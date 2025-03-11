@@ -78,14 +78,14 @@ A link to a GitHub repo, containing the following items.
 3. A folder with the system developed in whatever technologies/framework you may want. In this folder all the source code, configuration files, and any other file you may need (please remember we have adopted an IaC approach - Infrastructure as Code) AND the Dockerfiles, docker-compose files, etc. which will allow the instructors to re-build/re-deploy your system on whatever platform (either on-premise or on cloud).
 
 So, to wrap up, the structure of the repo submitted should be like this one, cf. https://drive.google.com/drive/folders/1HO9h8lQ8udyBhqjNk8BJ8hAODIONItcA?usp=sharing:
-
+.
 ├── input.txt
 ├── Student_doc.md
 ├── DataMetrics.json
 ├── source    # directory containing the source files of the developed system
 └── booklets # directory containing the documents about the development process, estimation, slides to be used for the discussion, etc.
 
-Each group needs to create a repo named <MATRICOLA>_<PROJECT> where <MATRICOLA> is the INFOSTUD Student ID of the group leader and <PROJECT> is the acronym of your project.
+Each group needs to create a repo named MATRICOLA_PROJECT where MATRICOLA is the INFOSTUD Student ID of the group leader and PROJECT is the acronym of your project.
 
 In order to avoid misunderstandings, this is repeated.
 
