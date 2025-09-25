@@ -7,15 +7,15 @@ import (
 
 // Define common interface for storing and querying geospatial data
 type Storage interface {
-	AddWaypoint(w *models.Waypoint) error
+	AddWaypoint(w models.Waypoint) error
 	AddConstraint(c *models.Constraint) error
 	Clear() error // Clear temporary data for a request
 
-	NearestPoint(p *models.Waypoint) (*models.Waypoint, error)
-    KNearestPoints(p *models.Waypoint, k int) ([]*models.Waypoint, error)
-	NearestPointsInRadius(p *models.Waypoint, radius_mt float64) ([]*models.Waypoint, error)
-    IsPointInObstacle(p *models.Waypoint) (bool, error)
-    IsLineInObstacle(p1, p2 *models.Waypoint) (bool, error)
+	NearestPoint(p models.Waypoint) (models.Waypoint, error)
+    KNearestPoints(p models.Waypoint, k int) ([]models.Waypoint, error)
+	NearestPointsInRadius(p models.Waypoint, radius_mt float64) ([]models.Waypoint, error)
+    IsPointInObstacle(p models.Waypoint) (bool, error)
+    IsLineInObstacle(p1, p2 models.Waypoint) (bool, error)
 }
 
 // DefaultStorage must implement Storage, so it can define a default for some methods
@@ -23,7 +23,7 @@ type DefaultStorage struct {
 	mu         sync.Mutex
 }
 
-func (ds *DefaultStorage) AddWaypoint(w *models.Waypoint) error {
+func (ds *DefaultStorage) AddWaypoint(w models.Waypoint) error {
 	return nil
 }
 
@@ -31,13 +31,13 @@ func (ds *DefaultStorage) AddConstraint(c *models.Constraint) error {
 	return nil
 }
 
-func (ds *DefaultStorage) Clear(w *models.Waypoint) error {
+func (ds *DefaultStorage) Clear(w models.Waypoint) error {
 	return nil
 }
 
 // ====================== Default methods
 
-func (d *DefaultStorage) AddWaypoints(w_list []*models.Waypoint) error {
+func (d *DefaultStorage) AddWaypoints(w_list []models.Waypoint) error {
 	for _, w := range w_list {
 		if err := d.AddWaypoint(w); err != nil {
 			return err

@@ -10,7 +10,7 @@ import (
 // MemoryStorage stores everything in-memory (cleared after each request)
 type MemoryStorage struct {
 	DefaultStorage
-	waypoints  []*models.Waypoint
+	waypoints  []models.Waypoint
 	constraints []*models.Constraint
 }
 
@@ -18,7 +18,7 @@ func NewEmptyMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{}
 }
 
-func NewMemoryStorage(w_list []*models.Waypoint, c_list []*models.Constraint) *MemoryStorage {
+func NewMemoryStorage(w_list []models.Waypoint, c_list []*models.Constraint) *MemoryStorage {
 	ms := NewEmptyMemoryStorage()
 	ms.AddWaypoints(w_list)
 	ms.AddConstraints(c_list)
@@ -30,22 +30,22 @@ func (m *MemoryStorage) Clear() error {
 	// defer m.mu.Unlock()
 
 	// TODO: Think about putting them to nil
-	m.waypoints = []*models.Waypoint{}
+	m.waypoints = []models.Waypoint{}
 	m.constraints = []*models.Constraint{}
 	return nil
 }
 
-func (m *MemoryStorage) AddWaypoint(w *models.Waypoint) error {
+func (m *MemoryStorage) AddWaypoint(w models.Waypoint) error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	m.waypoints = append(m.waypoints, w)
 	return nil
 }
 
-func (m *MemoryStorage) GetWaypoints() ([]*models.Waypoint, error) {
+func (m *MemoryStorage) GetWaypoints() ([]models.Waypoint, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
-	return append([]*models.Waypoint(nil), m.waypoints...), nil
+	return m.waypoints, nil
 }
 
 func (m *MemoryStorage) AddConstraint(c *models.Constraint) error {
@@ -58,19 +58,19 @@ func (m *MemoryStorage) AddConstraint(c *models.Constraint) error {
 func (m *MemoryStorage) GetConstraints() ([]*models.Constraint, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
-	return append([]*models.Constraint(nil), m.constraints...), nil
+	return m.constraints, nil
 }
 
 // ================================================================= Geometric helpers
 
 // Scan list of obstacle until you find someone that intersect
 // O(N)
-func (m *MemoryStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, error) {
+func (m *MemoryStorage) NearestPoint(p models.Waypoint) (models.Waypoint, error) {
 	if len(m.waypoints) == 0 {
-		return nil, errors.New("no waypoints")
+		return models.Waypoint{}, errors.New("no waypoints")
 	}
 
-	var nearest *models.Waypoint
+	var nearest models.Waypoint
 	minDist := float64(-1)
 
 	for _, wp := range m.waypoints {
@@ -86,7 +86,7 @@ func (m *MemoryStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, erro
 
 // Compute distance from p to every point in the list and then sort based on that distance, retaining only the first k.
 // O(N*logN)
-func (m *MemoryStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Waypoint, error) {
+func (m *MemoryStorage) KNearestPoints(p models.Waypoint, k int) ([]models.Waypoint, error) {
 	if len(m.waypoints) == 0 {
 		return nil, errors.New("no waypoints")
 	}
@@ -99,7 +99,7 @@ func (m *MemoryStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Way
 
 	// Create a slice of waypoints with distances
 	type pointDist struct {
-		point    *models.Waypoint
+		point    models.Waypoint
 		distance float64
 	}
 	
@@ -117,7 +117,7 @@ func (m *MemoryStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Way
 	})
 
 	// Return k nearest points
-	result := make([]*models.Waypoint, k)
+	result := make([]models.Waypoint, k)
 	for i := 0; i < k; i++ {
 		result[i] = points[i].point
 	}
@@ -126,7 +126,7 @@ func (m *MemoryStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Way
 
 // Compute distance from p to every point in the list discarding everyone that is more distant than radius. Then sort based on that distance.
 // O(N*logN)
-func (m *MemoryStorage) NearestPointsInRadius(p *models.Waypoint, radius float64) ([]*models.Waypoint, error) {
+func (m *MemoryStorage) NearestPointsInRadius(p models.Waypoint, radius float64) ([]models.Waypoint, error) {
 	if len(m.waypoints) == 0 {
 		return nil, errors.New("no waypoints")
 	}
@@ -136,7 +136,7 @@ func (m *MemoryStorage) NearestPointsInRadius(p *models.Waypoint, radius float64
 
 	// Create a slice of waypoints with distances
 	type pointDist struct {
-		point    *models.Waypoint
+		point    models.Waypoint
 		distance float64
 	}
 	
@@ -156,7 +156,7 @@ func (m *MemoryStorage) NearestPointsInRadius(p *models.Waypoint, radius float64
 	})
 
 	// Return all nearest points
-	result := make([]*models.Waypoint, len(points))
+	result := make([]models.Waypoint, len(points))
 	for i := 0; i < len(result); i++ {
 		result[i] = points[i].point
 	}
@@ -165,22 +165,24 @@ func (m *MemoryStorage) NearestPointsInRadius(p *models.Waypoint, radius float64
 
 // Scan list of obstacle until you find someone that intersect
 // O(#obstacles)
-func (m *MemoryStorage) IsPointInObstacle(p *models.Waypoint) (bool, error) {
+func (m *MemoryStorage) IsPointInObstacle(p models.Waypoint) (bool, error) {
 	for _, obstacle := range m.constraints {
 		if utils.PointInPolygon(p, obstacle) {
 			return true, nil
 		}		
 	}
+	
 	return false, nil
 }
 
 // Scan list of obstacle until you find someone that intersect line
 // O(#obstacles)
-func (m *MemoryStorage) IsLineInObstacle(p1, p2 *models.Waypoint) (bool, error) {
+func (m *MemoryStorage) IsLineInObstacle(p1, p2 models.Waypoint) (bool, error) {
 	for _, obstacle := range m.constraints {
-		if utils.DefaultLineInPolygon(p1, p2, obstacle) {
+		if utils.LineInPolygon(p1, p2, obstacle) {
 			return true, nil
 		}
 	}
+
 	return false, nil
 }

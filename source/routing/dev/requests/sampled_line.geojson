@@ -1,0 +1,33 @@
+{
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.684083650608301,
+          40.415360741026745
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.680258352459191,
+          40.41451466192274
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100
+      }
+    }
+  ],
+  "type": "FeatureCollection"
+}

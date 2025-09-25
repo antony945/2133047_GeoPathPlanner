@@ -10,6 +10,9 @@ services:
         - action: rebuild
           path: ./**/*.go
 
+    depends_on:
+      - redis
+
   redis:
     image: redis:7
     container_name: redis
