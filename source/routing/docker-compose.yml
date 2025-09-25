@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    # Important to bind/mount your codebase dir to /app dir for live reload
+    develop:
+      watch:
+        - action: rebuild
+          path: ./**/*.go
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${REDIS_PORT}:6379"

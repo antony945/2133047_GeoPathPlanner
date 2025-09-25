@@ -16,3 +16,8 @@ This microservice is implemented in **Go**, utilizing **PostgreSQL** and **Redis
 - PRM - Coming soon
 - PRM* - Coming soon
 - AntPath - Coming soon
+
+docker build -t routing-test -f Dockerfile .
+docker build -t routing-test-dev -f Dockerfile-dev .
+
+
