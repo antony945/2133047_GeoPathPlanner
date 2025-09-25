@@ -9,20 +9,30 @@ import (
 
 // MemoryStorage stores everything in-memory (cleared after each request)
 type MemoryStorage struct {
-	DefaultStorage
+	*DefaultStorage
 	waypoints  []models.Waypoint
 	constraints []*models.Constraint
 }
 
-func NewEmptyMemoryStorage() *MemoryStorage {
-	return &MemoryStorage{}
+func NewEmptyMemoryStorage() (*MemoryStorage, error) {
+	return &MemoryStorage{}, nil
 }
 
-func NewMemoryStorage(w_list []models.Waypoint, c_list []*models.Constraint) *MemoryStorage {
-	ms := NewEmptyMemoryStorage()
-	ms.AddWaypoints(w_list)
-	ms.AddConstraints(c_list)
-	return ms
+func NewMemoryStorage(w_list []models.Waypoint, c_list []*models.Constraint) (*MemoryStorage, error) {
+	ms, err := NewEmptyMemoryStorage()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ms.AddWaypoints(w_list); err != nil {
+		return nil, err
+	}
+
+	if err := ms.AddConstraints(c_list); err != nil {
+		return nil, err
+	}
+
+	return ms, nil
 }
 
 func (m *MemoryStorage) Clear() error {

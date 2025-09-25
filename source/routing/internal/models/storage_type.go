@@ -1,0 +1,37 @@
+package models
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type StorageType string
+
+const (
+	Memory StorageType = "Memory"
+	Redis  StorageType = "Redis"
+)
+
+// Validate algorithm type (enforce enum)
+func (s StorageType) Validate() error {
+	switch s {
+	case Memory, Redis:
+		return nil
+	default:
+		return fmt.Errorf("invalid storage type: %s, available options are %s, %s", s, Memory, Redis)
+	}
+}
+
+func (s *StorageType) UnmarshalJSON(data []byte) error {
+    var value string
+    if err := json.Unmarshal(data, &value); err != nil {
+        return err
+    }
+
+	*s = StorageType(value)
+	if err := s.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}

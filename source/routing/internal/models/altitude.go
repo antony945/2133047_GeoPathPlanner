@@ -23,18 +23,6 @@ type Altitude struct {
 	Unit  AltitudeUnit `json:"unit"`
 }
 
-// Parse unit
-func ParseUnit(unit string) (AltitudeUnit, error) {
-    switch strings.ToUpper(unit) {
-    case "MT":
-        return MT, nil
-    case "FT":
-        return FT, nil
-    default:
-		return "", fmt.Errorf("invalid altitude unit: %s, must be %s or %s", unit, MT, FT)
-    }
-}
-
 func NewAltitude(value float64, unit AltitudeUnit) (Altitude, error) {
 	a := Altitude{
 		Value: value,
@@ -53,7 +41,7 @@ func (a Altitude) Validate() error {
 	case MT, FT:
 		return nil
 	default:
-		return fmt.Errorf("invalid altitude unit: %s, must be %s or %s", a.Unit, MT, FT)
+		return fmt.Errorf("invalid altitude unit: %s, available options are %s or %s", a.Unit, MT, FT)
 	}
 }
 

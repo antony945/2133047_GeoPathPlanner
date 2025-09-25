@@ -10,9 +10,9 @@ import (
 )
 
 type Waypoint struct {
-	Lat float64  `json:"lat"`
-	Lon float64  `json:"lon"`
-	Alt Altitude `json:"alt"`
+	Lat float64
+	Lon float64
+	Alt Altitude
 }
 
 // NewWaypoint is a constructor with validation

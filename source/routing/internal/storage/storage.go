@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"geopathplanner/routing/internal/models"
 	"sync"
 )
@@ -16,6 +17,17 @@ type Storage interface {
 	NearestPointsInRadius(p models.Waypoint, radius_mt float64) ([]models.Waypoint, error)
     IsPointInObstacle(p models.Waypoint) (bool, error)
     IsLineInObstacle(p1, p2 models.Waypoint) (bool, error)
+}
+
+func NewStorage(w_list []models.Waypoint, c_list []*models.Constraint, storageType models.StorageType) (Storage, error) {
+	switch storageType {
+		case models.Memory:
+			return NewMemoryStorage(w_list, c_list)
+		case models.Redis:
+			return nil, fmt.Errorf("storage currently not implemented: %s", storageType)
+		default:
+			return nil, fmt.Errorf("storage not recognized: %s", storageType)
+	}
 }
 
 // DefaultStorage must implement Storage, so it can define a default for some methods
