@@ -1,17 +1,17 @@
 package utils
 
 import (
-	"fmt"
 	"geopathplanner/routing/internal/models"
 	"math"
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geo"
+	"github.com/paulmach/orb/planar"
 	"github.com/paulmach/orb/resample"
 )
 
 const (
-	DEFAULT_LINE_DIVISION_MAX_STEP_SIZE_MT = 500
+	DEFAULT_LINE_DIVISION_MAX_STEP_SIZE_MT = 50
 )
 
 // Implement POINT-POLYGON intersection
@@ -26,9 +26,8 @@ func PointInPolygon(p models.Waypoint, poly *models.Constraint) bool {
 		return false
 	}
 
-	// 3. Here you have to check exactly if it insersects: run PiP algorithm or RayTracing algorithm to do that
-	// TODO: For now return true, we have to implement that
-	return true
+	// 3. Here you have to check exactly if it insersects: run PiP algorithm (PnPoly, uses RayTracing) algorithm to do that
+	return planar.PolygonContains(poly.ToPolygon(), p.Point2D())
 }
 
 // Implement LINE-POLYGON intersection
@@ -71,7 +70,6 @@ func ResampleLineToInterval(p1, p2 models.Waypoint, distMt float64) []models.Way
 	if (dist <= distMt) {
 		return []models.Waypoint{p1, p2}
 	}
-	fmt.Printf("i'm here. %f > %f\n", dist, distMt)
 
 	// Define numStep, altStepSize and stepSize
 	numStep := int(dist / distMt)
@@ -79,14 +77,11 @@ func ResampleLineToInterval(p1, p2 models.Waypoint, distMt float64) []models.Way
 	
 	// Pythagorean theorem to find x stepSize
 	stepSizeMt := math.Sqrt(distMt*distMt - altStepSizeMt*altStepSizeMt)
-	fmt.Printf("altStepSizeMt: %f\n", altStepSizeMt)
-	fmt.Printf("stepSizeMt: %f\n", stepSizeMt)
 
 	quantizedPoints := make([]models.Waypoint, 0, numStep)
 
 	// 2D resample line	
 	resampledLine := resample.ToInterval(orb.LineString{p1.Point2D(), p2.Point2D()}, geo.DistanceHaversine, stepSizeMt)
-	fmt.Printf("resampledLine: %+v\n", resampledLine)
 	
 	// For each point in resampleLine, add the altitude interpolated
 	startingAltVal := p1.Alt.ConvertTo(models.MT).Value
@@ -106,4 +101,3 @@ func ResampleLineToInterval(p1, p2 models.Waypoint, distMt float64) []models.Way
 func DefaultResampleLineToInterval(p1, p2 models.Waypoint) []models.Waypoint {
 	return ResampleLineToInterval(p1, p2, DEFAULT_LINE_DIVISION_MAX_STEP_SIZE_MT)
 }
-

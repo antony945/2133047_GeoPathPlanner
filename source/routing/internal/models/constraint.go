@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geojson"
 )
 
@@ -33,6 +34,10 @@ func NewConstraintFromGeojson(geojsonString string) (*Constraint, error) {
 	// fmt.Printf("max altitude: %+v\n", c.MaxAltitude)
 	// fmt.Printf("constraint: %+v\n", c)
 	return c, nil
+}
+
+func (c *Constraint) ToPolygon() orb.Polygon {
+	return c.Geometry.(orb.Polygon)
 }
 
 func (c *Constraint) UnmarshalJSON(data []byte) error {
