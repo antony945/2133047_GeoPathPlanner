@@ -44,6 +44,29 @@ func (c *Feature3D) ToPolygon() orb.Polygon {
 	return c.Geometry.(orb.Polygon)
 }
 
+func (c *Feature3D) SetAltitude(min, max Altitude) error {
+	// Make sure that they are both in the same unit
+	if err := min.Unit.IsEqual(max.Unit); err != nil {
+		return err
+	}
+
+	// Check that min is less than max (otherwise swap the two)
+	// TODO: Check if swapping is good or if it's better to throw error
+	if min.Compare(max) > 0 {
+		min, max = max, min
+	}
+
+	// Assign min max to instance variable
+	c.MinAltitude = min
+	c.MaxAltitude = max
+
+	// Write altitudes in the properties
+	c.Feature.Properties["minAltitudeValue"] = float64(c.MinAltitude.Value)
+	c.Feature.Properties["maxAltitudeValue"] = float64(c.MaxAltitude.Value)
+	c.Feature.Properties["altitudeUnit"] = c.MinAltitude.Unit
+	return nil
+}
+
 func (c *Feature3D) UnmarshalJSON(data []byte) error {
     if err := json.Unmarshal(data, &c.Feature); err != nil {
         return err
@@ -52,16 +75,17 @@ func (c *Feature3D) UnmarshalJSON(data []byte) error {
 	var err error
 
 	unit := c.Feature.Properties.MustString("altitudeUnit", string(MT))
-	
 	min := c.Feature.Properties.MustFloat64("minAltitudeValue", DEFAULT_MIN_ALT)
-	c.MinAltitude, err = NewAltitude(min, AltitudeUnit(unit))
+	max := c.Feature.Properties.MustFloat64("maxAltitudeValue", DEFAULT_MAX_ALT)
+	minAlt, err := NewAltitude(min, AltitudeUnit(unit))
 	if err != nil {
 		return err
 	}
-	
-	max := c.Feature.Properties.MustFloat64("maxAltitudeValue", DEFAULT_MAX_ALT)
-	c.MaxAltitude, err = NewAltitude(max, AltitudeUnit(unit))
+	maxAlt, err := NewAltitude(max, AltitudeUnit(unit))
 	if err != nil {
+		return err
+	}
+	if err := c.SetAltitude(minAlt, maxAlt); err != nil {
 		return err
 	}
 
@@ -69,9 +93,6 @@ func (c *Feature3D) UnmarshalJSON(data []byte) error {
 }
 
 func (c *Feature3D) MarshalJSON() ([]byte, error) {
-	c.Feature.Properties["minAltitudeValue"] = float64(c.MinAltitude.ConvertTo(MT).Value)
-	c.Feature.Properties["maxAltitudeValue"] = float64(c.MaxAltitude.ConvertTo(MT).Value)
-	c.Feature.Properties["altitudeUnit"] = string(MT)
 	return c.Feature.MarshalJSON()
 }
 

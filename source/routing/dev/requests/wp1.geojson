@@ -1,11 +1,18 @@
 {
-  "type": "Feature",
-  "properties": {},
-  "geometry": {
-    "coordinates": [
-      -3.680258352459191,
-      40.41451466192274
-    ],
-    "type": "Point"
-  }
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 120
+      },
+      "geometry": {
+        "coordinates": [
+          -3.680258352459191,
+          40.41451466192274
+        ],
+        "type": "Point"
+      }
+    }
+  ]
 }

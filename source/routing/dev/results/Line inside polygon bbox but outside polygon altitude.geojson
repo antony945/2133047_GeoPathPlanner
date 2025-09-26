@@ -1,0 +1,235 @@
+{
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.680258352459191,
+          40.41451466192274
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100,
+        "fill": "#3ca32e",
+        "fill-opacity": 0.8,
+        "inside": false,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.6808959021507093,
+          40.41465567510674
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100,
+        "fill": "#3ca32e",
+        "fill-opacity": 0.8,
+        "inside": false,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.6815334518422276,
+          40.41479668829074
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100,
+        "fill": "#3ca32e",
+        "fill-opacity": 0.8,
+        "inside": false,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.682171001533746,
+          40.41493770147474
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100,
+        "fill": "#3ca32e",
+        "fill-opacity": 0.8,
+        "inside": false,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.682808551225264,
+          40.41507871465874
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100,
+        "fill": "#3ca32e",
+        "fill-opacity": 0.8,
+        "inside": false,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.6834461009167825,
+          40.41521972784275
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100,
+        "fill": "#3ca32e",
+        "fill-opacity": 0.8,
+        "inside": false,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.684083650608301,
+          40.415360741026745
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 100,
+        "fill": "#3ca32e",
+        "fill-opacity": 0.8,
+        "inside": false,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -3.680258352459191,
+            40.41451466192274
+          ],
+          [
+            -3.6808959021507093,
+            40.41465567510674
+          ],
+          [
+            -3.6815334518422276,
+            40.41479668829074
+          ],
+          [
+            -3.682171001533746,
+            40.41493770147474
+          ],
+          [
+            -3.682808551225264,
+            40.41507871465874
+          ],
+          [
+            -3.6834461009167825,
+            40.41521972784275
+          ],
+          [
+            -3.684083650608301,
+            40.415360741026745
+          ]
+        ]
+      },
+      "properties": {
+        "stroke": "#3388ff",
+        "stroke-opacity": 0.8,
+        "stroke-width": 4
+      }
+    },
+    {
+      "id": 0,
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3.682350868202377,
+              40.41280363703126
+            ],
+            [
+              -3.6803385702834817,
+              40.41316452298395
+            ],
+            [
+              -3.681329573921829,
+              40.41581779687536
+            ],
+            [
+              -3.6828215244555906,
+              40.415560765544114
+            ],
+            [
+              -3.682742913597508,
+              40.41516672686038
+            ],
+            [
+              -3.6841695232323843,
+              40.413956171911565
+            ],
+            [
+              -3.682350868202377,
+              40.41280363703126
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "fill": "#555555",
+        "fill-opacity": 0.5,
+        "maxAltitudeValue": 500,
+        "minAltitudeValue": 400,
+        "stroke": "#555555",
+        "stroke-opacity": 0.8,
+        "stroke-width": 2
+      }
+    }
+  ],
+  "type": "FeatureCollection"
+}

@@ -1,0 +1,115 @@
+package utils
+
+import (
+	"encoding/json"
+	"fmt"
+	"geopathplanner/routing/internal/models"
+	"os"
+	"path/filepath"
+
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/geojson"
+)
+
+type Styler interface {
+	Style(f *geojson.Feature) *geojson.Feature
+}
+
+type WaypointStyler struct {}
+func (s WaypointStyler) Style(f *geojson.Feature) *geojson.Feature {
+	color := "#656eec"
+	
+	if isInsidePolygon := f.Properties["inside"]; isInsidePolygon != nil {
+		flag, _ := isInsidePolygon.(bool)
+		if flag {
+			color = "#d24141"
+		} else {
+			color = "#3ca32e"
+		}
+	}
+	
+	f.Properties["fill"] = color
+	f.Properties["fill-opacity"] = 0.8
+	f.Properties["stroke"] = "#555555"
+	f.Properties["stroke-width"] = 2
+	f.Properties["stroke-opacity"] = 0.8
+	// f.Properties["marker-color"] = color
+    // f.Properties["marker-size"] = "medium"
+    // f.Properties["marker-symbol"] = "circle"
+	return f
+}
+
+type ConstraintStyler struct {}
+func (s ConstraintStyler) Style(f *geojson.Feature) *geojson.Feature {
+	f.Properties["fill"] = "#555555"
+	f.Properties["fill-opacity"] = 0.5
+	f.Properties["stroke"] = "#555555"
+	f.Properties["stroke-width"] = 2
+	f.Properties["stroke-opacity"] = 0.8
+	return f
+}
+
+type LineStyler struct {}
+func (s LineStyler) Style(f *geojson.Feature) *geojson.Feature {
+	f.Properties["stroke"] = "#3388ff"
+	f.Properties["stroke-width"] = 4
+	f.Properties["stroke-opacity"] = 0.8
+	return f
+}
+
+// ExportToGeoJSON takes waypoints and constraints and writes them into a FeatureCollection
+// saved under dev/results/<filename>.geojson.
+func ExportToGeoJSON(waypoints []*models.Waypoint, polygons []*models.Feature3D, filename string, lineBetweenWaypoints bool) error {
+	// Create a FeatureCollection
+	fc := geojson.NewFeatureCollection()
+	var styler Styler
+
+	
+	// Wrap waypoints (MarshalJSON already defines how they look)
+	styler = WaypointStyler{}
+	for _, wp := range waypoints {
+		fc.Append(styler.Style(wp.Feature))
+	}
+
+	// Draw also the line that passes through the point if needed
+	styler = LineStyler{}
+	if lineBetweenWaypoints {
+		line := make(orb.LineString, len(waypoints))
+		for i, wp := range waypoints {
+			line[i] = wp.Point2D()
+		}
+		lineFeature := geojson.NewFeature(line)
+		fc.Append(styler.Style(lineFeature))
+	}
+
+	// Wrap constraints
+	styler = ConstraintStyler{}
+	for _, p := range polygons {
+		if p == nil {
+			continue
+		}
+		z := styler.Style(p.Feature)
+		fmt.Printf("Polygon properties:\n%+v\n", z.Properties)
+		fc.Append(styler.Style(p.Feature))
+	}
+
+	// Marshal collection
+	data, err := json.MarshalIndent(fc, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal feature collection: %w", err)
+	}
+
+	// Ensure dev/results exists
+	outDir := filepath.Join("dev", "results")
+	if err := os.MkdirAll(outDir, os.ModePerm); err != nil {
+		return fmt.Errorf("create results dir: %w", err)
+	}
+	
+	// Write to file
+	outPath := ResolvePath(filepath.Join(outDir, filename+".geojson"))
+	if err := os.WriteFile(outPath, data, 0644); err != nil {
+		return fmt.Errorf("write file: %w", err)
+	}
+
+	return nil
+}

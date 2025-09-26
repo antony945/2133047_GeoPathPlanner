@@ -103,26 +103,26 @@ func TestLineInPolygon(t *testing.T) {
 		},
 		"properties": {
 		"altitudeUnit": "mt",
-		"maxAltitudeValue": 999999,
-		"minAltitudeValue": -999999
+		"maxAltitudeValue": 200,
+		"minAltitudeValue": 50
 		},
 		"id": 0
 	}`
 
 	tests := []struct {
 		name     string
-		p1       models.Waypoint
-		p2       models.Waypoint
+		p1       *models.Waypoint
+		p2       *models.Waypoint
 		poly     *models.Feature3D
 		expected bool
 	}{
 		{
 			name: "Line completely outside polygon",
-			p1: func() models.Waypoint {
+			p1: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp0json)
 				return wp
 			}(),
-			p2: func() models.Waypoint {
+			p2: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp1json)
 				return wp
 			}(),
@@ -134,29 +134,30 @@ func TestLineInPolygon(t *testing.T) {
 		},
 		{
 			name: "Line inside polygon bbox but outside polygon altitude",
-			p1: func() models.Waypoint {
+			p1: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp1json)
 				return wp
 			}(),
-			p2: func() models.Waypoint {
+			p2: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp2json)
 				return wp
 			}(),
 			poly: func() *models.Feature3D {
 				c, _ := models.NewConstraintFromGeojson(polyjson)
-				c.MinAltitude, _ = models.NewAltitude(400, models.MT)
-				c.MaxAltitude, _ = models.NewAltitude(500, models.MT)
+				min, _ := models.NewAltitude(400, models.MT)
+				max, _ := models.NewAltitude(500, models.MT)
+				c.SetAltitude(min, max)
 				return c
 			}(),
 			expected: false,
 		},
 		{
 			name: "Line inside polygon bbox but outside polygon shape",
-			p1: func() models.Waypoint {
+			p1: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp3json)
 				return wp
 			}(),
-			p2: func() models.Waypoint {
+			p2: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp4json)
 				return wp
 			}(),
@@ -168,11 +169,11 @@ func TestLineInPolygon(t *testing.T) {
 		},
 		{
 			name: "Line inside polygon shape",
-			p1: func() models.Waypoint {
+			p1: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp1json)
 				return wp
 			}(),
-			p2: func() models.Waypoint {
+			p2: func() *models.Waypoint {
 				wp, _ := models.NewWaypointFromGeojson(wp2json)
 				return wp
 			}(),
@@ -186,7 +187,11 @@ func TestLineInPolygon(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := LineInPolygon(tt.p1, tt.p2, tt.poly)
+			result, line := LineInPolygon(tt.p1, tt.p2, tt.poly)
+			// t.Logf("Polygon altitude range: min=%v, max=%v", tt.poly.MinAltitude, tt.poly.MaxAltitude)
+			// TODO: For visually testing, export results in geojson
+			ExportToGeoJSON(line, []*models.Feature3D{tt.poly}, tt.name, true)
+			
 			if result != tt.expected {
 				t.Errorf("LineInPolygon() = %v, want %v", result, tt.expected)
 			}

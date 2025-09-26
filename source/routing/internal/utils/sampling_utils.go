@@ -95,12 +95,12 @@ func (s *HaltonSampler) _halton(idx, base int) float64 {
 // TODO: Test goal bias sampler
 type GoalBiasSampler struct {
 	InternalSampler Sampler
-	Goal models.Waypoint
+	Goal *models.Waypoint
 	Bias float64
 	last_chosen_goal bool
 }
 
-func NewGoalBiasSampler(sampler Sampler, goal models.Waypoint, bias float64) *GoalBiasSampler {
+func NewGoalBiasSampler(sampler Sampler, goal *models.Waypoint, bias float64) *GoalBiasSampler {
 	return &GoalBiasSampler{
 		InternalSampler: sampler,
 		Goal: goal,
@@ -159,13 +159,13 @@ func Sample2D(geometry orb.Geometry, sampler Sampler) orb.Point {
 	return sampled
 }
 
-func SampleWithAltitude2D(geometry orb.Geometry, alt models.Altitude, sampler Sampler) models.Waypoint {
+func SampleWithAltitude2D(geometry orb.Geometry, alt models.Altitude, sampler Sampler) *models.Waypoint {
 	sampled := Sample2D(geometry, sampler)
 	wp, _ := models.NewWaypoint(sampled.Lat(), sampled.Lon(), alt)
 	return wp
 }
 
-func Sample3D(geometry *models.Feature3D, sampler Sampler) models.Waypoint {
+func Sample3D(geometry *models.Feature3D, sampler Sampler) *models.Waypoint {
 	sampled := Sample2D(geometry.Geometry, sampler)
 	minAlt, maxAlt := geometry.MinAltitude.Normalize().Value, geometry.MaxAltitude.Normalize().Value
 	
