@@ -15,7 +15,7 @@ const (
 )
 
 // Implement POINT-POLYGON intersection
-func PointInPolygon(p models.Waypoint, poly *models.Constraint) bool {
+func PointInPolygon(p models.Waypoint, poly *models.Feature3D) bool {
 	// 1. First check intersection with BBox of poly -> if not, then immediately return false
 	if !poly.Geometry.Bound().Contains(p.Point2D()) {
 		return false 
@@ -27,11 +27,15 @@ func PointInPolygon(p models.Waypoint, poly *models.Constraint) bool {
 	}
 
 	// 3. Here you have to check exactly if it insersects: run PiP algorithm (PnPoly, uses RayTracing) algorithm to do that
-	return planar.PolygonContains(poly.ToPolygon(), p.Point2D())
+	return PointInPolygon2D(p.Point2D(), poly.ToPolygon())
+}
+
+func PointInPolygon2D(p orb.Point, poly orb.Polygon) bool {
+	return planar.PolygonContains(poly, p);
 }
 
 // Implement LINE-POLYGON intersection
-func LineInPolygon(p1, p2 models.Waypoint, poly *models.Constraint) bool {
+func LineInPolygon(p1, p2 models.Waypoint, poly *models.Feature3D) bool {
 	// Divide line into point and then check if any individual point lies in polygon
 	quantizedLine := DefaultResampleLineToInterval(p1, p2)
 	
@@ -40,7 +44,7 @@ func LineInPolygon(p1, p2 models.Waypoint, poly *models.Constraint) bool {
 	return _sublineInPolygonRecursive(quantizedLine, poly, 0, len(quantizedLine)-1)
 }
 
-func _sublineInPolygonRecursive(quantizedLine []models.Waypoint, poly *models.Constraint, start, end int) bool {
+func _sublineInPolygonRecursive(quantizedLine []models.Waypoint, poly *models.Feature3D, start, end int) bool {
 	// Base case
 	if start > end {
 		return false

@@ -11,14 +11,14 @@ import (
 type MemoryStorage struct {
 	*DefaultStorage
 	waypoints  []models.Waypoint
-	constraints []*models.Constraint
+	constraints []*models.Feature3D
 }
 
 func NewEmptyMemoryStorage() (*MemoryStorage, error) {
 	return &MemoryStorage{}, nil
 }
 
-func NewMemoryStorage(w_list []models.Waypoint, c_list []*models.Constraint) (*MemoryStorage, error) {
+func NewMemoryStorage(w_list []models.Waypoint, c_list []*models.Feature3D) (*MemoryStorage, error) {
 	ms, err := NewEmptyMemoryStorage()
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (m *MemoryStorage) Clear() error {
 
 	// TODO: Think about putting them to nil
 	m.waypoints = []models.Waypoint{}
-	m.constraints = []*models.Constraint{}
+	m.constraints = []*models.Feature3D{}
 	return nil
 }
 
@@ -58,14 +58,14 @@ func (m *MemoryStorage) GetWaypoints() ([]models.Waypoint, error) {
 	return m.waypoints, nil
 }
 
-func (m *MemoryStorage) AddConstraint(c *models.Constraint) error {
+func (m *MemoryStorage) AddConstraint(c *models.Feature3D) error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	m.constraints = append(m.constraints, c)
 	return nil
 }
 
-func (m *MemoryStorage) GetConstraints() ([]*models.Constraint, error) {
+func (m *MemoryStorage) GetConstraints() ([]*models.Feature3D, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	return m.constraints, nil
@@ -175,7 +175,7 @@ func (m *MemoryStorage) NearestPointsInRadius(p models.Waypoint, radius float64)
 
 // Scan list of obstacle until you find someone that intersect
 // O(#obstacles)
-func (m *MemoryStorage) IsPointInObstacle(p models.Waypoint) (bool, error) {
+func (m *MemoryStorage) IsPointInObstacles(p models.Waypoint) (bool, error) {
 	for _, obstacle := range m.constraints {
 		if utils.PointInPolygon(p, obstacle) {
 			return true, nil
@@ -187,7 +187,7 @@ func (m *MemoryStorage) IsPointInObstacle(p models.Waypoint) (bool, error) {
 
 // Scan list of obstacle until you find someone that intersect line
 // O(#obstacles)
-func (m *MemoryStorage) IsLineInObstacle(p1, p2 models.Waypoint) (bool, error) {
+func (m *MemoryStorage) IsLineInObstacles(p1, p2 models.Waypoint) (bool, error) {
 	for _, obstacle := range m.constraints {
 		if utils.LineInPolygon(p1, p2, obstacle) {
 			return true, nil

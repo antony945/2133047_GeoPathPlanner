@@ -9,13 +9,13 @@ import (
 	"github.com/paulmach/orb/geojson"
 )
 
-type Constraint struct {
+type Feature3D struct {
 	*geojson.Feature
 	MinAltitude Altitude
 	MaxAltitude Altitude
 }
 
-func NewConstraintFromGeojsonFile(filename string) (*Constraint, error) {
+func NewConstraintFromGeojsonFile(filename string) (*Feature3D, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)
@@ -24,8 +24,8 @@ func NewConstraintFromGeojsonFile(filename string) (*Constraint, error) {
 	return NewConstraintFromGeojson(string(data))
 }
 
-func NewConstraintFromGeojson(geojsonString string) (*Constraint, error) {
-	var c *Constraint
+func NewConstraintFromGeojson(geojsonString string) (*Feature3D, error) {
+	var c *Feature3D
 	if err := json.Unmarshal([]byte(geojsonString), &c); err != nil {
 		return nil, fmt.Errorf("unmarshaling geojson: %w", err)
 	}
@@ -36,11 +36,15 @@ func NewConstraintFromGeojson(geojsonString string) (*Constraint, error) {
 	return c, nil
 }
 
-func (c *Constraint) ToPolygon() orb.Polygon {
+func (c *Feature3D) Bound() orb.Bound {
+	return c.Geometry.Bound()
+}
+
+func (c *Feature3D) ToPolygon() orb.Polygon {
 	return c.Geometry.(orb.Polygon)
 }
 
-func (c *Constraint) UnmarshalJSON(data []byte) error {
+func (c *Feature3D) UnmarshalJSON(data []byte) error {
     if err := json.Unmarshal(data, &c.Feature); err != nil {
         return err
     }
@@ -64,7 +68,7 @@ func (c *Constraint) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *Constraint) MarshalJSON() ([]byte, error) {
+func (c *Feature3D) MarshalJSON() ([]byte, error) {
 	c.Feature.Properties["minAltitudeValue"] = float64(c.MinAltitude.ConvertTo(MT).Value)
 	c.Feature.Properties["maxAltitudeValue"] = float64(c.MaxAltitude.ConvertTo(MT).Value)
 	c.Feature.Properties["altitudeUnit"] = string(MT)

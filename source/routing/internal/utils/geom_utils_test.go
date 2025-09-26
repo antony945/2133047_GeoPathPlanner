@@ -113,7 +113,7 @@ func TestLineInPolygon(t *testing.T) {
 		name     string
 		p1       models.Waypoint
 		p2       models.Waypoint
-		poly     *models.Constraint
+		poly     *models.Feature3D
 		expected bool
 	}{
 		{
@@ -126,7 +126,7 @@ func TestLineInPolygon(t *testing.T) {
 				wp, _ := models.NewWaypointFromGeojson(wp1json)
 				return wp
 			}(),
-			poly: func() *models.Constraint {
+			poly: func() *models.Feature3D {
 				c, _ := models.NewConstraintFromGeojson(polyjson)
 				return c
 			}(),
@@ -142,7 +142,7 @@ func TestLineInPolygon(t *testing.T) {
 				wp, _ := models.NewWaypointFromGeojson(wp2json)
 				return wp
 			}(),
-			poly: func() *models.Constraint {
+			poly: func() *models.Feature3D {
 				c, _ := models.NewConstraintFromGeojson(polyjson)
 				c.MinAltitude, _ = models.NewAltitude(400, models.MT)
 				c.MaxAltitude, _ = models.NewAltitude(500, models.MT)
@@ -160,7 +160,7 @@ func TestLineInPolygon(t *testing.T) {
 				wp, _ := models.NewWaypointFromGeojson(wp4json)
 				return wp
 			}(),
-			poly: func() *models.Constraint {
+			poly: func() *models.Feature3D {
 				c, _ := models.NewConstraintFromGeojson(polyjson)
 				return c
 			}(),
@@ -176,7 +176,7 @@ func TestLineInPolygon(t *testing.T) {
 				wp, _ := models.NewWaypointFromGeojson(wp2json)
 				return wp
 			}(),
-			poly: func() *models.Constraint {
+			poly: func() *models.Feature3D {
 				c, _ := models.NewConstraintFromGeojson(polyjson)
 				return c
 			}(),
