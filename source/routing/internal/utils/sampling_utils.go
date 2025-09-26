@@ -19,6 +19,10 @@ type Sampler interface {
 // TODO: Test uniform sampler
 type UniformSampler struct {}
 
+func NewUniformSampler() *UniformSampler {
+	return &UniformSampler{}
+}
+
 func (s *UniformSampler) SampleXY(minX, maxX, minY, maxY float64) (float64, float64) {
 	x := s.Sample(minX, maxX)
 	y := s.Sample(minY, maxY)
@@ -45,6 +49,12 @@ func (s *UniformSampler) Sample(min, max float64) float64 {
 // TODO: Test halton sampler
 type HaltonSampler struct {
 	idx int
+}
+
+func NewHaltonSampler() *HaltonSampler {
+	return &HaltonSampler{
+		idx: 1,
+	}
 }
 
 func (s *HaltonSampler) SampleXY(minX, maxX, minY, maxY float64) (float64, float64) {
@@ -78,6 +88,52 @@ func (s *HaltonSampler) _halton(idx, base int) float64 {
 		i /= base
 	}
 	return result
+}
+
+// -------------------------------------------------------------------------------------------
+
+// TODO: Test goal bias sampler
+type GoalBiasSampler struct {
+	InternalSampler Sampler
+	Goal models.Waypoint
+	Bias float64
+	last_chosen_goal bool
+}
+
+func NewGoalBiasSampler(sampler Sampler, goal models.Waypoint, bias float64) *GoalBiasSampler {
+	return &GoalBiasSampler{
+		InternalSampler: sampler,
+		Goal: goal,
+		Bias: bias,
+		last_chosen_goal: false,
+	}
+}
+
+func (s *GoalBiasSampler) UseGoal() bool {
+	s.last_chosen_goal = rand.Float64() < s.Bias
+	return s.last_chosen_goal
+}
+
+func (s *GoalBiasSampler) SampleXY(minX, maxX, minY, maxY float64) (float64, float64) {
+	if s.UseGoal() {
+		return s.Goal.Lon, s.Goal.Lat
+	}
+	return s.InternalSampler.SampleXY(minX, maxX, minY, maxY)
+}
+
+func (s *GoalBiasSampler) SampleXYZ(minX, maxX, minY, maxY, minZ, maxZ float64) (float64, float64, float64) {
+	if s.UseGoal() {
+		return s.Goal.Lon, s.Goal.Lat, s.Goal.Alt.Value
+	}
+	return s.InternalSampler.SampleXYZ(minX, maxX, minY, maxY, minZ, maxZ)
+}
+
+func (s *GoalBiasSampler) SampleZ(minZ, maxZ float64) (float64) {
+	// Here do not check again if we have to use goal or no, we assume the choice was already been done
+	if s.last_chosen_goal {
+		return s.Goal.Alt.Value
+	}
+	return s.InternalSampler.SampleZ(minZ, maxZ)
 }
 
 // -------------------------------------------------------------------------------------------
