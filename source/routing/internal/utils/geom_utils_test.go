@@ -127,7 +127,7 @@ func TestLineInPolygon(t *testing.T) {
 				return wp
 			}(),
 			poly: func() *models.Feature3D {
-				c, _ := models.NewConstraintFromGeojson(polyjson)
+				c, _ := models.NewFeatureFromGeojson(polyjson)
 				return c
 			}(),
 			expected: false,
@@ -143,7 +143,7 @@ func TestLineInPolygon(t *testing.T) {
 				return wp
 			}(),
 			poly: func() *models.Feature3D {
-				c, _ := models.NewConstraintFromGeojson(polyjson)
+				c, _ := models.NewFeatureFromGeojson(polyjson)
 				min, _ := models.NewAltitude(400, models.MT)
 				max, _ := models.NewAltitude(500, models.MT)
 				c.SetAltitude(min, max)
@@ -162,7 +162,7 @@ func TestLineInPolygon(t *testing.T) {
 				return wp
 			}(),
 			poly: func() *models.Feature3D {
-				c, _ := models.NewConstraintFromGeojson(polyjson)
+				c, _ := models.NewFeatureFromGeojson(polyjson)
 				return c
 			}(),
 			expected: false,
@@ -178,7 +178,7 @@ func TestLineInPolygon(t *testing.T) {
 				return wp
 			}(),
 			poly: func() *models.Feature3D {
-				c, _ := models.NewConstraintFromGeojson(polyjson)
+				c, _ := models.NewFeatureFromGeojson(polyjson)
 				return c
 			}(),
 			expected: true,

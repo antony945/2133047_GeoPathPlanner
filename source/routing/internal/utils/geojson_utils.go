@@ -18,6 +18,7 @@ type Styler interface {
 type WaypointStyler struct {}
 func (s WaypointStyler) Style(f *geojson.Feature) *geojson.Feature {
 	color := "#656eec"
+	stroke_width := 5
 	
 	if isInsidePolygon := f.Properties["inside"]; isInsidePolygon != nil {
 		flag, _ := isInsidePolygon.(bool)
@@ -27,11 +28,25 @@ func (s WaypointStyler) Style(f *geojson.Feature) *geojson.Feature {
 			color = "#3ca32e"
 		}
 	}
-	
+
+	if f.Properties["parameter"] != nil {
+		color = "#ffffff"
+	}
+	if f.Properties["near"] != nil {
+		color = "#ffce0a"
+	}
+	if f.Properties["nearest"] != nil {
+		color = "#ff8d0a"
+	}
+
+	return s.AdvancedStyle(f, color, stroke_width)
+}
+
+func (s WaypointStyler) AdvancedStyle(f *geojson.Feature, color string, stroke_width int) *geojson.Feature {
 	f.Properties["fill"] = color
 	f.Properties["fill-opacity"] = 0.8
 	f.Properties["stroke"] = "#555555"
-	f.Properties["stroke-width"] = 2
+	f.Properties["stroke-width"] = stroke_width
 	f.Properties["stroke-opacity"] = 0.8
 	// f.Properties["marker-color"] = color
     // f.Properties["marker-size"] = "medium"
@@ -39,10 +54,15 @@ func (s WaypointStyler) Style(f *geojson.Feature) *geojson.Feature {
 	return f
 }
 
-type ConstraintStyler struct {}
-func (s ConstraintStyler) Style(f *geojson.Feature) *geojson.Feature {
-	f.Properties["fill"] = "#555555"
-	f.Properties["fill-opacity"] = 0.5
+type PolygonStyler struct {}
+func (s PolygonStyler) Style(f *geojson.Feature) *geojson.Feature {
+	color := "#555555"
+	return s.AdvancedStyle(f, color)
+}
+
+func (s PolygonStyler) AdvancedStyle(f *geojson.Feature, color string) *geojson.Feature {
+	f.Properties["fill"] = color
+	f.Properties["fill-opacity"] = 0.3
 	f.Properties["stroke"] = "#555555"
 	f.Properties["stroke-width"] = 2
 	f.Properties["stroke-opacity"] = 0.8
@@ -52,46 +72,15 @@ func (s ConstraintStyler) Style(f *geojson.Feature) *geojson.Feature {
 type LineStyler struct {}
 func (s LineStyler) Style(f *geojson.Feature) *geojson.Feature {
 	f.Properties["stroke"] = "#3388ff"
-	f.Properties["stroke-width"] = 4
+	f.Properties["stroke-width"] = 5
 	f.Properties["stroke-opacity"] = 0.8
 	return f
 }
 
 // ExportToGeoJSON takes waypoints and constraints and writes them into a FeatureCollection
 // saved under dev/results/<filename>.geojson.
-func ExportToGeoJSON(waypoints []*models.Waypoint, polygons []*models.Feature3D, filename string, lineBetweenWaypoints bool) error {
-	// Create a FeatureCollection
-	fc := geojson.NewFeatureCollection()
-	var styler Styler
-
-	
-	// Wrap waypoints (MarshalJSON already defines how they look)
-	styler = WaypointStyler{}
-	for _, wp := range waypoints {
-		fc.Append(styler.Style(wp.Feature))
-	}
-
-	// Draw also the line that passes through the point if needed
-	styler = LineStyler{}
-	if lineBetweenWaypoints {
-		line := make(orb.LineString, len(waypoints))
-		for i, wp := range waypoints {
-			line[i] = wp.Point2D()
-		}
-		lineFeature := geojson.NewFeature(line)
-		fc.Append(styler.Style(lineFeature))
-	}
-
-	// Wrap constraints
-	styler = ConstraintStyler{}
-	for _, p := range polygons {
-		if p == nil {
-			continue
-		}
-		z := styler.Style(p.Feature)
-		fmt.Printf("Polygon properties:\n%+v\n", z.Properties)
-		fc.Append(styler.Style(p.Feature))
-	}
+func ExportToGeoJSON(waypoints []*models.Waypoint, polygons []*models.Feature3D, filename string, lineBetweenWaypoints bool, otherFeatures ...*geojson.Feature) error {
+	fc := CreateFeatureCollection(waypoints, polygons, lineBetweenWaypoints, otherFeatures...)
 
 	// Marshal collection
 	data, err := json.MarshalIndent(fc, "", "  ")
@@ -112,4 +101,44 @@ func ExportToGeoJSON(waypoints []*models.Waypoint, polygons []*models.Feature3D,
 	}
 
 	return nil
+}
+
+func CreateFeatureCollection(waypoints []*models.Waypoint, polygons []*models.Feature3D, lineBetweenWaypoints bool, otherFeatures ...*geojson.Feature) (*geojson.FeatureCollection) {
+	// Create a FeatureCollection
+	fc := geojson.NewFeatureCollection()
+	var styler Styler
+	
+	// Wrap waypoints (MarshalJSON already defines how they look)
+	styler = WaypointStyler{}
+	for _, wp := range waypoints {
+		fc.Append(styler.Style(wp.Feature))
+	}
+
+	// Draw also the line that passes through the point if needed
+	styler = LineStyler{}
+	if lineBetweenWaypoints {
+		line := make(orb.LineString, len(waypoints))
+		for i, wp := range waypoints {
+			line[i] = wp.Point2D()
+		}
+		lineFeature := geojson.NewFeature(line)
+		fc.Append(styler.Style(lineFeature))
+	}
+
+	// Wrap constraints
+	styler = PolygonStyler{}
+	for _, p := range polygons {
+		if p == nil {
+			continue
+		}
+		fc.Append(styler.Style(p.Feature))
+	}
+
+	// Append other features if we have some
+	styler = PolygonStyler{}
+	for _, f := range otherFeatures {
+		fc.Append(styler.Style(f))
+	}
+
+	return fc
 }

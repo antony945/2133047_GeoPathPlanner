@@ -41,13 +41,30 @@ func PointInPolygon2D(p orb.Point, poly orb.Polygon) bool {
 }
 
 // Implement LINE-POLYGON intersection
-func LineInPolygon(p1, p2 *models.Waypoint, poly *models.Feature3D) (bool, []*models.Waypoint) {
+func LineInPolygon(p1, p2 *models.Waypoint, polygons ...*models.Feature3D) (bool, []*models.Waypoint) {
 	// Divide line into point and then check if any individual point lies in polygon
 	quantizedLine := DefaultResampleLineToInterval(p1, p2)
-	
 	// Do it in a smart way, by checking intermediate point first and then recursively the left and the right parts of the line
 	// TODO: Think about keeping the recursive version or changing to iterative
-	return _sublineInPolygonRecursive(quantizedLine, poly, 0, len(quantizedLine)-1), quantizedLine
+	var inside bool
+	for _, poly := range polygons {
+		inside = _sublineInPolygonLinear(quantizedLine, poly)
+		// inside = _sublineInPolygonRecursive(quantizedLine, poly, 0, len(quantizedLine)-1)
+		if inside {
+			break
+		}
+	}
+	return inside, quantizedLine
+}
+
+func _sublineInPolygonLinear(quantizedLine []*models.Waypoint, poly *models.Feature3D) bool {
+	for _, p := range quantizedLine {
+		if PointInPolygon(p, poly) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func _sublineInPolygonRecursive(quantizedLine []*models.Waypoint, poly *models.Feature3D, start, end int) bool {
@@ -75,6 +92,10 @@ func _sublineInPolygonRecursive(quantizedLine []*models.Waypoint, poly *models.F
 
 // Implement line division into evenly spaced points
 func ResampleLineToInterval(p1, p2 *models.Waypoint, distMt float64) []*models.Waypoint {
+	if (p1 == p2) {
+		return []*models.Waypoint{p1, p2}
+	}
+	
 	// Check if line's ends distance between each other is already less than step size (base case)
 	dist := HaversineDistance3D(*p1, *p2)
 	if (dist <= distMt) {

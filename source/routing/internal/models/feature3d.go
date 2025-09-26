@@ -15,16 +15,16 @@ type Feature3D struct {
 	MaxAltitude Altitude
 }
 
-func NewConstraintFromGeojsonFile(filename string) (*Feature3D, error) {
+func NewFeatureFromGeojsonFile(filename string) (*Feature3D, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)
 	}
 
-	return NewConstraintFromGeojson(string(data))
+	return NewFeatureFromGeojson(string(data))
 }
 
-func NewConstraintFromGeojson(geojsonString string) (*Feature3D, error) {
+func NewFeatureFromGeojson(geojsonString string) (*Feature3D, error) {
 	var c *Feature3D
 	if err := json.Unmarshal([]byte(geojsonString), &c); err != nil {
 		return nil, fmt.Errorf("unmarshaling geojson: %w", err)
@@ -34,6 +34,14 @@ func NewConstraintFromGeojson(geojsonString string) (*Feature3D, error) {
 	// fmt.Printf("max altitude: %+v\n", c.MaxAltitude)
 	// fmt.Printf("constraint: %+v\n", c)
 	return c, nil
+}
+
+func MustNewFeatureFromGeojson(geojsonString string) *Feature3D {
+	f, err := NewFeatureFromGeojson(geojsonString)
+    if err != nil {
+        panic(err)
+    }
+    return f
 }
 
 func (c *Feature3D) Bound() orb.Bound {

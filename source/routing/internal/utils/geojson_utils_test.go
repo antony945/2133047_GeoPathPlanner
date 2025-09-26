@@ -49,7 +49,7 @@ func TestExportToGeoJSON(t *testing.T) {
 		}
 	}`)
 
-	constraint, _ := models.NewConstraintFromGeojson(`
+	constraint, _ := models.NewFeatureFromGeojson(`
 	{
     "type": "Feature",
     "geometry": {

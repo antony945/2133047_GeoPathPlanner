@@ -13,6 +13,8 @@ type DistanceFunc2D orb.DistanceFunc
 
 // Distance3D calculates the between two waypoints using any 2d distance function.
 // Then add altitude difference to find the 3D distance. Returns result in mt.
+// TODO: Check if it's handled the case when p1=p2
+
 func Distance3D(p1, p2 models.Waypoint, distanceFunc2D DistanceFunc2D) float64 {
 	// Use a 2D distance
 	distance2D := distanceFunc2D(p1.Point2D(), p2.Point2D())
