@@ -1,4 +1,3 @@
-// src/auth/auth.controller.ts
 import { Controller, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -27,6 +26,7 @@ export class AuthController {
             nome: { type: 'string' },
             cognome: { type: 'string' },
             email: { type: 'string' },
+            country: { type: 'string' },
           },
         },
       },
@@ -54,6 +54,7 @@ export class AuthController {
             nome: { type: 'string' },
             cognome: { type: 'string' },
             email: { type: 'string' },
+            country: { type: 'string' },
           },
         },
       },

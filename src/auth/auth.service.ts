@@ -23,6 +23,7 @@ export class AuthService {
         nome: user.nome,
         cognome: user.cognome,
         email: user.email,
+        country: user.country,
       },
     };
   }
@@ -47,6 +48,7 @@ export class AuthService {
         nome: user.nome,
         cognome: user.cognome,
         email: user.email,
+        country: user.country,
       },
     };
   }
