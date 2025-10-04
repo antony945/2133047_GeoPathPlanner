@@ -23,6 +23,17 @@ type Storage interface {
 	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error)
 }
 
+func NewEmptyStorage(storageType models.StorageType) (Storage, error) {
+	switch storageType {
+		case models.Memory:
+			return NewEmptyMemoryStorage()
+		case models.Redis:
+			return nil, fmt.Errorf("storage currently not implemented: %s", storageType)
+		default:
+			return nil, fmt.Errorf("storage not recognized: %s", storageType)
+	}
+}
+
 func NewStorage(w_list []*models.Waypoint, c_list []*models.Feature3D, storageType models.StorageType) (Storage, error) {
 	switch storageType {
 		case models.Memory:
