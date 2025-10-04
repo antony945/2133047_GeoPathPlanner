@@ -171,6 +171,38 @@ func (c *Feature3D) ToGeomPolygon() *geom.Polygon {
 	// geom.NewPolygon(geom.XY).MustSetCoords(c.ToPolygon()[0][0])
 }
 
+// Convert c to polygol type in order to use it with union library polygol
+func (c *Feature3D) ToPolygol() [][][][]float64 {
+	var p [][][][]float64
+
+	switch v := c.Feature.Geometry.(type) {
+	case orb.Polygon:
+		p = make([][][][]float64, 1)
+		p[0] = make([][][]float64, len(v))
+		for i := range v { // rings
+			p[0][i] = make([][]float64, len(v[i]))
+			for j := range v[i] { // points
+				pt := v[i][j]
+				p[0][i][j] = []float64{pt.X(), pt.Y()}
+			}
+		}
+	case orb.MultiPolygon:
+		p = make([][][][]float64, len(v))
+		for i := range v { // polygons
+			p[i] = make([][][]float64, len(v[i]))
+			for j := range v[i] { // rings
+				p[i][j] = make([][]float64, len(v[i][j]))
+				for k := range v[i][j] { // points
+					pt := v[i][j][k]
+					p[i][j][k] = []float64{pt.X(), pt.Y()}
+				}
+			}
+		}
+	}
+
+	return p
+}
+
 func (c *Feature3D) GetVertices(alt Altitude, reversed bool) []*Waypoint {
 	polygon := c.ToPolygon()
 	if len(polygon) == 0 {

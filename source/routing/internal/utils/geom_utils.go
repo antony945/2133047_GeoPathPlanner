@@ -1,11 +1,14 @@
 package utils
 
 import (
+	"fmt"
 	"geopathplanner/routing/internal/models"
 	"math"
 
+	"github.com/engelsjk/polygol"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geo"
+	"github.com/paulmach/orb/geojson"
 	"github.com/paulmach/orb/planar"
 	"github.com/paulmach/orb/resample"
 )
@@ -222,4 +225,82 @@ func getWayToGoAroundPolygon(c *models.Feature3D, enteringPoint, exitingPoint *m
 
 	bestWay = append(bestWay, exitingPoint)
 	return bestWay
+}
+
+func FindMinMaxAltitude(features []*models.Feature3D) (models.Altitude, models.Altitude) {
+	// Find min and max altitude first
+	var minAlt, maxAlt models.Altitude
+	minAlt, _ = models.NewAltitude(models.DEFAULT_MAX_ALT, models.MT)
+	maxAlt, _ = models.NewAltitude(models.DEFAULT_MIN_ALT, models.MT)
+
+	for _, f := range features {
+		minAltCurrent := f.MinAltitude.Normalize()
+		maxAltCurrent := f.MaxAltitude.Normalize()
+
+		if minAltCurrent.Compare(minAlt) < 0 {
+			// new min alt
+			minAlt = minAltCurrent
+		}
+		if maxAltCurrent.Compare(maxAlt) > 0 {
+			// new max alt
+			maxAlt = maxAltCurrent
+		}
+	}
+
+	return minAlt, maxAlt
+}
+
+func UnionFeatures(features []*models.Feature3D) ([]*models.Feature3D, error) {
+	// Get min max altitude that will be set for all the features
+	minAlt, maxAlt := FindMinMaxAltitude(features)
+
+	// Convert features to polygol geom
+	polygons := make([]polygol.Geom, 0, len(features))
+	for _, f := range features {
+		polygons = append(polygons, f.ToPolygol())
+	}
+	
+	// Perform union
+	result, err := polygol.Union(polygons[0], polygons[1:]...)
+	if err != nil {
+		return nil, fmt.Errorf("error while performing features union: %w", err)
+	}
+
+	// Convert back to list of features
+	unionedFeatures, err := PolygolToListOfFeature(result, minAlt, maxAlt)
+	if err != nil {
+		return nil, fmt.Errorf("error while converting from polygol.Geom to Feature3D: %w", err)
+	}
+
+	return unionedFeatures, nil
+}
+
+func PolygolToListOfFeature(p [][][][]float64, minAltitude, maxAltitude models.Altitude) ([]*models.Feature3D, error) {
+	feature_list := make([]*models.Feature3D, 0, len(p))
+
+	// FOR EVERY POLYGON IN THE MULTIPOLYGON
+	for _, polyData := range p {
+		polygon := make(orb.Polygon, len(polyData))
+		// FOR EVERY RING IN THE POLYGON
+		for j, ringData := range polyData {
+			polygon[j] = make(orb.Ring, len(ringData))
+			// FOR EVERY POINT IN THE RING
+			for k, pointData := range ringData {
+				point := orb.Point{pointData[0], pointData[1]}
+				polygon[j][k] = point
+			}
+		}
+
+		// Here we have our polygon
+		f, err := models.NewFeatureFromGeojsonFeature(geojson.NewFeature(polygon))
+		if err != nil {
+			return nil, err
+		}
+		f.SetAltitude(minAltitude, maxAltitude)
+		
+		// Set min, max altitude
+		feature_list = append(feature_list, f)
+	}
+
+	return feature_list, nil
 }

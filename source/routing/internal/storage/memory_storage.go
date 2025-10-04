@@ -263,6 +263,20 @@ func (m *MemoryStorage) IsPointInObstacles(p *models.Waypoint) (bool, *models.Fe
 	return false, nil, nil
 }
 
+// Scan list of obstacle and return every obstacle that collide with point
+// O(#obstacles)
+func (m *MemoryStorage) GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*models.Feature3D, error) {
+	obstacles := make([]*models.Feature3D, 0)
+	
+	for _, obstacle := range m.constraints {
+		if utils.PointInPolygon(p, obstacle) {
+			obstacles = append(obstacles, obstacle)
+		}
+	}
+
+	return obstacles, nil
+}
+
 // Scan list of obstacle until you find someone that intersect line
 // O(#obstacles)
 func (m *MemoryStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*models.Waypoint, error) {
@@ -273,8 +287,6 @@ func (m *MemoryStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*mod
 
 // Get intersection ponits (useful for AntPath)
 func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
-	// TODO: Compare line bound with polygons bound
-
 	// Divide line into point and then check if any individual point lies in polygon
 	quantizedLine := utils.DefaultResampleLineToInterval(p1, p2)
 	// For every point, check if it intersect with a polygon and mark it as:
@@ -291,25 +303,27 @@ func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*model
 	}
 	
 	lpi_list := make([]*models.LinePolygonIntersection, 0)
+	obstacles := make(models.PolygonSet)
 	var startPoint, endPoint *models.Waypoint
-	var obstacle *models.Feature3D
 	previousInside := false
 	for i := 1; i < len(quantizedLine); i++ {
 		// Check if current point is intersecting
-		currentInside, currentObstacle, _ := m.IsPointInObstacles(quantizedLine[i])
-		
+		currentObstacles, _ := m.GetAllObstaclesContainingPoint(quantizedLine[i])
+		// If there are obstacles add them to the ongoing list, otherwise currentObstacles will be empty
+		obstacles.AddAll(currentObstacles...)
+		currentInside := len(currentObstacles) > 0
+
 		if (currentInside && !previousInside) {
 			// Previous is startPoint
 			startPoint = quantizedLine[i-1]
-			obstacle = currentObstacle
 		} else if (!currentInside && previousInside) { // Current is endPoint
 			endPoint = quantizedLine[i]
 			
 			// Once you found the endPoint create the LinePolygonIntersection
-			lpi_list = append(lpi_list, models.NewLinePolygonIntersection(startPoint, endPoint, obstacle))
+			lpi_list = append(lpi_list, models.NewLinePolygonIntersection(startPoint, endPoint, obstacles.Values()))
 
 			// Reset everything to search for other obstacles
-			// previousInside := false
+			obstacles.Clear()
 		}
 
 		previousInside = currentInside

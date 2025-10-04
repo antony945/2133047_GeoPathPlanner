@@ -21,6 +21,7 @@ type Storage interface {
     IsPointInObstacles(p *models.Waypoint) (bool, *models.Feature3D, error)
     IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*models.Waypoint, error)
 	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error)
+	GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*models.Feature3D, error)
 }
 
 func NewEmptyStorage(storageType models.StorageType) (Storage, error) {
