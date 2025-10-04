@@ -190,7 +190,7 @@ func TestLineInPolygon(t *testing.T) {
 			result, line := LineInPolygon(tt.p1, tt.p2, tt.poly)
 			// t.Logf("Polygon altitude range: min=%v, max=%v", tt.poly.MinAltitude, tt.poly.MaxAltitude)
 			// TODO: For visually testing, export results in geojson
-			ExportToGeoJSON(line, []*models.Feature3D{tt.poly}, tt.name, true)
+			ExportToGeoJSON("utils", line, []*models.Feature3D{tt.poly}, tt.name, true)
 			
 			if result != tt.expected {
 				t.Errorf("LineInPolygon() = %v, want %v", result, tt.expected)

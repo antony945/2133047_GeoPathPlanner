@@ -78,8 +78,8 @@ func (s LineStyler) Style(f *geojson.Feature) *geojson.Feature {
 }
 
 // ExportToGeoJSON takes waypoints and constraints and writes them into a FeatureCollection
-// saved under dev/results/<filename>.geojson.
-func ExportToGeoJSON(waypoints []*models.Waypoint, polygons []*models.Feature3D, filename string, lineBetweenWaypoints bool, otherFeatures ...*geojson.Feature) error {
+// saved under dev/results/<folder>/<filename>.geojson.
+func ExportToGeoJSON(folder string, waypoints []*models.Waypoint, polygons []*models.Feature3D, filename string, lineBetweenWaypoints bool, otherFeatures ...*geojson.Feature) error {
 	fc := CreateFeatureCollection(waypoints, polygons, lineBetweenWaypoints, otherFeatures...)
 
 	// Marshal collection
@@ -89,13 +89,13 @@ func ExportToGeoJSON(waypoints []*models.Waypoint, polygons []*models.Feature3D,
 	}
 
 	// Ensure dev/results exists
-	outDir := filepath.Join("dev", "results")
+	outDir := ResolvePath(filepath.Join("dev", "results", folder))
 	if err := os.MkdirAll(outDir, os.ModePerm); err != nil {
 		return fmt.Errorf("create results dir: %w", err)
 	}
 	
 	// Write to file
-	outPath := ResolvePath(filepath.Join(outDir, filename+".geojson"))
+	outPath := filepath.Join(outDir, filename+".geojson")
 	if err := os.WriteFile(outPath, data, 0644); err != nil {
 		return fmt.Errorf("write file: %w", err)
 	}

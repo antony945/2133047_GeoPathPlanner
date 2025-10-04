@@ -216,7 +216,7 @@ func TestMemoryStorage_NearestPoint(t *testing.T) {
 			got, gotErr := m.NearestPoint(tt.p)
 
 			// TODO: For visually testing, export results in geojson
-			utils.ExportToGeoJSON(append(tt.w_list, tt.p), tt.c_list, tt.name, false)
+			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false)
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -427,7 +427,7 @@ func TestMemoryStorage_KNearestPoints(t *testing.T) {
 			_, gotErr := m.KNearestPoints(tt.p, tt.k)
 
 			// TODO: For visually testing, export results in geojson
-			utils.ExportToGeoJSON(append(tt.w_list, tt.p), tt.c_list, tt.name, false)
+			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false)
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -637,7 +637,7 @@ func TestMemoryStorage_NearestPointsInRadius(t *testing.T) {
 			// TODO: For visually testing, export results in geojson
 			// Generate circle polygon
 
-			utils.ExportToGeoJSON(append(tt.w_list, tt.p), tt.c_list, tt.name, false, tt.p.CircleAroundWaypointGeodesic(tt.r, 64))
+			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false, tt.p.CircleAroundWaypointGeodesic(tt.r, 64))
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -839,10 +839,10 @@ func TestMemoryStorage_IsPointInObstacles(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			_, gotErr := m.IsPointInObstacles(tt.p)
+			_, _, gotErr := m.IsPointInObstacles(tt.p)
 
 			// TODO: For visually testing, export results in geojson
-			utils.ExportToGeoJSON(append(tt.w_list, tt.p), tt.c_list, tt.name, false)
+			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false)
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -1050,7 +1050,7 @@ func TestMemoryStorage_IsLineInObstacles(t *testing.T) {
 			got, line, gotErr := m.IsLineInObstacles(tt.p, tt.p2)
 
 			// TODO: For visually testing, export results in geojson
-			utils.ExportToGeoJSON(line, tt.c_list, tt.name, true)
+			utils.ExportToGeoJSON("storage", line, tt.c_list, tt.name, true)
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -1064,6 +1064,212 @@ func TestMemoryStorage_IsLineInObstacles(t *testing.T) {
       // TODO: update the condition below to compare got with tt.want.
 			if got != tt.want {
 				t.Errorf("IsLineInObstacles() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMemoryStorage_GetIntersectionPoints(t *testing.T) {
+  a, _ := models.NewAltitude(100, models.MT)
+  w1 := models.MustNewWaypoint(0, 50.872778105839274, 4.433724687935722, a) // p1
+	w2 := models.MustNewWaypoint(1, 50.884400404439646, 4.46992531620532, a) // p2
+
+	c_list := []*models.Feature3D{
+		models.MustNewFeatureFromGeojson(`{
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              4.435823054794525,
+              50.87917754349243
+            ],
+            [
+              4.435999901698551,
+              50.876186530052024
+            ],
+            [
+              4.443605337154025,
+              50.878195458959425
+            ],
+            [
+              4.439678842862065,
+              50.88446720530686
+            ],
+            [
+              4.435823054794525,
+              50.87917754349243
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }`),
+		models.MustNewFeatureFromGeojson(`{
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              4.443180802952469,
+              50.87710169486769
+            ],
+            [
+              4.445940351819587,
+              50.874043594523414
+            ],
+            [
+              4.449867003560769,
+              50.875472226326934
+            ],
+            [
+              4.447425915923816,
+              50.88058383172759
+            ],
+            [
+              4.443180802952469,
+              50.87710169486769
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }`),
+		models.MustNewFeatureFromGeojson(`{
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              4.454253542517819,
+              50.88096314072149
+            ],
+            [
+              4.456623787928493,
+              50.87712402157996
+            ],
+            [
+              4.462737042916956,
+              50.87863279943002
+            ],
+            [
+              4.460756068008692,
+              50.884413843656176
+            ],
+            [
+              4.454253542517819,
+              50.88096314072149
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }`),
+		models.MustNewFeatureFromGeojson(`{
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              4.465548569604977,
+              50.88086437277474
+            ],
+            [
+              4.466185163129978,
+              50.8824937224808
+            ],
+            [
+              4.469156850257434,
+              50.88035101122094
+            ],
+            [
+              4.465619026164603,
+              50.88738133071263
+            ],
+            [
+              4.460914241378333,
+              50.88548451715948
+            ],
+            [
+              4.465548569604977,
+              50.88086437277474
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }`),
+		models.MustNewFeatureFromGeojson(`{
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              4.467564748066309,
+              50.88892119085034
+            ],
+            [
+              4.463628522001983,
+              50.88991457616726
+            ],
+            [
+              4.46840349799416,
+              50.887481856932595
+            ],
+            [
+              4.467564748066309,
+              50.88892119085034
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }`),
+	}
+	
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for receiver constructor.
+		w_list []*models.Waypoint
+		c_list []*models.Feature3D
+		// Named input parameters for target function.
+		p1       *models.Waypoint
+		p2       *models.Waypoint
+		want    []*models.LinePolygonIntersection
+		wantErr bool
+	}{
+		{ name: "IntersectionPoints with obstacles", c_list: c_list, p1: w1, p2: w2, wantErr: false },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m, err := storage.NewMemoryStorage(tt.w_list, tt.c_list)
+			if err != nil {
+				t.Fatalf("could not construct receiver type: %v", err)
+			}
+			got, gotErr := m.GetIntersectionPoints(tt.p1, tt.p2)
+
+			// TODO: For visually testing, export results in geojson
+			pointList := []*models.Waypoint{tt.p1, tt.p2}
+      for _, g := range got {
+        pointList = append(pointList, g.EnteringPoint)
+        pointList = append(pointList, g.ExitingPoint)
+      }
+      
+      utils.ExportToGeoJSON("storage", pointList, tt.c_list, tt.name, true)
+
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("GetIntersectionPoints() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("GetIntersectionPoints() succeeded unexpectedly")
 			}
 		})
 	}

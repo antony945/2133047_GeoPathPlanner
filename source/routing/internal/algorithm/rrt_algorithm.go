@@ -14,6 +14,6 @@ func NewRRTAlgorithm() (*RRTAlgorithm, error) {
 }
 
 // TODO: Implement RRT Algorithm
-func (a *RRTAlgorithm) Compute(routingRequest *models.RoutingRequest, storage storage.Storage) (*models.RoutingResponse, error) {
-	return &models.RoutingResponse{}, nil
+func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D, parameters map[string]any, storage storage.Storage) ([]*models.Waypoint, float64, error) {
+	return []*models.Waypoint{}, 0.0, nil
 }

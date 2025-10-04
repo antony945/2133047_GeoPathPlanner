@@ -216,3 +216,21 @@ func (w *Waypoint) BBoxAroundWaypoint(radiusMeters float64) *geojson.Feature {
 
 	return feature
 }
+
+func (w *Waypoint) GetLineString(w2 *Waypoint) orb.LineString {
+	return orb.LineString{w.Point2D(), w2.Point2D()}
+}
+
+func (w *Waypoint) GetLineStringFeature(w2 *Waypoint) *geojson.Feature {
+	feature := geojson.NewFeature(w.GetLineString(w2))
+	return feature
+}
+
+func (w *Waypoint) GetLineStringBound(w2 *Waypoint) orb.Bound {
+	// TODO: Implement in a smarter way, since now if the line is diagonal it will create a very big BB
+	return w.GetLineString(w2).Bound()
+}
+
+func (w *Waypoint) GetLineStringBoundFeature(w2 *Waypoint) *geojson.Feature {
+	return geojson.NewFeature(w.GetLineString(w2).Bound())
+}

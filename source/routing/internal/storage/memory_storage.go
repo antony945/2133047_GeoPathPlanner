@@ -60,6 +60,10 @@ func (m *MemoryStorage) AddWaypoint(w *models.Waypoint) error {
 }
 
 func (m *MemoryStorage) AddWaypoints(w_list []*models.Waypoint) error {
+	if w_list == nil {
+		return nil
+	}
+	
 	for _, w := range w_list {
 		if err := m.AddWaypoint(w); err != nil {
 			return err
@@ -82,6 +86,10 @@ func (m *MemoryStorage) AddConstraint(c *models.Feature3D) error {
 }
 
 func (m *MemoryStorage) AddConstraints(c_list []*models.Feature3D) error {
+	if c_list == nil {
+		return nil
+	}
+	
 	for _, c := range c_list {
 		if err := m.AddConstraint(c); err != nil {
 			return err
@@ -245,19 +253,67 @@ func (m *MemoryStorage) NearestPointsInRadius(p *models.Waypoint, radius float64
 
 // Scan list of obstacle until you find someone that intersect
 // O(#obstacles)
-func (m *MemoryStorage) IsPointInObstacles(p *models.Waypoint) (bool, error) {
+func (m *MemoryStorage) IsPointInObstacles(p *models.Waypoint) (bool, *models.Feature3D, error) {
 	for _, obstacle := range m.constraints {
 		if utils.PointInPolygon(p, obstacle) {
-			return true, nil
-		}		
+			return true, obstacle, nil
+		}
 	}
 	
-	return false, nil
+	return false, nil, nil
 }
 
 // Scan list of obstacle until you find someone that intersect line
 // O(#obstacles)
 func (m *MemoryStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*models.Waypoint, error) {
+	// TODO: First check line bounds with polygon bounds
 	in, line := utils.LineInPolygon(p1, p2, m.constraints...)
 	return in, line, nil
+}
+
+// Get intersection ponits (useful for AntPath)
+func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
+	// TODO: Compare line bound with polygons bound
+
+	// Divide line into point and then check if any individual point lies in polygon
+	quantizedLine := utils.DefaultResampleLineToInterval(p1, p2)
+	// For every point, check if it intersect with a polygon and mark it as:
+	// Start Point: if previous point was not intersecting but current is
+	// End Point: if previous point was intersecting but current is not
+	// Return startpoint, endpoint and the polygon that the line is intersecting
+	
+	// If first is already inside -> error, impossible
+	if firstInside, _, _ := m.IsPointInObstacles(quantizedLine[0]); firstInside {
+		return nil, errors.New("first point is already in obstacles")
+	}
+	if lastInside, _, _ := m.IsPointInObstacles(quantizedLine[0]); lastInside {
+		return nil, errors.New("last point is already in obstacles")
+	}
+	
+	lpi_list := make([]*models.LinePolygonIntersection, 0)
+	var startPoint, endPoint *models.Waypoint
+	var obstacle *models.Feature3D
+	previousInside := false
+	for i := 1; i < len(quantizedLine); i++ {
+		// Check if current point is intersecting
+		currentInside, currentObstacle, _ := m.IsPointInObstacles(quantizedLine[i])
+		
+		if (currentInside && !previousInside) {
+			// Previous is startPoint
+			startPoint = quantizedLine[i-1]
+			obstacle = currentObstacle
+		} else if (!currentInside && previousInside) { // Current is endPoint
+			endPoint = quantizedLine[i]
+			
+			// Once you found the endPoint create the LinePolygonIntersection
+			lpi_list = append(lpi_list, models.NewLinePolygonIntersection(startPoint, endPoint, obstacle))
+
+			// Reset everything to search for other obstacles
+			// previousInside := false
+		}
+
+		previousInside = currentInside
+	}
+
+	return lpi_list, nil
 }

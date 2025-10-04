@@ -36,3 +36,13 @@ func HaversineDistance3D(p1, p2 models.Waypoint) float64 {
 func FastDistance3D(p1, p2 models.Waypoint) float64 {
 	return Distance3D(p1, p2, geo.Distance)
 }
+
+func TotalHaversineDistance(wps []*models.Waypoint) float64 {
+	distance := 0.0
+	
+	for i := 0; i < len(wps)-1; i++ {
+		distance += HaversineDistance3D(*wps[i], *wps[i+1])
+	}
+
+	return distance
+}

@@ -19,3 +19,5 @@ go.work
 
 # Go module files
 go.sum
+
+dev/results/
