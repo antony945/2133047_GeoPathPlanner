@@ -161,6 +161,10 @@ func ResampleLineToInterval(p1, p2 *models.Waypoint, distMt float64) []*models.W
 	return quantizedPoints
 }
 
+func GetPointInDirectionAtDistance(p1, p2 *models.Waypoint, distMt float64) *models.Waypoint {
+	return ResampleLineToInterval(p1, p2, distMt)[1]
+}
+
 func DefaultResampleLineToInterval(p1, p2 *models.Waypoint) []*models.Waypoint {
 	return ResampleLineToInterval(p1, p2, DEFAULT_LINE_DIVISION_MAX_STEP_SIZE_MT)
 }

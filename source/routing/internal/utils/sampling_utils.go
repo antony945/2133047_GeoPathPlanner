@@ -2,7 +2,8 @@ package utils
 
 import (
 	"geopathplanner/routing/internal/models"
-	"math/rand/v2"
+	"math/rand"
+	"time"
 
 	"github.com/paulmach/orb"
 )
@@ -17,10 +18,20 @@ type Sampler interface {
 // ------------------------------------------------------
 
 // TODO: Test uniform sampler
-type UniformSampler struct {}
+type UniformSampler struct {
+	r *rand.Rand
+}
 
 func NewUniformSampler() *UniformSampler {
-	return &UniformSampler{}
+	return &UniformSampler{
+		r: rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
+}
+
+func NewUniformSamplerWithSeed(seed int64) *UniformSampler {
+	return &UniformSampler{
+		r: rand.New(rand.NewSource(seed)),
+	}
 }
 
 func (s *UniformSampler) SampleXY(minX, maxX, minY, maxY float64) (float64, float64) {

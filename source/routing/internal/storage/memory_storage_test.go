@@ -1069,7 +1069,7 @@ func TestMemoryStorage_IsLineInObstacles(t *testing.T) {
 	}
 }
 
-func TestMemoryStorage_GetIntersectionPoints(t *testing.T) {
+func TestMemoryStorage_SampleFree(t *testing.T) {
   a, _ := models.NewAltitude(100, models.MT)
   w1 := models.MustNewWaypoint(0, 50.872778105839274, 4.433724687935722, a) // p1
 	w2 := models.MustNewWaypoint(1, 50.884400404439646, 4.46992531620532, a) // p2
@@ -1231,6 +1231,38 @@ func TestMemoryStorage_GetIntersectionPoints(t *testing.T) {
       }
     }`),
 	}
+
+  search_volume := models.MustNewFeatureFromGeojson(`{
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              4.4281679963691545,
+              50.89062392756719
+            ],
+            [
+              4.4281679963691545,
+              50.86983921138935
+            ],
+            [
+              4.473729291371427,
+              50.86983921138935
+            ],
+            [
+              4.473729291371427,
+              50.89062392756719
+            ],
+            [
+              4.4281679963691545,
+              50.89062392756719
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }`)
 	
 	tests := []struct {
 		name string // description of this test case
@@ -1238,12 +1270,12 @@ func TestMemoryStorage_GetIntersectionPoints(t *testing.T) {
 		w_list []*models.Waypoint
 		c_list []*models.Feature3D
 		// Named input parameters for target function.
-		p1       *models.Waypoint
-		p2       *models.Waypoint
-		want    []*models.LinePolygonIntersection
-		wantErr bool
+		sampler utils.Sampler
+    sampleVolume *models.Feature3D
+    alt models.Altitude
 	}{
-		{ name: "IntersectionPoints with obstacles", c_list: c_list, p1: w1, p2: w2, wantErr: false },
+		{ name: "SampleFree with obstacles - uniform", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewUniformSamplerWithSeed(10), sampleVolume: search_volume, alt: a},
+    { name: "SampleFree with obstacles - halton", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewHaltonSampler(), sampleVolume: search_volume, alt: a},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1251,26 +1283,16 @@ func TestMemoryStorage_GetIntersectionPoints(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			got, gotErr := m.GetIntersectionPoints(tt.p1, tt.p2)
 
-			// TODO: For visually testing, export results in geojson
-			pointList := []*models.Waypoint{tt.p1, tt.p2}
-      for _, g := range got {
-        pointList = append(pointList, g.EnteringPoint)
-        pointList = append(pointList, g.ExitingPoint)
+      // Run 50 sample free
+      gotList := make([]*models.Waypoint, 0, 200)
+      for i := 0; i < 200; i++ {
+        got, _ := m.SampleFree(tt.sampler, tt.sampleVolume, tt.alt)
+        gotList = append(gotList, got)
       }
       
-      utils.ExportToGeoJSON("storage", pointList, tt.c_list, tt.name, true)
-
-			if gotErr != nil {
-				if !tt.wantErr {
-					t.Errorf("GetIntersectionPoints() failed: %v", gotErr)
-				}
-				return
-			}
-			if tt.wantErr {
-				t.Fatal("GetIntersectionPoints() succeeded unexpectedly")
-			}
+			// TODO: For visually testing, export results in geojson
+      utils.ExportToGeoJSON("storage", gotList, append(tt.c_list, tt.sampleVolume), tt.name, false)
 		})
 	}
 }

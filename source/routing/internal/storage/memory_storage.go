@@ -12,10 +12,15 @@ import (
 type MemoryStorage struct {
 	waypoints  []*models.Waypoint
 	constraints []*models.Feature3D
+	waypointsMap map[*models.Waypoint]*models.Waypoint
 }
 
 func NewEmptyMemoryStorage() (*MemoryStorage, error) {
-	return &MemoryStorage{}, nil
+	return &MemoryStorage{
+		waypoints: make([]*models.Waypoint, 0),
+		constraints: make([]*models.Feature3D, 0),
+		waypointsMap: make(map[*models.Waypoint]*models.Waypoint),
+	}, nil
 }
 
 func NewMemoryStorage(w_list []*models.Waypoint, c_list []*models.Feature3D) (*MemoryStorage, error) {
@@ -40,8 +45,14 @@ func (m *MemoryStorage) Clear() error {
 	// defer m.mu.Unlock()
 
 	// TODO: Think about putting them to nil
-	m.waypoints = []*models.Waypoint{}
-	m.constraints = []*models.Feature3D{}
+	m.constraints = make([]*models.Feature3D, 0)
+	m.ClearWaypoints()
+	return nil
+}
+
+func (m *MemoryStorage) ClearWaypoints() error {
+	m.waypoints = make([]*models.Waypoint, 0)
+	m.waypointsMap = make(map[*models.Waypoint]*models.Waypoint)
 	return nil
 }
 
@@ -103,6 +114,53 @@ func (m *MemoryStorage) GetConstraints() ([]*models.Feature3D, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	return m.constraints, nil
+}
+
+// ================================================================= RRT
+
+func (m *MemoryStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models.Waypoint) error {	
+	// Add waypoint to the list of waypoints
+	m.AddWaypoint(w)
+
+	// But also add it in the map
+	m.waypointsMap[w] = prev
+	return nil
+}
+
+func (m *MemoryStorage) GetPrevious(w *models.Waypoint) (*models.Waypoint, error) {
+	// Search in the map
+	return m.waypointsMap[w], nil
+}
+
+func (m *MemoryStorage) GetPathToRoot(w *models.Waypoint) ([]*models.Waypoint, error) {
+	// Start from w and find its previous until there are no more previous
+	route := make([]*models.Waypoint, 0)
+	current := w
+	for {
+		// Check if current is nil, in case return
+		if current == nil {
+			// End of route
+			// Reverse route and return it
+			left := 0
+			right := len(route) - 1
+			for left < right {
+				route[left], route[right] = route[right], route[left]
+				left++
+				right--
+			}
+			return route, nil
+		}
+
+		route = append(route, current)
+
+		// Check if prev was already in the map, if no error
+		prev, ok := m.waypointsMap[current]
+		if !ok {
+    		return nil, fmt.Errorf("waypoint %+v not found in map", w)
+		}
+
+		current = prev
+	}
 }
 
 // ================================================================= Geometric helpers
@@ -335,7 +393,13 @@ func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*model
 
 func (m *MemoryStorage) Sample(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {	
 	// TODO: Decide which to use
-	return utils.SampleWithAltitude2D(sampler, sampleVolume.Geometry, alt)
+	sampled, err := utils.SampleWithAltitude2D(sampler, sampleVolume.Geometry, alt)
+	if err != nil {
+		return nil, fmt.Errorf("unexpected error during memoryStorage Sample: %w", err)
+	}
+
+	// TODO: Check if sampled was already present
+	return sampled, nil
 }
 
 func (m *MemoryStorage) SampleFree(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {

@@ -223,7 +223,7 @@ func (c *Feature3D) GetVertices(alt Altitude, reversed bool) []*Waypoint {
 			vertices[left], vertices[right] = vertices[right], vertices[left]
 			left++
 			right--
-	}
+		}
 	}
 
 	return vertices
