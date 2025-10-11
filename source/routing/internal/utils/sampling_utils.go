@@ -109,20 +109,20 @@ func NewGoalBiasSampler(sampler Sampler, goal *models.Waypoint, bias float64) *G
 	}
 }
 
-func (s *GoalBiasSampler) UseGoal() bool {
+func (s *GoalBiasSampler) useGoal() bool {
 	s.last_chosen_goal = rand.Float64() < s.Bias
 	return s.last_chosen_goal
 }
 
 func (s *GoalBiasSampler) SampleXY(minX, maxX, minY, maxY float64) (float64, float64) {
-	if s.UseGoal() {
+	if s.useGoal() {
 		return s.Goal.Lon, s.Goal.Lat
 	}
 	return s.InternalSampler.SampleXY(minX, maxX, minY, maxY)
 }
 
 func (s *GoalBiasSampler) SampleXYZ(minX, maxX, minY, maxY, minZ, maxZ float64) (float64, float64, float64) {
-	if s.UseGoal() {
+	if s.useGoal() {
 		return s.Goal.Lon, s.Goal.Lat, s.Goal.Alt.Value
 	}
 	return s.InternalSampler.SampleXYZ(minX, maxX, minY, maxY, minZ, maxZ)
@@ -138,7 +138,7 @@ func (s *GoalBiasSampler) SampleZ(minZ, maxZ float64) (float64) {
 
 // -------------------------------------------------------------------------------------------
 
-func Sample2D(geometry orb.Geometry, sampler Sampler) orb.Point {
+func Sample2D(sampler Sampler, geometry orb.Geometry) (orb.Point, error) {
 	// 1. Retrieve bounding box to sample there
 	bound := geometry.Bound()
 	minLon, minLat := bound.Min.Lon(), bound.Min.Lat()
@@ -156,21 +156,38 @@ func Sample2D(geometry orb.Geometry, sampler Sampler) orb.Point {
 		isValid = PointInPolygon2D(sampled, geometry.(orb.Polygon))
 	}
 
-	return sampled
+	return sampled, nil
 }
 
-func SampleWithAltitude2D(geometry orb.Geometry, alt models.Altitude, sampler Sampler) *models.Waypoint {
-	sampled := Sample2D(geometry, sampler)
-	wp, _ := models.NewWaypoint(sampled.Lat(), sampled.Lon(), alt)
-	return wp
+func SampleWithAltitude2D(sampler Sampler, geometry orb.Geometry, alt models.Altitude) (*models.Waypoint, error) {
+	sampled, err := Sample2D(sampler, geometry)
+	if err != nil {
+		return nil, err
+	}
+	wp, err := models.NewWaypoint(sampled.Lat(), sampled.Lon(), alt)
+	if err != nil {
+		return nil, err
+	}
+
+	return wp, nil
 }
 
-func Sample3D(geometry *models.Feature3D, sampler Sampler) *models.Waypoint {
-	sampled := Sample2D(geometry.Geometry, sampler)
+func Sample3D(sampler Sampler, geometry *models.Feature3D) (*models.Waypoint, error) {
+	sampled, err := Sample2D(sampler, geometry.Geometry)
+	if err != nil {
+		return nil, err
+	}
 	minAlt, maxAlt := geometry.MinAltitude.Normalize().Value, geometry.MaxAltitude.Normalize().Value
 	
 	// Sample point
-	randAlt, _ := models.NewAltitude(sampler.SampleZ(minAlt, maxAlt), models.MT)		
-	sampled3D, _ := models.NewWaypoint(sampled.Lat(), sampled.Lon(), randAlt)
-	return sampled3D
+	randAlt, err := models.NewAltitude(sampler.SampleZ(minAlt, maxAlt), models.MT)
+	if err != nil {
+		return nil, err
+	}	
+	sampled3D, err := models.NewWaypoint(sampled.Lat(), sampled.Lon(), randAlt)
+	if err != nil {
+		return nil, err
+	}
+	
+	return sampled3D, nil
 }

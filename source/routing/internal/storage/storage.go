@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"geopathplanner/routing/internal/models"
+	"geopathplanner/routing/internal/utils"
 )
 
 // Define common interface for storing and querying geospatial data
@@ -22,6 +23,8 @@ type Storage interface {
     IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*models.Waypoint, error)
 	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error)
 	GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*models.Feature3D, error)
+	Sample(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error)
+	SampleFree(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error)
 }
 
 func NewEmptyStorage(storageType models.StorageType) (Storage, error) {

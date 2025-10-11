@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"geopathplanner/routing/internal/models"
 	"geopathplanner/routing/internal/utils"
 	"slices"
@@ -330,4 +331,25 @@ func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*model
 	}
 
 	return lpi_list, nil
+}
+
+func (m *MemoryStorage) Sample(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {	
+	// TODO: Decide which to use
+	return utils.SampleWithAltitude2D(sampler, sampleVolume.Geometry, alt)
+}
+
+func (m *MemoryStorage) SampleFree(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {
+	isInObstacle := true
+	var sampled *models.Waypoint
+	var err error
+	// sample until you found a point that is not in an obstacle
+	for isInObstacle {
+		sampled, err = m.Sample(sampler, sampleVolume, alt)
+		if err != nil {
+			return nil, fmt.Errorf("unexpected error during memoryStorage SampleFree: %w", err)
+		}
+		isInObstacle, _, _ = m.IsPointInObstacles(sampled)
+	}
+	
+	return sampled, nil
 }
