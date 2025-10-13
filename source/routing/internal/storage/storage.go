@@ -22,6 +22,7 @@ type Storage interface {
 	ClearWaypoints() error
 
 	AddWaypointWithPrevious(prev *models.Waypoint, w *models.Waypoint) error	
+	ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error
 	GetPrevious(p *models.Waypoint) (*models.Waypoint, error)
 	GetPathToRoot(w *models.Waypoint) ([]*models.Waypoint, error)
 

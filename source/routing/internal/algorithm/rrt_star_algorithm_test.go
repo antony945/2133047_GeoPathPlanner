@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestRRTAlgorithm_run(t *testing.T) {
+func TestRRTStarAlgorithm_run(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
 	w1 := models.MustNewWaypoint(0, 50.872778105839274, 4.433724687935722, a) // p1
 	w2 := models.MustNewWaypoint(1, 50.884400404439646, 4.46992531620532, a)  // p2
@@ -16,7 +16,7 @@ func TestRRTAlgorithm_run(t *testing.T) {
 	// w4 := models.MustNewWaypoint(3, 50.888976908715335, 4.434797815001701, a)  // p4
 
 	c_list := []*models.Feature3D{
-    models.MustNewFeatureFromGeojson(`{
+		models.MustNewFeatureFromGeojson(`{
       "type": "Feature",
       "properties": {},
       "geometry": {
@@ -218,7 +218,7 @@ func TestRRTAlgorithm_run(t *testing.T) {
         "type": "Polygon"
       }
     }`),
-    models.MustNewFeatureFromGeojson(`{
+		models.MustNewFeatureFromGeojson(`{
       "type": "Feature",
       "properties": {},
       "geometry": {
@@ -256,7 +256,7 @@ func TestRRTAlgorithm_run(t *testing.T) {
 	}
 
 	c_overlapping := []*models.Feature3D{
-    models.MustNewFeatureFromGeojson(`{
+		models.MustNewFeatureFromGeojson(`{
       "type": "Feature",
       "properties": {},
       "geometry": {
@@ -287,7 +287,7 @@ func TestRRTAlgorithm_run(t *testing.T) {
         "type": "Polygon"
       }
     }`),
-    models.MustNewFeatureFromGeojson(`{
+		models.MustNewFeatureFromGeojson(`{
         "type": "Feature",
         "properties": {},
         "geometry": {
@@ -326,7 +326,7 @@ func TestRRTAlgorithm_run(t *testing.T) {
           "type": "Polygon"
         }
       }`),
-    models.MustNewFeatureFromGeojson(`{
+		models.MustNewFeatureFromGeojson(`{
       "type": "Feature",
       "properties": {},
       "geometry": {
@@ -357,9 +357,9 @@ func TestRRTAlgorithm_run(t *testing.T) {
         "type": "Polygon"
       }
     }`),
-  }
+	}
 
-  sv := models.MustNewFeatureFromGeojson(`{
+	sv := models.MustNewFeatureFromGeojson(`{
       "type": "Feature",
       "properties": {},
       "geometry": {
@@ -394,36 +394,36 @@ func TestRRTAlgorithm_run(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
-    searchVolume *models.Feature3D
-		start      *models.Waypoint
-		end      *models.Waypoint
-		constraints []*models.Feature3D
-		want    []*models.Waypoint
-		wantCost float64
-		wantErr bool
+		searchVolume *models.Feature3D
+		start        *models.Waypoint
+		end          *models.Waypoint
+		constraints  []*models.Feature3D
+		want         []*models.Waypoint
+		wantCost     float64
+		wantErr      bool
 	}{
-		{name: "RRT with non-overlapping obstacles", searchVolume: sv, start: w1, end: w2, constraints: c_list, wantErr: false},
-		{name: "RRT with overlapping obstacles",     searchVolume: sv, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
-		{name: "RRT with no obstacles",              searchVolume: sv, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "RRTStar with non-overlapping obstacles", searchVolume: sv, start: w1, end: w2, constraints: c_list, wantErr: false},
+		{name: "RRTStar with overlapping obstacles", searchVolume: sv, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "RRTStar with no obstacles", searchVolume: sv, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a, err := algorithm.NewRRTAlgorithm()
+			a, err := algorithm.NewRRTStarAlgorithm()
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			
+
 			m, err := storage.NewEmptyMemoryStorage()
 			if err != nil {
 				t.Fatalf("could not construct memory storage: %v", err)
 			}
-      m.AddConstraints(tt.constraints)
+			m.AddConstraints(tt.constraints)
 
 			got, _, gotErr := a.Run(tt.searchVolume, tt.start, tt.end, nil, m)
 
 			// TODO: For visually testing, export results in geojson
-      utils.MarkWaypointsAsOriginal(tt.start, tt.end)
-			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, true)
+			utils.MarkWaypointsAsOriginal(tt.start, tt.end)
+			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, false)
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -438,14 +438,14 @@ func TestRRTAlgorithm_run(t *testing.T) {
 	}
 }
 
-func TestRRTAlgorithm_Compute(t *testing.T) {
+func TestRRTStarAlgorithm_Compute(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
 	w_list := []*models.Waypoint{
     models.MustNewWaypoint(0, 50.872778105839274, 4.433724687935722, a),
     models.MustNewWaypoint(1, 50.884400404439646, 4.46992531620532, a),
     models.MustNewWaypoint(2, 50.890383059561145, 4.45503208121508, a),
     models.MustNewWaypoint(3, 50.888976908715335, 4.434797815001701, a),
-  }
+  	}
 
 	c_list := []*models.Feature3D{
     models.MustNewFeatureFromGeojson(`{
@@ -789,9 +789,9 @@ func TestRRTAlgorithm_Compute(t *testing.T) {
         "type": "Polygon"
       }
     }`),
-  }
+  	}
 
-  sv := models.MustNewFeatureFromGeojson(`{
+  	sv := models.MustNewFeatureFromGeojson(`{
       "type": "Feature",
       "properties": {},
       "geometry": {
@@ -826,20 +826,20 @@ func TestRRTAlgorithm_Compute(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for target function.
-    searchVolume *models.Feature3D
+    	searchVolume *models.Feature3D
 		waypoints   []*models.Waypoint
 		constraints []*models.Feature3D
 		want    []*models.Waypoint
 		wantCost float64
 		wantErr bool
 	}{
-		{name: "RRTFull with non-overlapping obstacles", searchVolume: sv, waypoints: w_list, constraints: c_list, wantErr: false},
-		{name: "RRTFull with overlapping obstacles", searchVolume: sv, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
-		{name: "RRTFull with no obstacles", searchVolume: sv, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "RRTStarFull with non-overlapping obstacles", searchVolume: sv, waypoints: w_list, constraints: c_list, wantErr: false},
+		{name: "RRTStarFull with overlapping obstacles", searchVolume: sv, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "RRTStarFull with no obstacles", searchVolume: sv, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a, err := algorithm.NewRRTAlgorithm()
+			a, err := algorithm.NewRRTStarAlgorithm()
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
@@ -852,8 +852,8 @@ func TestRRTAlgorithm_Compute(t *testing.T) {
 			got, _, gotErr := a.Compute(tt.searchVolume, tt.waypoints, tt.constraints, nil, m)
 
 			// TODO: For visually testing, export results in geojson
-      utils.MarkWaypointsAsOriginal(tt.waypoints...)
-			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, true)
+      		utils.MarkWaypointsAsOriginal(tt.waypoints...)
+			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, false)
 
 			if gotErr != nil {
 				if !tt.wantErr {

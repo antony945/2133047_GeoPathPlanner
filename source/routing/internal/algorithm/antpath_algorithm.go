@@ -50,12 +50,13 @@ func (a *AntPathAlgorithm) Run(start, end *models.Waypoint, parameters map[strin
 	route := make([]*models.Waypoint, 0)
 	// cost := 0.0
 
+	// ------------------------------------------------------------------------------------------------------
+
 	// Get intersection points
 	intersectionPoints, err := storage.GetIntersectionPoints(start, end)
 	if err != nil {
 		return nil, 0.0, err
 	}
-
 	route = append(route, start)
 	
 	// For every intersectionPoint struct get best way to go around obstacle
@@ -86,8 +87,9 @@ func (a *AntPathAlgorithm) Run(start, end *models.Waypoint, parameters map[strin
 		route = append(route, bestForPolygonWay...)
 	}
 
-	route = append(route, end)
+	// ------------------------------------------------------------------------------------------------------
 
+	route = append(route, end)
 	cost := utils.TotalHaversineDistance(route)
 	return route, cost, nil
 }

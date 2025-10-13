@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DEFAULT_LINE_DIVISION_MAX_STEP_SIZE_MT = 50
+	DEFAULT_LINE_DIVISION_MAX_STEP_SIZE_MT = 10
 )
 
 // Implement POINT-POLYGON intersection

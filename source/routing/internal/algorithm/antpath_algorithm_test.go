@@ -389,7 +389,9 @@ func TestAntPathAlgorithm_run(t *testing.T) {
 			got, _, gotErr := a.Run(tt.start, tt.end, nil, m)
 
 			// TODO: For visually testing, export results in geojson
-			utils.ExportToGeoJSON("algorithm", got, tt.constraints, tt.name, true)
+			// utils.ExportToGeoJSON("algorithm", got, tt.constraints, tt.name, true)
+      utils.MarkWaypointsAsOriginal(tt.start, tt.end)
+			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, nil, tt.name, true)
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -785,7 +787,9 @@ func TestAntPathAlgorithm_Compute(t *testing.T) {
 			got, _, gotErr := a.Compute(nil, tt.waypoints, tt.constraints, nil, m)
 
 			// TODO: For visually testing, export results in geojson
-			utils.ExportToGeoJSON("algorithm", got, tt.constraints, tt.name, true)
+			// utils.ExportToGeoJSON("algorithm", got, tt.constraints, tt.name, true)
+      utils.MarkWaypointsAsOriginal(tt.waypoints...)
+			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, nil, tt.name, true)
 
 			if gotErr != nil {
 				if !tt.wantErr {

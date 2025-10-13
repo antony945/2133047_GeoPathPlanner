@@ -80,7 +80,7 @@ func (s LineStyler) Style(f *geojson.Feature) *geojson.Feature {
 // ExportToGeoJSON takes waypoints and constraints and writes them into a FeatureCollection
 // saved under dev/results/<folder>/<filename>.geojson.
 func ExportToGeoJSON(folder string, waypoints []*models.Waypoint, polygons []*models.Feature3D, filename string, lineBetweenWaypoints bool, otherFeatures ...*geojson.Feature) error {
-	fc := CreateFeatureCollection(waypoints, polygons, lineBetweenWaypoints, otherFeatures...)
+	fc := CreateFeatureCollection(waypoints, polygons, lineBetweenWaypoints, false, otherFeatures...)
 
 	// Marshal collection
 	data, err := json.MarshalIndent(fc, "", "  ")
@@ -103,7 +103,44 @@ func ExportToGeoJSON(folder string, waypoints []*models.Waypoint, polygons []*mo
 	return nil
 }
 
-func CreateFeatureCollection(waypoints []*models.Waypoint, polygons []*models.Feature3D, lineBetweenWaypoints bool, otherFeatures ...*geojson.Feature) (*geojson.FeatureCollection) {
+func ExportToGeoJSONRoute(folder string, route []*models.Waypoint, constraints []*models.Feature3D, searchVolume *models.Feature3D, filename string, ignoreIntermediateWaypoints bool) error {
+	var fc *geojson.FeatureCollection
+	if searchVolume == nil {
+		fc = CreateFeatureCollection(route, constraints, true, ignoreIntermediateWaypoints)
+	} else {
+		fc = CreateFeatureCollection(route, constraints, true, ignoreIntermediateWaypoints, searchVolume.Feature)
+	}
+
+	// Marshal collection
+	data, err := json.MarshalIndent(fc, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal feature collection: %w", err)
+	}
+
+	// Ensure dev/results exists
+	outDir := ResolvePath(filepath.Join("dev", "results", folder))
+	if err := os.MkdirAll(outDir, os.ModePerm); err != nil {
+		return fmt.Errorf("create results dir: %w", err)
+	}
+	
+	// Write to file
+	outPath := filepath.Join(outDir, filename+".geojson")
+	if err := os.WriteFile(outPath, data, 0644); err != nil {
+		return fmt.Errorf("write file: %w", err)
+	}
+
+	return nil
+}
+
+func MarkWaypointsAsOriginal(waypoints ...*models.Waypoint) error {
+	for _, wp := range waypoints {
+		wp.Feature.Properties["original"] = true
+	}
+
+	return nil
+}
+
+func CreateFeatureCollection(waypoints []*models.Waypoint, polygons []*models.Feature3D, lineBetweenWaypoints bool, ignoreIntermediateWaypoints bool, otherFeatures ...*geojson.Feature) (*geojson.FeatureCollection) {
 	// Create a FeatureCollection
 	fc := geojson.NewFeatureCollection()
 	var styler Styler
@@ -111,7 +148,9 @@ func CreateFeatureCollection(waypoints []*models.Waypoint, polygons []*models.Fe
 	// Wrap waypoints (MarshalJSON already defines how they look)
 	styler = WaypointStyler{}
 	for _, wp := range waypoints {
-		fc.Append(styler.Style(wp.Feature))
+		if !ignoreIntermediateWaypoints || wp.Feature.Properties["original"] != nil {
+			fc.Append(styler.Style(wp.Feature))
+		}
 	}
 
 	// Draw also the line that passes through the point if needed

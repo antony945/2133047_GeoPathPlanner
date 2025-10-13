@@ -66,19 +66,29 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 	MAX_ITERATIONS := 10000
 	GOAL_BIAS := 0.10
 	SAMPLER := utils.NewGoalBiasSampler(
-		utils.NewUniformSamplerWithSeed(10),
+		// utils.NewUniformSamplerWithSeed(10),
+		utils.NewHaltonSampler(),
 		end,
 		GOAL_BIAS,
 	)
 	STEP_SIZE_MT := 10.0
+
+	fmt.Printf("PARAMETERS\n")
+	fmt.Printf("max_iterations: %d\n", MAX_ITERATIONS)
+	fmt.Printf("step_size_mt: %f\n", STEP_SIZE_MT)
+	fmt.Printf("goal_bias: %f\n", GOAL_BIAS)
+	fmt.Printf("sampler: %+v\n", SAMPLER)
+	fmt.Printf("--------------------------------------------------------\n")
 
 	// Add start to storage
 	err := storage.AddWaypointWithPrevious(nil, start)
 	if err != nil {
 		return nil, 0.0, err
 	}
-	
 	goal_found := false
+
+	// ------------------------------------------------------------------------------------------------------	
+	
 	for current_iter := range MAX_ITERATIONS {
 		// 1. Sample a new free wp
 		sampled, err := storage.SampleFree(SAMPLER, searchVolume, start.Alt)
@@ -93,7 +103,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 			return nil, 0.0, err
 		}
 
-		// 3. Find wp starting from nearest in direction of sampled at distance STEP_SIZE_MT
+		// 3. Find wp starting from nearest in direction of sampled at distance (steering) STEP_SIZE_MT
 		new := utils.GetPointInDirectionAtDistance(nearest, sampled, STEP_SIZE_MT)
 
 		// 4. Check if connection from nearest to new is possible
@@ -135,6 +145,8 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 
 	// fmt.Printf("Storage at the end has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
 
+	// ------------------------------------------------------------------------------------------------------
+
 	// Now try to obtain the route from the goal node
 	if goal_found {
 		route, err := storage.GetPathToRoot(end)
@@ -144,7 +156,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 		cost := utils.TotalHaversineDistance(route)
 		return route, cost, nil
 	} else {
-		return nil, 0.0, fmt.Errorf("goal not found with %d in iterations", MAX_ITERATIONS)
+		return nil, 0.0, fmt.Errorf("goal not found with %d iterations", MAX_ITERATIONS)
 	}
 }
 

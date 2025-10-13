@@ -123,9 +123,16 @@ func (m *MemoryStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models
 	m.AddWaypoint(w)
 
 	// But also add it in the map
-	m.waypointsMap[w] = prev
+	m.ChangePrevious(prev, w)
 	return nil
 }
+
+func (m *MemoryStorage)	ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error {
+	// Just add it to the map
+	m.waypointsMap[w] = new_prev
+	return nil
+}
+
 
 func (m *MemoryStorage) GetPrevious(w *models.Waypoint) (*models.Waypoint, error) {
 	// Search in the map
