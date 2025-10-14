@@ -60,11 +60,12 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
 
 	// TODO: Parameters
-	MAX_ITERATIONS := 10000
+	// TODO: Think about not to use max_iterations directly, rather continue until a certain condition happen (e.g. cost of route stopped decreasing for a while) 
+	MAX_ITERATIONS := 5000
 	GOAL_BIAS := 0.10
 	SAMPLER := utils.NewGoalBiasSampler(
-		utils.NewUniformSampler(),
-		// utils.NewUniformSamplerWithSeed(10),
+		// utils.NewUniformSampler(),
+		utils.NewUniformSamplerWithSeed(10),
 		// utils.NewHaltonSampler(),
 		end,
 		GOAL_BIAS,
