@@ -66,7 +66,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 	MAX_ITERATIONS := 10000
 	GOAL_BIAS := 0.10
 	SAMPLER := utils.NewGoalBiasSampler(
-		utils.NewUniformSamplerWithSeed(10),
+		utils.NewUniformSamplerWithSeed(945),
 		// utils.NewHaltonSampler(),
 		end,
 		GOAL_BIAS,

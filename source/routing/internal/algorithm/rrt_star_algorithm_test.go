@@ -423,7 +423,7 @@ func TestRRTStarAlgorithm_run(t *testing.T) {
 
 			// TODO: For visually testing, export results in geojson
 			utils.MarkWaypointsAsOriginal(tt.start, tt.end)
-			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, false)
+			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, true)
 
 			if gotErr != nil {
 				if !tt.wantErr {
@@ -853,7 +853,7 @@ func TestRRTStarAlgorithm_Compute(t *testing.T) {
 
 			// TODO: For visually testing, export results in geojson
       		utils.MarkWaypointsAsOriginal(tt.waypoints...)
-			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, false)
+			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, true)
 
 			if gotErr != nil {
 				if !tt.wantErr {

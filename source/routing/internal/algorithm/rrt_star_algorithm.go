@@ -65,7 +65,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 	GOAL_BIAS := 0.10
 	SAMPLER := utils.NewGoalBiasSampler(
 		// utils.NewUniformSampler(),
-		utils.NewUniformSamplerWithSeed(10),
+		utils.NewUniformSamplerWithSeed(945),
 		// utils.NewHaltonSampler(),
 		end,
 		GOAL_BIAS,
