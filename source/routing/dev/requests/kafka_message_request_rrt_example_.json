@@ -1,0 +1,16 @@
+{
+    "request_id": "XXXX",
+    "waypoints": [],
+    "constraints": [],
+    "search_volume": {},
+    "parameters": {
+        "algorithm": "rrt",
+        "storage": "memory",
+        "sampler": "uniform",
+        "sampler_seed": 10,
+        "max_iterations": 10000,
+        "max_step_size_mt": 20,
+        "goal_bias": 0.10
+    },
+    "received_at": 2023
+}

@@ -129,7 +129,7 @@ func ResampleLineToInterval(p1, p2 *models.Waypoint, distMt float64) []*models.W
 	}
 	
 	// Check if line's ends distance between each other is already less than step size (base case)
-	dist := HaversineDistance3D(*p1, *p2)
+	dist := HaversineDistance3D(p1, p2)
 	if (dist <= distMt) {
 		return []*models.Waypoint{p1, p2}
 	}
@@ -180,7 +180,7 @@ func GetNearestFreeVertexIndex(c *models.Feature3D, p *models.Waypoint, reversed
 			continue
 		}
 
-		dist := HaversineDistance3D(*p, *vertices[i])
+		dist := HaversineDistance3D(p, vertices[i])
 		// Check distance between p and v
 		if dist < minDist {
 			// min = v

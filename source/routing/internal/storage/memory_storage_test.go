@@ -213,7 +213,7 @@ func TestMemoryStorage_NearestPoint(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			got, gotErr := m.NearestPoint(tt.p)
+			got, _, gotErr := m.NearestPoint(tt.p)
 
 			// TODO: For visually testing, export results in geojson
 			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false)
@@ -424,7 +424,7 @@ func TestMemoryStorage_KNearestPoints(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			_, gotErr := m.KNearestPoints(tt.p, tt.k)
+			_, _, gotErr := m.KNearestPoints(tt.p, tt.k)
 
 			// TODO: For visually testing, export results in geojson
 			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false)
@@ -632,7 +632,7 @@ func TestMemoryStorage_NearestPointsInRadius(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			_, gotErr := m.NearestPointsInRadius(tt.p, tt.r)
+			_, _, gotErr := m.NearestPointsInRadius(tt.p, tt.r)
 
 			// TODO: For visually testing, export results in geojson
 			// Generate circle polygon

@@ -60,7 +60,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
 
 	// TODO: Parameters
-	MAX_ITERATIONS := 8000
+	MAX_ITERATIONS := 10000
 	GOAL_BIAS := 0.10
 	SAMPLER := utils.NewGoalBiasSampler(
 		utils.NewUniformSampler(),
@@ -71,6 +71,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 	)
 	STEP_SIZE_MT := 10.0
 	K_INIT := 2*math.E
+	R_INIT_MT := 2.0
 
 	fmt.Printf("PARAMETERS\n")
 	fmt.Printf("max_iterations: %d\n", MAX_ITERATIONS)
@@ -78,6 +79,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 	fmt.Printf("goal_bias: %f\n", GOAL_BIAS)
 	fmt.Printf("sampler: %+v\n", SAMPLER)
 	fmt.Printf("k_init: %d\n", int(K_INIT))
+	fmt.Printf("r_init_mt: %f\n", R_INIT_MT)
 	fmt.Printf("--------------------------------------------------------\n")
 
 	// Add start to storage
@@ -92,14 +94,18 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 	for current_iter := range MAX_ITERATIONS {
 		// Change K according to cardinality of V (no. of nodes)
 		K := int(K_INIT * math.Log(float64(storage.WaypointsLen())))+1
+		// R := math.Max(R_INIT_MT * math.Sqrt(math.Log(float64(storage.WaypointsLen()))/float64(storage.WaypointsLen())), STEP_SIZE_MT)
 
 		if current_iter % 100 == 0 {
 			if goal_found {
 				route, _ := storage.GetPathToRoot(end)
 				cost_km := utils.TotalHaversineDistance(route)/1000
-				fmt.Printf("[%d/%d] k: %d, #wps: %d, cost: %.3f km\n", current_iter, MAX_ITERATIONS, K, len(route), cost_km)
+				fmt.Printf("[%d/%d] k: %d, #wps: %d, #routeWps: %d, routeCost: %.3f km\n", current_iter, MAX_ITERATIONS, K, storage.WaypointsLen(), len(route), cost_km)
+				// fmt.Printf("[%d/%d] radius: %.2fmt, #wps: %d, cost: %.3f km\n", current_iter, MAX_ITERATIONS, R, len(route), cost_km)
+			
 			} else {
-				fmt.Printf("[%d/%d] k: %d, goal not found yet\n", current_iter, MAX_ITERATIONS, K)
+				fmt.Printf("[%d/%d] k: %d, #wps: %d, goal not found yet\n", current_iter, MAX_ITERATIONS, K, storage.WaypointsLen())
+				// fmt.Printf("[%d/%d] radius: %.2fmt, goal not found yet\n", current_iter, MAX_ITERATIONS, R)
 			}
 		}
 
@@ -111,7 +117,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 		}
 
 		// 2. Get nearest wp
-		nearest, err := storage.NearestPoint(sampled)
+		nearest, _, err := storage.NearestPoint(sampled)
 		if err != nil {
 			return nil, 0.0, err
 		}
@@ -148,7 +154,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 		// }
 
 		// 6. Check if it's goal
-		if a.isGoal(new, end, STEP_SIZE_MT) {
+		if !goal_found && a.isGoal(new, end, STEP_SIZE_MT) {
 			// 7. Check if can be connected to goal
 			isInObstacles, _, err := storage.IsLineInObstacles(new, end)
 			if err != nil {
@@ -160,12 +166,11 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 				if err != nil {
 					return nil, 0.0, err
 				}
-				if !goal_found {
-					route, _ := storage.GetPathToRoot(end)
-					cost_km := utils.TotalHaversineDistance(route)/1000
-					fmt.Printf("New goal found at iteration %d/%d.\n", current_iter, MAX_ITERATIONS)
-					fmt.Printf("#wps: %d, cost: %.3f km\n", len(route), cost_km)
-				}
+				
+				route, _ := storage.GetPathToRoot(end)
+				cost_km := utils.TotalHaversineDistance(route)/1000
+				fmt.Printf("New goal found at iteration %d/%d.\n", current_iter, MAX_ITERATIONS)
+				fmt.Printf("#wps: %d, cost: %.3f km\n", len(route), cost_km)
 				goal_found = true
 			}
 		}
@@ -186,24 +191,24 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 
 func (a *RRTStarAlgorithm) ConnectAndRewire(new, nearest *models.Waypoint, k int, storage storage.Storage) (bool, error) {
 	// TODO: Test also with radius
-	neighbors, err := storage.KNearestPoints(new, k)
+	neighbors, distances, err := storage.KNearestPoints(new, k)
 	if err != nil {
 		return false, fmt.Errorf("error while getting the %d-nn of %v: %+w", k, new, err)
 	}
 
-	return a.connectAndRewireWithNeighbors(new, nearest, neighbors, storage)
+	return a.connectAndRewireWithNeighbors(new, nearest, neighbors, distances, storage)
 }
 
 func (a *RRTStarAlgorithm) ConnectAndRewireInRadius(new, nearest *models.Waypoint, radius_mt float64, storage storage.Storage) (bool, error) {
-	neighbors, err := storage.NearestPointsInRadius(new, radius_mt)
+	neighbors, distances, err := storage.NearestPointsInRadius(new, radius_mt)
 	if err != nil {
 		return false, fmt.Errorf("error while getting point within %.2f mt of %v: %+w", radius_mt, new, err)
 	}
 
-	return a.connectAndRewireWithNeighbors(new, nearest, neighbors, storage)
+	return a.connectAndRewireWithNeighbors(new, nearest, neighbors, distances, storage)
 }
 
-func (a *RRTStarAlgorithm) connectAndRewireWithNeighbors(new, nearest *models.Waypoint, neighbors []*models.Waypoint, storage storage.Storage) (bool, error) {
+func (a *RRTStarAlgorithm) connectAndRewireWithNeighbors(new, nearest *models.Waypoint, neighbors []*models.Waypoint, distances []float64, storage storage.Storage) (bool, error) {
 	// CONNECT
 	// For every neighbor check if connecting to new via that would be better compared to connect to nearest
 	minCostWp := nearest
@@ -211,7 +216,7 @@ func (a *RRTStarAlgorithm) connectAndRewireWithNeighbors(new, nearest *models.Wa
 	if err != nil {
 		return false, err
 	}
-	minCost += a.getLineCost(minCostWp, new)
+	minCost += distances[0]
 
 	// Scan neighbors
 	// TODO: you can skip first one as it will be the nearest
@@ -233,7 +238,10 @@ func (a *RRTStarAlgorithm) connectAndRewireWithNeighbors(new, nearest *models.Wa
 		if err != nil {
 			return false, err
 		}
-		currentCost += a.getLineCost(near, new)
+		// TODO: Think if it make sense
+		// currentCost += a.getLineCost(near, new)
+		currentCost += distances[idx]
+
 		if currentCost < minCost {
 			minCostWp = near
 			minCost = currentCost
@@ -280,15 +288,17 @@ func (a *RRTStarAlgorithm) connectAndRewireWithNeighbors(new, nearest *models.Wa
 }
 
 func (a *RRTStarAlgorithm) getCost(wp *models.Waypoint, storage storage.Storage) (float64, error) {
-	route, err := storage.GetPathToRoot(wp)
-	if err != nil {
-		return 0.0, err
-	}
-	cost := utils.TotalHaversineDistance(route)
-	return cost, nil
+	// route, err := storage.GetPathToRoot(wp)
+	// if err != nil {
+	// 	return 0.0, err
+	// }
+	// cost := utils.TotalHaversineDistance(route)
+	// return cost, nil
+
+	return storage.GetCostToRoot(wp)
 }
 
 func (a *RRTStarAlgorithm) getLineCost(start, end *models.Waypoint) (float64) {
 	// get cost of connecting start to end (haversine distance cost)
-	return utils.HaversineDistance3D(*start, *end)
+	return utils.HaversineDistance3D(start, end)
 }

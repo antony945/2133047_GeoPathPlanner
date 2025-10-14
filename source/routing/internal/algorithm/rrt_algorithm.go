@@ -98,7 +98,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 		}
 
 		// 2. Get nearest wp
-		nearest, err := storage.NearestPoint(sampled)
+		nearest, _, err := storage.NearestPoint(sampled)
 		if err != nil {
 			return nil, 0.0, err
 		}
@@ -162,5 +162,5 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 
 func (a *RRTAlgorithm) isGoal(w, goal *models.Waypoint, tolerance_mt float64) bool {
 	// is goal if distance is less than tolerance_mt
-	return utils.HaversineDistance3D(*w, *goal) < tolerance_mt
+	return utils.HaversineDistance3D(w, goal) < tolerance_mt
 }
