@@ -226,6 +226,7 @@ func (r *RTreeStorage) GetCostToRoot(w *models.Waypoint) (float64, error) {
 // ================================================================= Geometric helpers
 
 // TODO: Make sure it's using the right distance function when doing so
+// Update: it doesn't, it's using euclidean distance.
 // Use 1-nn with rtree to find nearest point
 // O(logN)
 func (r *RTreeStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, float64, error) {

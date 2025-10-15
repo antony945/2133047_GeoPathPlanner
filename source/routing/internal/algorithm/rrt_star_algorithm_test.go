@@ -393,6 +393,7 @@ func TestRRTStarAlgorithm_run(t *testing.T) {
 
 	tests := []struct {
 		name string // description of this test case
+    storageType models.StorageType
 		// Named input parameters for target function.
 		searchVolume *models.Feature3D
 		start        *models.Waypoint
@@ -402,9 +403,12 @@ func TestRRTStarAlgorithm_run(t *testing.T) {
 		wantCost     float64
 		wantErr      bool
 	}{
-		{name: "RRTStar with non-overlapping obstacles", searchVolume: sv, start: w1, end: w2, constraints: c_list, wantErr: false},
-		{name: "RRTStar with overlapping obstacles", searchVolume: sv, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
-		{name: "RRTStar with no obstacles", searchVolume: sv, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "RRTStar with non-overlapping obstacles - MEMORY", storageType: models.Memory, searchVolume: sv, start: w1, end: w2, constraints: c_list, wantErr: false},
+		{name: "RRTStar with non-overlapping obstacles - RTREE", storageType: models.RTree, searchVolume: sv, start: w1, end: w2, constraints: c_list, wantErr: false},
+		{name: "RRTStar with overlapping obstacles - MEMORY", storageType: models.Memory, searchVolume: sv, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "RRTStar with overlapping obstacles - RTREE", storageType: models.RTree, searchVolume: sv, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "RRTStar with no obstacles - MEMORY", storageType: models.Memory, searchVolume: sv, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "RRTStar with no obstacles - RTREE", storageType: models.RTree, searchVolume: sv, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -413,13 +417,13 @@ func TestRRTStarAlgorithm_run(t *testing.T) {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
 
-			m, err := storage.NewEmptyMemoryStorage()
+			s, err := storage.NewEmptyStorage(tt.storageType)
 			if err != nil {
-				t.Fatalf("could not construct memory storage: %v", err)
+				t.Fatalf("could not construct storage: %v", err)
 			}
-			m.AddConstraints(tt.constraints)
+			s.AddConstraints(tt.constraints)
 
-			got, _, gotErr := a.Run(tt.searchVolume, tt.start, tt.end, nil, m)
+			got, _, gotErr := a.Run(tt.searchVolume, tt.start, tt.end, nil, s)
 
 			// TODO: For visually testing, export results in geojson
 			utils.MarkWaypointsAsOriginal(tt.start, tt.end)
@@ -825,17 +829,21 @@ func TestRRTStarAlgorithm_Compute(t *testing.T) {
 
 	tests := []struct {
 		name string // description of this test case
+    storageType models.StorageType
 		// Named input parameters for target function.
-    	searchVolume *models.Feature3D
+    searchVolume *models.Feature3D
 		waypoints   []*models.Waypoint
 		constraints []*models.Feature3D
 		want    []*models.Waypoint
 		wantCost float64
 		wantErr bool
 	}{
-		{name: "RRTStarFull with non-overlapping obstacles", searchVolume: sv, waypoints: w_list, constraints: c_list, wantErr: false},
-		{name: "RRTStarFull with overlapping obstacles", searchVolume: sv, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
-		{name: "RRTStarFull with no obstacles", searchVolume: sv, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "RRTStarFull with non-overlapping obstacles - MEMORY", storageType: models.Memory, searchVolume: sv, waypoints: w_list, constraints: c_list, wantErr: false},
+		{name: "RRTStarFull with non-overlapping obstacles - RTREE", storageType: models.RTree, searchVolume: sv, waypoints: w_list, constraints: c_list, wantErr: false},
+		{name: "RRTStarFull with overlapping obstacles - MEMORY", storageType: models.Memory, searchVolume: sv, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "RRTStarFull with overlapping obstacles - RTREE", storageType: models.RTree, searchVolume: sv, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "RRTStarFull with no obstacles - MEMORY", storageType: models.Memory, searchVolume: sv, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "RRTStarFull with no obstacles - RTREE", storageType: models.RTree, searchVolume: sv, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -844,12 +852,12 @@ func TestRRTStarAlgorithm_Compute(t *testing.T) {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
 			
-			m, err := storage.NewEmptyMemoryStorage()
+			s, err := storage.NewEmptyStorage(tt.storageType)
 			if err != nil {
-				t.Fatalf("could not construct memory storage: %v", err)
+				t.Fatalf("could not construct storage: %v", err)
 			}
 
-			got, _, gotErr := a.Compute(tt.searchVolume, tt.waypoints, tt.constraints, nil, m)
+			got, _, gotErr := a.Compute(tt.searchVolume, tt.waypoints, tt.constraints, nil, s)
 
 			// TODO: For visually testing, export results in geojson
       		utils.MarkWaypointsAsOriginal(tt.waypoints...)

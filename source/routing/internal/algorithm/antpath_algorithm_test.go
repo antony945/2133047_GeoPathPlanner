@@ -361,6 +361,7 @@ func TestAntPathAlgorithm_run(t *testing.T) {
 
 	tests := []struct {
 		name string // description of this test case
+    storageType models.StorageType
 		// Named input parameters for target function.
 		start      *models.Waypoint
 		end      *models.Waypoint
@@ -369,9 +370,12 @@ func TestAntPathAlgorithm_run(t *testing.T) {
 		wantCost float64
 		wantErr bool
 	}{
-		{name: "AntPath with non-overlapping obstacles", start: w1, end: w2, constraints: c_list, wantErr: false},
-		{name: "AntPath with overlapping obstacles", start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
-		{name: "AntPath with no obstacles", start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "AntPath with non-overlapping obstacles - MEMORY", storageType: models.Memory, start: w1, end: w2, constraints: c_list, wantErr: false},
+		{name: "AntPath with non-overlapping obstacles - RTREE", storageType: models.RTree, start: w1, end: w2, constraints: c_list, wantErr: false},
+		{name: "AntPath with overlapping obstacles - MEMORY", storageType: models.Memory, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "AntPath with overlapping obstacles - RTREE", storageType: models.RTree, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "AntPath with no obstacles - MEMORY", storageType: models.Memory, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "AntPath with no obstacles - RTREE", storageType: models.RTree, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -379,14 +383,14 @@ func TestAntPathAlgorithm_run(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			
-			m, err := storage.NewEmptyMemoryStorage()
-			if err != nil {
-				t.Fatalf("could not construct memory storage: %v", err)
-			}
-      m.AddConstraints(tt.constraints)
 
-			got, _, gotErr := a.Run(tt.start, tt.end, nil, m)
+      s, err := storage.NewEmptyStorage(tt.storageType)
+      if err != nil {
+				t.Fatalf("could not construct storage: %v", err)
+			}
+      s.AddConstraints(tt.constraints)
+
+			got, _, gotErr := a.Run(tt.start, tt.end, nil, s)
 
 			// TODO: For visually testing, export results in geojson
 			// utils.ExportToGeoJSON("algorithm", got, tt.constraints, tt.name, true)
@@ -761,6 +765,7 @@ func TestAntPathAlgorithm_Compute(t *testing.T) {
 
 	tests := []struct {
 		name string // description of this test case
+    storageType models.StorageType
 		// Named input parameters for target function.
 		waypoints   []*models.Waypoint
 		constraints []*models.Feature3D
@@ -768,9 +773,12 @@ func TestAntPathAlgorithm_Compute(t *testing.T) {
 		wantCost float64
 		wantErr bool
 	}{
-		{name: "AntPathFull with non-overlapping obstacles", waypoints: w_list, constraints: c_list, wantErr: false},
-		{name: "AntPathFull with overlapping obstacles", waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
-		{name: "AntPathFull with no obstacles", waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "AntPathFull with non-overlapping obstacles - MEMORY", storageType: models.Memory, waypoints: w_list, constraints: c_list, wantErr: false},
+		{name: "AntPathFull with non-overlapping obstacles - RTREE", storageType: models.RTree, waypoints: w_list, constraints: c_list, wantErr: false},
+		{name: "AntPathFull with overlapping obstacles - MEMORY", storageType: models.Memory, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "AntPathFull with overlapping obstacles - RTREE", storageType: models.RTree, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
+		{name: "AntPathFull with no obstacles - MEMORY", storageType: models.Memory, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
+		{name: "AntPathFull with no obstacles - RTREE", storageType: models.RTree, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -779,12 +787,12 @@ func TestAntPathAlgorithm_Compute(t *testing.T) {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
 			
-			m, err := storage.NewEmptyMemoryStorage()
+			s, err := storage.NewEmptyStorage(tt.storageType)
 			if err != nil {
-				t.Fatalf("could not construct memory storage: %v", err)
+				t.Fatalf("could not construct storage: %v", err)
 			}
 
-			got, _, gotErr := a.Compute(nil, tt.waypoints, tt.constraints, nil, m)
+			got, _, gotErr := a.Compute(nil, tt.waypoints, tt.constraints, nil, s)
 
 			// TODO: For visually testing, export results in geojson
 			// utils.ExportToGeoJSON("algorithm", got, tt.constraints, tt.name, true)
