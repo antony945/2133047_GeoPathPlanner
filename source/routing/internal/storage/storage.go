@@ -11,12 +11,10 @@ type Storage interface {
 	AddWaypoint(w *models.Waypoint) error
 	AddWaypoints(w_list []*models.Waypoint) error
 	GetWaypoints() ([]*models.Waypoint, error)
-	MustGetWaypoints() []*models.Waypoint
+	MustGetWaypoints() ([]*models.Waypoint)
 
 	AddConstraint(c *models.Feature3D) error
 	AddConstraints(c_list []*models.Feature3D) error
-	GetConstraints() ([]*models.Feature3D, error)
-	MustGetConstraints() []*models.Feature3D
 
 	WaypointsLen() int
 	
@@ -49,6 +47,8 @@ func NewEmptyStorage(storageType models.StorageType) (Storage, error) {
 	switch storageType {
 		case models.Memory:
 			return NewEmptyMemoryStorage()
+		case models.RTree:
+			return NewEmptyRTreeStorage()
 		case models.Redis:
 			return nil, fmt.Errorf("storage currently not implemented: %s", storageType)
 		default:

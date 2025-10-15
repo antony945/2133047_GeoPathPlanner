@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dhconnelly/rtreego"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geojson"
 	"github.com/twpayne/go-geom"
@@ -137,7 +138,34 @@ func (c *Feature3D) MarshalJSON() ([]byte, error) {
 	return c.Feature.MarshalJSON()
 }
 
-// ---------------------------------------------------------------
+func (c *Feature3D) GetVertices(alt Altitude, reversed bool) []*Waypoint {
+	polygon := c.ToPolygon()
+	if len(polygon) == 0 {
+		return nil
+	}
+
+	// Get outer ring vertices (skip last one as it's same as first)
+	vertices := make([]*Waypoint, 0, len(polygon[0])-1)
+	for _, pt := range polygon[0][:len(polygon[0])-1] {
+		wp, _ := NewWaypoint(pt.Lat(), pt.Lon(), alt)
+		vertices = append(vertices, wp)
+	}
+
+	if reversed {
+		left := 0
+		right := len(vertices) - 1
+		for left < right {
+			vertices[left], vertices[right] = vertices[right], vertices[left]
+			left++
+			right--
+		}
+	}
+
+	return vertices
+}
+
+// --------------------------------------------------------------- CONVERSION
+
 func (c *Feature3D) ToGeomPolygon() *geom.Polygon {
 	// Create geom polygon
 	// g := geom.NewPolygon(geom.XY)
@@ -203,28 +231,13 @@ func (c *Feature3D) ToPolygol() [][][][]float64 {
 	return p
 }
 
-func (c *Feature3D) GetVertices(alt Altitude, reversed bool) []*Waypoint {
-	polygon := c.ToPolygon()
-	if len(polygon) == 0 {
-		return nil
+// Implement rtreego.Spatial interface so to use waypoint with the rtree
+func (c *Feature3D) Bounds() rtreego.Rect {
+	// Create rtreego point
+	rect, err := rtreego.NewRectFromPoints(rtreego.Point{c.Bound().Min.Lon(), c.Bound().Min.Lat()}, rtreego.Point{c.Bound().Max.Lon(), c.Bound().Max.Lat()})
+	if err != nil {
+		panic(err)
 	}
-
-	// Get outer ring vertices (skip last one as it's same as first)
-	vertices := make([]*Waypoint, 0, len(polygon[0])-1)
-	for _, pt := range polygon[0][:len(polygon[0])-1] {
-		wp, _ := NewWaypoint(pt.Lat(), pt.Lon(), alt)
-		vertices = append(vertices, wp)
-	}
-
-	if reversed {
-		left := 0
-		right := len(vertices) - 1
-		for left < right {
-			vertices[left], vertices[right] = vertices[right], vertices[left]
-			left++
-			right--
-		}
-	}
-
-	return vertices
+	
+	return rect
 }

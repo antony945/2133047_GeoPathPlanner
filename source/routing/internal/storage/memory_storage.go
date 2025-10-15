@@ -10,10 +10,13 @@ import (
 
 // MemoryStorage stores everything in-memory (cleared after each request)
 type MemoryStorage struct {
+	// TODO: Duplicate of waypoints, probably we can use just the map and it will be ok. Or use just list but list of nodes
 	waypoints  []*models.Waypoint
 	constraints []*models.Feature3D
 	waypointsMap map[*models.Waypoint]*models.PointDist
 }
+
+// ---------------------------------------------------------------- CONSTRUCTORS
 
 func NewEmptyMemoryStorage() (*MemoryStorage, error) {
 	return &MemoryStorage{
@@ -40,14 +43,15 @@ func NewMemoryStorage(w_list []*models.Waypoint, c_list []*models.Feature3D) (*M
 	return ms, nil
 }
 
+// ---------------------------------------------------------------- GENERAL
+
 func (m *MemoryStorage) Clear() error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 
 	// TODO: Think about putting them to nil
 	m.constraints = make([]*models.Feature3D, 0)
-	m.ClearWaypoints()
-	return nil
+	return m.ClearWaypoints()
 }
 
 func (m *MemoryStorage) ClearWaypoints() error {
@@ -57,12 +61,14 @@ func (m *MemoryStorage) ClearWaypoints() error {
 }
 
 func (m *MemoryStorage) WaypointsLen() int {
-	return len(m.waypointsMap)
+	return len(m.waypoints)
 }
 
 func (m *MemoryStorage) ConstraintsLen() int {
 	return len(m.constraints)
 }
+
+// ---------------------------------------------------------------- WAYPOINTS
 
 func (m *MemoryStorage) AddWaypoint(w *models.Waypoint) error {
 	// m.mu.Lock()
@@ -98,6 +104,8 @@ func (m *MemoryStorage) MustGetWaypoints() []*models.Waypoint {
 	return wps
 }
 
+// ---------------------------------------------------------------- CONSTRAINTS
+
 func (m *MemoryStorage) AddConstraint(c *models.Feature3D) error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
@@ -118,12 +126,14 @@ func (m *MemoryStorage) AddConstraints(c_list []*models.Feature3D) error {
 	return nil
 }
 
+// TODO: Probably not needed
 func (m *MemoryStorage) GetConstraints() ([]*models.Feature3D, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	return m.constraints, nil
 }
 
+// TODO: Probably not needed
 func (m *MemoryStorage) MustGetConstraints() []*models.Feature3D {
 	c, err := m.GetConstraints()
 	if err != nil {
@@ -225,7 +235,7 @@ func (m *MemoryStorage) GetCostToRoot(w *models.Waypoint) (float64, error) {
 
 // ================================================================= Geometric helpers
 
-// Scan list of obstacle until you find someone that intersect
+// Scan full list of points until you find nearest one
 // O(N)
 func (m *MemoryStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, float64, error) {
 	// TODO: Just for visual debug
@@ -421,7 +431,7 @@ func (m *MemoryStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*mod
 	return in, line, nil
 }
 
-// Get intersection ponits (useful for AntPath)
+// Get intersection points (useful for AntPath)
 func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
 	// Divide line into point and then check if any individual point lies in polygon
 	quantizedLine := utils.DefaultResampleLineToInterval(p1, p2)

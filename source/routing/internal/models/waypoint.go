@@ -6,10 +6,16 @@ import (
 	"math"
 	"os"
 
+	"github.com/dhconnelly/rtreego"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geo"
 	"github.com/paulmach/orb/geojson"
 	"github.com/tidwall/geodesic"
+)
+
+const (
+	TOLERANCE = 0.01
+	NUM_SIDES = 32
 )
 
 type Waypoint struct {
@@ -130,17 +136,13 @@ func (w *Waypoint) MarshalJSON() ([]byte, error) {
 
 // CirclePolygon generates a polygon feature representing a circle around a waypoint
 // radius is in meters, numSides controls how smooth the circle approximation is
-func (w *Waypoint) CircleAroundWaypoint(radiusMeters float64, numSides int) *geojson.Feature {
-	if numSides < 8 {
-		numSides = 64 // ensure good approximation
-	}
-
+func (w *Waypoint) CircleAroundWaypoint(radiusMeters float64) *Feature3D {
 	centerPoint := w.Point2D()
 	radiusDeg := radiusMeters / 111320.0 // rough conversion meters->degrees (works for small areas)
 
-	ring := make(orb.Ring, numSides+1)
-	for i := 0; i <= numSides; i++ {
-		theta := 2 * math.Pi * float64(i) / float64(numSides)
+	ring := make(orb.Ring, NUM_SIDES+1)
+	for i := 0; i <= NUM_SIDES; i++ {
+		theta := 2 * math.Pi * float64(i) / float64(NUM_SIDES)
 		dx := radiusDeg * math.Cos(theta)
 		dy := radiusDeg * math.Sin(theta)
 
@@ -156,21 +158,22 @@ func (w *Waypoint) CircleAroundWaypoint(radiusMeters float64, numSides int) *geo
 	feature.Properties["center_lat"] = w.Lat
 	feature.Properties["center_lon"] = w.Lon
 	feature.Properties["radius_mt"] = radiusMeters
-	return feature
+
+	f, err := NewFeatureFromGeojsonFeature(feature)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
 
 // CirclePolygonGeodesic generates a geodesic-accurate circle polygon around a waypoint.
 // radiusMeters = circle radius, numSides = polygon smoothness
-func (w *Waypoint) CircleAroundWaypointGeodesic(radiusMeters float64, numSides int) *geojson.Feature {
-	if numSides < 8 {
-		numSides = 64
-	}
-
-	ring := make(orb.Ring, numSides+1)
+func (w *Waypoint) CircleAroundWaypointGeodesic(radiusMeters float64) *Feature3D {
+	ring := make(orb.Ring, NUM_SIDES+1)
 
 	// step around the circle bearings 0..360°
-	for i := 0; i <= numSides; i++ {
-		azi := 360.0 * float64(i) / float64(numSides) // bearing in degrees
+	for i := 0; i <= NUM_SIDES; i++ {
+		azi := 360.0 * float64(i) / float64(NUM_SIDES) // bearing in degrees
 
 		var lat, lon float64
 		geodesic.WGS84.Direct(w.Lat, w.Lon, azi, radiusMeters, &lat, &lon, nil)
@@ -185,12 +188,16 @@ func (w *Waypoint) CircleAroundWaypointGeodesic(radiusMeters float64, numSides i
 	feature.Properties["center_lon"] = w.Lon
 	feature.Properties["radius_m"] = radiusMeters
 
-	return feature
+	f, err := NewFeatureFromGeojsonFeature(feature)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
 
 // BoundingBoxAroundWaypoint creates a bounding box polygon feature around a waypoint.
 // Uses orb/geo.NewBoundAroundPoint (not a circle).
-func (w *Waypoint) BBoxAroundWaypoint(radiusMeters float64) *geojson.Feature {
+func (w *Waypoint) BBoxAroundWaypoint(radiusMeters float64) *Feature3D {
 	// orb expects radius in meters, and Point as [lon, lat]
 	pt := orb.Point{w.Lon, w.Lat}
 
@@ -214,7 +221,11 @@ func (w *Waypoint) BBoxAroundWaypoint(radiusMeters float64) *geojson.Feature {
 	feature.Properties["center_lon"] = w.Lon
 	feature.Properties["radius_m"] = radiusMeters
 
-	return feature
+	f, err := NewFeatureFromGeojsonFeature(feature)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
 
 func (w *Waypoint) GetLineString(w2 *Waypoint) orb.LineString {
@@ -226,6 +237,10 @@ func (w *Waypoint) GetLineStringFeature(w2 *Waypoint) *geojson.Feature {
 	return feature
 }
 
+func (w *Waypoint) GetLineStringFeature3D(w2 *Waypoint) *Feature3D {
+	return MustNewFeatureFromGeojsonFeature(w.GetLineStringFeature(w2))
+}
+
 func (w *Waypoint) GetLineStringBound(w2 *Waypoint) orb.Bound {
 	// TODO: Implement in a smarter way, since now if the line is diagonal it will create a very big BB
 	return w.GetLineString(w2).Bound()
@@ -233,4 +248,15 @@ func (w *Waypoint) GetLineStringBound(w2 *Waypoint) orb.Bound {
 
 func (w *Waypoint) GetLineStringBoundFeature(w2 *Waypoint) *geojson.Feature {
 	return geojson.NewFeature(w.GetLineString(w2).Bound())
+}
+
+// Implement rtreego.Spatial interface so to use waypoint with the rtree
+
+func (w *Waypoint) RTreePoint() rtreego.Point {
+	return rtreego.Point{w.Lon, w.Lat, w.Alt.Normalize().Value}
+}
+
+func (w *Waypoint) Bounds() rtreego.Rect {
+	// Create rtreego point
+	return w.RTreePoint().ToRect(TOLERANCE)
 }

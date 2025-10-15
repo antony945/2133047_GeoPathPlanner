@@ -12,6 +12,8 @@ require (
 	github.com/twpayne/go-geom v1.3.6
 )
 
+require github.com/dhconnelly/rtreego v1.2.0 // indirect
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/engelsjk/polygol v0.0.3 // direct
