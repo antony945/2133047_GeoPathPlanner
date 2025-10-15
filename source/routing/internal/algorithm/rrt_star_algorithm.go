@@ -61,7 +61,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 
 	// TODO: Parameters
 	// TODO: Think about not to use max_iterations directly, rather continue until a certain condition happen (e.g. cost of route stopped decreasing for a while) 
-	MAX_ITERATIONS := 5000
+	MAX_ITERATIONS := 10000
 	GOAL_BIAS := 0.10
 	SAMPLER := utils.NewGoalBiasSampler(
 		// utils.NewUniformSampler(),
@@ -100,9 +100,9 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 		if current_iter % 100 == 0 {
 			if goal_found {
 				route, _ := storage.GetPathToRoot(end)
-				cost_km := utils.TotalHaversineDistance(route)/1000
-				fmt.Printf("[%d/%d] k: %d, #wps: %d, #routeWps: %d, routeCost: %.3f km\n", current_iter, MAX_ITERATIONS, K, storage.WaypointsLen(), len(route), cost_km)
-				// fmt.Printf("[%d/%d] radius: %.2fmt, #wps: %d, cost: %.3f km\n", current_iter, MAX_ITERATIONS, R, len(route), cost_km)
+				cost_km := utils.TotalHaversineDistance(route)
+				fmt.Printf("[%d/%d] k: %d, #wps: %d, #routeWps: %d, routeCost: %.3f mt\n", current_iter, MAX_ITERATIONS, K, storage.WaypointsLen(), len(route), cost_km)
+				// fmt.Printf("[%d/%d] radius: %.2fmt, #wps: %d, cost: %.3f mt\n", current_iter, MAX_ITERATIONS, R, len(route), cost_km)
 			
 			} else {
 				fmt.Printf("[%d/%d] k: %d, #wps: %d, goal not found yet\n", current_iter, MAX_ITERATIONS, K, storage.WaypointsLen())
@@ -150,8 +150,8 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 		}
 		// if rewired && goal_found {
 		// 	route, _ := storage.GetPathToRoot(end)
-		// 	cost_km := utils.TotalHaversineDistance(route)/1000
-		// 	fmt.Printf("Rewired Tree\n#wps: %d, cost: %.3f km\n", len(route), cost_km)
+		// 	cost_km := utils.TotalHaversineDistance(route)
+		// 	fmt.Printf("Rewired Tree\n#wps: %d, cost: %.3f mt\n", len(route), cost_km)
 		// }
 
 		// 6. Check if it's goal
@@ -169,9 +169,9 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 				}
 				
 				route, _ := storage.GetPathToRoot(end)
-				cost_km := utils.TotalHaversineDistance(route)/1000
+				cost_km := utils.TotalHaversineDistance(route)
 				fmt.Printf("New goal found at iteration %d/%d.\n", current_iter, MAX_ITERATIONS)
-				fmt.Printf("#wps: %d, cost: %.3f km\n", len(route), cost_km)
+				fmt.Printf("#wps: %d, cost: %.3f mt\n", len(route), cost_km)
 				goal_found = true
 			}
 		}
