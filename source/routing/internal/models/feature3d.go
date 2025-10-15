@@ -234,7 +234,7 @@ func (c *Feature3D) ToPolygol() [][][][]float64 {
 // Implement rtreego.Spatial interface so to use waypoint with the rtree
 func (c *Feature3D) Bounds() rtreego.Rect {
 	// Create rtreego point
-	rect, err := rtreego.NewRectFromPoints(rtreego.Point{c.Bound().Min.Lon(), c.Bound().Min.Lat()}, rtreego.Point{c.Bound().Max.Lon(), c.Bound().Max.Lat()})
+	rect, err := rtreego.NewRectFromPoints(rtreego.Point{c.Bound().Min.Lon(), c.Bound().Min.Lat(), c.MinAltitude.Normalize().Value}, rtreego.Point{c.Bound().Max.Lon(), c.Bound().Max.Lat(), c.MaxAltitude.Normalize().Value})
 	if err != nil {
 		panic(err)
 	}

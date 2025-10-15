@@ -37,6 +37,13 @@ func FastDistance3D(p1, p2 *models.Waypoint) float64 {
 	return Distance3D(p1, p2, geo.Distance)
 }
 
+// EuclideanDistance3D calculates the 3D distance between two waypoints using euclidean distance (not geodesic). Returns result in mt.
+func EuclideanDistance3D(p1, p2 *models.Waypoint) float64 {
+	return Distance3D(p1, p2, func(p1, p2 orb.Point) float64 {
+		return math.Sqrt(math.Pow(p1.X()-p2.X(), 2) + math.Pow(p1.Y()-p2.Y(), 2))
+	})
+}
+
 func TotalHaversineDistance(wps []*models.Waypoint) float64 {
 	distance := 0.0
 	

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	TOLERANCE = 0.01
+	TOLERANCE = 0.0001
 	NUM_SIDES = 32
 )
 

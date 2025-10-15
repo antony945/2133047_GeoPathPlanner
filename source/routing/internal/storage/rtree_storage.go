@@ -17,7 +17,7 @@ const (
 
 type RTreeStorage struct {
 	// TODO: Think about using a list in case retrieving all waypoints at once is an important operation
-	// waypoints []*models.Waypoint
+	waypoints []*models.Waypoint
 	waypointsTree *rtreego.Rtree
 	constraintsTree *rtreego.Rtree
 	// TODO: Think if waypoints map is necessary or we could insert nodes in the RTree to avoid memory duplication
@@ -28,6 +28,7 @@ type RTreeStorage struct {
 
 func NewEmptyRTreeStorage() (*RTreeStorage, error) {
 	return &RTreeStorage{
+		waypoints: make([]*models.Waypoint, 0),
 		waypointsTree: rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR),
 		constraintsTree: rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR),
 	}, nil
@@ -58,6 +59,7 @@ func (r *RTreeStorage) Clear() error {
 }
 
 func (r *RTreeStorage) ClearWaypoints() error {
+	r.waypoints = make([]*models.Waypoint, 0)
 	r.waypointsMap = make(map[*models.Waypoint]*models.PointDist)
 	r.waypointsTree = rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR)
 	return nil
@@ -74,6 +76,7 @@ func (r *RTreeStorage) ConstraintsLen() int {
 // ---------------------------------------------------------------- WAYPOINTS
 
 func (r *RTreeStorage) AddWaypoint(w *models.Waypoint) error {
+	r.waypoints = append(r.waypoints, w)
 	r.waypointsTree.Insert(w)
 	return nil
 }
@@ -92,15 +95,13 @@ func (r *RTreeStorage) AddWaypoints(w_list []*models.Waypoint) error {
 }
 
 // TODO: Not efficient as it have to scan the keys of the map, think about maintaining an array if it's needed
+// Update: decided to maintain an array
 func (r *RTreeStorage) GetWaypoints() ([]*models.Waypoint, error) {
-	keys := make([]*models.Waypoint, 0, len(r.waypointsMap))
-	for w := range r.waypointsMap {
-		keys = append(keys, w)
-	}
-	return keys, nil
+	return r.waypoints, nil
 }
 
 // TODO: Not efficient as it have to scan the keys of the map, think about maintaining an array if it's needed
+// Update: decided to maintain an array
 func (r *RTreeStorage) MustGetWaypoints() []*models.Waypoint {
 	wps, err := r.GetWaypoints()
 	if err != nil {
@@ -237,6 +238,15 @@ func (r *RTreeStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, float
 		return nil, 0.0, errors.New("no waypoints")
 	}
 
+	// TODO: Debug
+	// fmt.Printf("wpsLen: %d\n", r.WaypointsLen())
+	// fmt.Printf("GEODISTANCES")
+	// for _, wp := range r.MustGetWaypoints() {
+	// 	fmt.Printf("GEO_HAV[%v, %v]: %.3f mt\n", p, wp, utils.HaversineDistance3D(p, wp))
+	// 	fmt.Printf("GEO_FAST[%v, %v]: %.3f mt\n", p, wp, utils.FastDistance3D(p, wp))
+	// 	fmt.Printf("EUCLIDEAN[%v, %v]: %.3f mt\n", p, wp, utils.EuclideanDistance3D(p, wp))
+	// }
+
 	// Use rtree functionalities to improve 1-nn search
 	nearest := r.waypointsTree.NearestNeighbor(p.RTreePoint()).(*models.Waypoint)
 	minDist := utils.HaversineDistance3D(p, nearest)
@@ -286,6 +296,11 @@ func (r *RTreeStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Wayp
 		result = append(result, wp)
 		distances = append(distances, utils.HaversineDistance3D(p, wp))
 	}
+
+	// TODO: Just for debug
+	// for i, d := range distances {
+	// 	fmt.Printf("distance[%d]: %f mt\n", i, d)
+	// }
 
 	return result, distances, nil
 }

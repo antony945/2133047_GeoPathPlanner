@@ -1,23 +1,31 @@
 package storage_test
 
 import (
+	"fmt"
 	"geopathplanner/routing/internal/models"
 	"geopathplanner/routing/internal/storage"
 	"geopathplanner/routing/internal/utils"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMemoryStorage_NearestPoint(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
+  high, _ := models.NewAltitude(1000, models.MT)
+
 	w := models.MustNewWaypoint(4, 40.41470804648725, -3.7105863826680263, a)
 
 	w2 := models.MustNewWaypoint(5, 40.4196041474128, -3.711548885387799, a)
+
+  w_close2dbuthigh := models.MustNewWaypoint(6, 40.41521155294711, -3.709898376035113, high)
 	
 	w_list := []*models.Waypoint{
 		models.MustNewWaypoint(0, 40.41916768849225, -3.71113552992486, a),
 		models.MustNewWaypoint(1, 40.4196554439028, -3.7156507406992887, a),
 		models.MustNewWaypoint(2, 40.41656626657965, -3.7131795780455263, a),
 		models.MustNewWaypoint(3, 40.42051481387966, -3.7107084153917924, a),
+    w_close2dbuthigh,
 	}
 	
 	c_list := []*models.Feature3D{
@@ -185,6 +193,7 @@ func TestMemoryStorage_NearestPoint(t *testing.T) {
 		{ name: "MEMORY - Find NearestPoint to external point", w_list: w_list, c_list: c_list, p: w, want: w_list[2], wantErr: false, },
 		{ name: "MEMORY - Find NearestPoint to external point - closer", w_list: w_list, c_list: c_list, p: w2, want: w_list[0], wantErr: false, },
 		{ name: "MEMORY - Find NearestPoint to internal point", w_list: w_list, c_list: c_list, p: w_list[0], want: w_list[0], wantErr: false, },
+		{ name: "MEMORY - Find NearestPoint to external point in presence of a 2d but not 3d nearest", w_list: w_list, c_list: c_list, p: w, want: w_list[2], wantErr: false, },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -192,7 +201,8 @@ func TestMemoryStorage_NearestPoint(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			got, _, gotErr := m.NearestPoint(tt.p)
+			got, dist, gotErr := m.NearestPoint(tt.p)
+      fmt.Printf("nearest dist: %f mt\n", dist)
 
 			// TODO: For visually testing, export results in geojson
 			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false)
@@ -390,12 +400,12 @@ func TestMemoryStorage_KNearestPoints(t *testing.T) {
 		want    []*models.Waypoint
 		wantErr bool
 	}{
-		{ name: "MEMORY - KNN - external point - k=0", w_list: w_list, c_list: c_list, p: w, k: 0, wantErr: false },
-		{ name: "MEMORY - KNN - external point - k=1", w_list: w_list, c_list: c_list, p: w2, k: 1, wantErr: false },
-		{ name: "MEMORY - KNN - external point - k=3", w_list: w_list, c_list: c_list, p: w2, k: 3, wantErr: false },
-		{ name: "MEMORY - KNN - external point - k>#wps", w_list: w_list, c_list: c_list, p: w2, k: 7, wantErr: false },
-		{ name: "MEMORY - KNN - internal point - k=1", w_list: w_list, c_list: c_list, p: w_list[0], k: 1, wantErr: false },
-		{ name: "MEMORY - KNN - internal point - k=2", w_list: w_list, c_list: c_list, p: w_list[0], k: 2, wantErr: false },
+		{ name: "MEMORY - KNN - external point - k=0", w_list: w_list, c_list: c_list, p: w, k: 0, want: []*models.Waypoint{}, wantErr: false },
+		{ name: "MEMORY - KNN - external point - k=1", w_list: w_list, c_list: c_list, p: w2, k: 1, want: []*models.Waypoint{w_list[0]}, wantErr: false },
+		{ name: "MEMORY - KNN - external point - k=3", w_list: w_list, c_list: c_list, p: w2, k: 3, want: []*models.Waypoint{w_list[0], w_list[3], w_list[1]}, wantErr: false },
+		{ name: "MEMORY - KNN - external point - k>#wps", w_list: w_list, c_list: c_list, p: w2, k: 7, want: []*models.Waypoint{w_list[0], w_list[3], w_list[1], w_list[2]}, wantErr: false },
+		{ name: "MEMORY - KNN - internal point - k=1", w_list: w_list, c_list: c_list, p: w_list[0], k: 1, want: []*models.Waypoint{w_list[0]}, wantErr: false },
+		{ name: "MEMORY - KNN - internal point - k=2", w_list: w_list, c_list: c_list, p: w_list[0], k: 2, want: []*models.Waypoint{w_list[0], w_list[3]}, wantErr: false },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -403,7 +413,7 @@ func TestMemoryStorage_KNearestPoints(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			_, _, gotErr := m.KNearestPoints(tt.p, tt.k)
+			got, _, gotErr := m.KNearestPoints(tt.p, tt.k)
 
 			// TODO: For visually testing, export results in geojson
 			utils.ExportToGeoJSON("storage", append(tt.w_list, tt.p), tt.c_list, tt.name, false)
@@ -416,6 +426,11 @@ func TestMemoryStorage_KNearestPoints(t *testing.T) {
 			}
 			if tt.wantErr {
 				t.Fatal("KNearestPoints() succeeded unexpectedly")
+			}
+
+      // TODO: update the condition below to compare got with tt.want.
+      if !assert.ElementsMatch(t, got, tt.want) {
+				t.Errorf("KNearestPoints() = %v, want %v", got, tt.want)
 			}
 		})
 	}
