@@ -16,7 +16,7 @@ func NewRRTAlgorithm() (*RRTAlgorithm, error) {
 }
 
 // TODO: Implement RRT Algorithm
-func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D, parameters map[string]any, storage storage.Storage) ([]*models.Waypoint, float64, error) {
+func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D, parameters map[string]any, storageType models.StorageType) ([]*models.Waypoint, float64, error) {
 	// Create empty list of wps
 	route := make([]*models.Waypoint, 0)
 	cost := 0.0
@@ -25,8 +25,13 @@ func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*mode
 	route = append(route, waypoints[0])
 	
 	// TODO: Buffer constraints
-	// 1. Load constraint into storage
-	err := storage.AddConstraints(constraints)
+	// TODO: Think about creating and adding constraints in Run function so to parallelize that function
+	// 1. Create storage and load constraint into it
+	storage, err := storage.NewEmptyStorage(storageType)
+	if err != nil {
+		return nil, 0.0, err
+	}
+	err = storage.AddConstraints(constraints)
 	if err != nil {
 		return nil, 0.0, err
 	}
@@ -42,12 +47,18 @@ func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*mode
 		route = append(route, tmpRoute[1:]...)
 		cost += tmpCost
 	}
+
+	// TODO: Think if this is the correct place
+	storage.Clear()
 	
 	// 3. Return everything
 	return route, cost, nil
 }
 
 func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Waypoint, parameters map[string]any, storage storage.Storage) ([]*models.Waypoint, float64, error) {
+	// TODO: Think if this is the correct place
+	storage.ClearWaypoints()
+	
 	// HERE IMPLEMENT RRT
 	// start from start
 	// sample a new free wp
@@ -58,8 +69,6 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 	// check if connection from free to goal is possible
 	// if yes break from the loop, if not continue
 
-	// TODO: Think if this is the correct place
-	storage.ClearWaypoints()
 	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
 
 	// TODO: Parameters

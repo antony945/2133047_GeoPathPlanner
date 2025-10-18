@@ -28,6 +28,7 @@ type RTreeStorage struct {
 
 func NewEmptyRTreeStorage() (*RTreeStorage, error) {
 	return &RTreeStorage{
+		waypointsMap: make(map[*models.Waypoint]*models.PointDist),
 		waypoints: make([]*models.Waypoint, 0),
 		waypointsTree: rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR),
 		constraintsTree: rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR),

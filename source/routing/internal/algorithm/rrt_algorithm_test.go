@@ -853,13 +853,8 @@ func TestRRTAlgorithm_Compute(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
-			
-			s, err := storage.NewEmptyStorage(tt.storageType)
-			if err != nil {
-				t.Fatalf("could not construct storage: %v", err)
-			}
 
-			got, _, gotErr := a.Compute(tt.searchVolume, tt.waypoints, tt.constraints, nil, s)
+			got, _, gotErr := a.Compute(tt.searchVolume, tt.waypoints, tt.constraints, nil, tt.storageType)
 
 			// TODO: For visually testing, export results in geojson
       utils.MarkWaypointsAsOriginal(tt.waypoints...)

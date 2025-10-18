@@ -119,6 +119,14 @@ func ExportToGeoJSONRoute(folder string, route []*models.Waypoint, constraints [
 		fc = CreateFeatureCollection(route, constraints, true, ignoreIntermediateWaypoints, searchVolume.Feature)
 	}
 
+	// TODO: Reset all properties of waypoints
+	for _, wp := range route {
+		delete(wp.Feature.Properties, "parameter")
+		delete(wp.Feature.Properties, "near")
+		delete(wp.Feature.Properties, "nearest")
+		delete(wp.Feature.Properties, "inside")
+	}
+
 	// Marshal collection
 	data, err := json.MarshalIndent(fc, "", "  ")
 	if err != nil {
@@ -135,14 +143,6 @@ func ExportToGeoJSONRoute(folder string, route []*models.Waypoint, constraints [
 	outPath := filepath.Join(outDir, filename+".geojson")
 	if err := os.WriteFile(outPath, data, 0644); err != nil {
 		return fmt.Errorf("write file: %w", err)
-	}
-
-	// TODO: Reset all properties of waypoints
-	for _, wp := range route {
-		delete(wp.Feature.Properties, "parameter")
-		delete(wp.Feature.Properties, "near")
-		delete(wp.Feature.Properties, "nearest")
-		delete(wp.Feature.Properties, "inside")
 	}
 
 	return nil
