@@ -60,6 +60,8 @@ func NewStorage(w_list []*models.Waypoint, c_list []*models.Feature3D, storageTy
 	switch storageType {
 		case models.Memory:
 			return NewMemoryStorage(w_list, c_list)
+		case models.RTree:
+			return NewRTreeStorage(w_list, c_list)
 		case models.Redis:
 			return nil, fmt.Errorf("storage currently not implemented: %s", storageType)
 		default:

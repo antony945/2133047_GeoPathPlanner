@@ -8,9 +8,15 @@ import (
 	"math"
 )
 
+const (
+	K_INIT float64 = 2*math.E
+	R_INIT_MT float64 = 2.0
+)
+
 type RRTStarAlgorithm struct {
 	*RRTAlgorithm
 }
+
 
 func NewRRTStarAlgorithm() (*RRTStarAlgorithm, error) {
 	a, err := NewRRTAlgorithm()
@@ -69,27 +75,8 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 
 	// TODO: Parameters
 	// TODO: Think about not to use max_iterations directly, rather continue until a certain condition happen (e.g. cost of route stopped decreasing for a while) 
-	MAX_ITERATIONS := 20000
-	GOAL_BIAS := 0.10
-	SAMPLER := utils.NewGoalBiasSampler(
-		// utils.NewUniformSampler(),
-		// utils.NewUniformSamplerWithSeed(945),
-		utils.NewHaltonSampler(),
-		end,
-		GOAL_BIAS,
-	)
-	STEP_SIZE_MT := 10.0
-	K_INIT := 2*math.E
-	R_INIT_MT := 2.0
-
-	fmt.Printf("PARAMETERS\n")
-	fmt.Printf("max_iterations: %d\n", MAX_ITERATIONS)
-	fmt.Printf("step_size_mt: %f\n", STEP_SIZE_MT)
-	fmt.Printf("goal_bias: %f\n", GOAL_BIAS)
-	fmt.Printf("sampler: %+v\n", SAMPLER)
-	fmt.Printf("k_init: %d\n", int(K_INIT))
-	fmt.Printf("r_init_mt: %f\n", R_INIT_MT)
-	fmt.Printf("--------------------------------------------------------\n")
+	// Get Parameters
+	sampler, max_iterations, step_size_mt, _ := a.GetParameters(parameters, end)
 
 	// Add start to storage
 	err := storage.AddWaypointWithPrevious(nil, start)
@@ -100,26 +87,26 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 
 	// ------------------------------------------------------------------------------------------------------
 
-	for current_iter := range MAX_ITERATIONS {
+	for current_iter := range max_iterations {
 		// Change K according to cardinality of V (no. of nodes)
 		K := int(K_INIT * math.Log(float64(storage.WaypointsLen())))+1
-		// R := math.Max(R_INIT_MT * math.Sqrt(math.Log(float64(storage.WaypointsLen()))/float64(storage.WaypointsLen())), STEP_SIZE_MT)
+		// R := math.Max(R_INIT_MT * math.Sqrt(math.Log(float64(storage.WaypointsLen()))/float64(storage.WaypointsLen())), step_size_mt)
 
 		if current_iter % 100 == 0 {
 			if goal_found {
 				route, _ := storage.GetPathToRoot(end)
 				cost_km := utils.TotalHaversineDistance(route)
-				fmt.Printf("[%d/%d] k: %d, #wps: %d, #routeWps: %d, routeCost: %.3f mt\n", current_iter, MAX_ITERATIONS, K, storage.WaypointsLen(), len(route), cost_km)
+				fmt.Printf("[%d/%d] k: %d, #wps: %d, #routeWps: %d, routeCost: %.3f mt\n", current_iter, max_iterations, K, storage.WaypointsLen(), len(route), cost_km)
 				// fmt.Printf("[%d/%d] radius: %.2fmt, #wps: %d, cost: %.3f mt\n", current_iter, MAX_ITERATIONS, R, len(route), cost_km)
 			
 			} else {
-				fmt.Printf("[%d/%d] k: %d, #wps: %d, goal not found yet\n", current_iter, MAX_ITERATIONS, K, storage.WaypointsLen())
+				fmt.Printf("[%d/%d] k: %d, #wps: %d, goal not found yet\n", current_iter, max_iterations, K, storage.WaypointsLen())
 				// fmt.Printf("[%d/%d] radius: %.2fmt, goal not found yet\n", current_iter, MAX_ITERATIONS, R)
 			}
 		}
 
 		// 1. Sample a new free wp
-		sampled, err := storage.SampleFree(SAMPLER, searchVolume, start.Alt)
+		sampled, err := storage.SampleFree(sampler, searchVolume, start.Alt)
 		if err != nil {
 			// Impossible to sample 
 			return nil, 0.0, err
@@ -131,8 +118,8 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 			return nil, 0.0, err
 		}
 
-		// 3. Find wp starting from nearest in direction of sampled at distance (steering) STEP_SIZE_MT
-		new := utils.GetPointInDirectionAtDistance(nearest, sampled, STEP_SIZE_MT)
+		// 3. Find wp starting from nearest in direction of sampled at distance (steering) step_size_mt
+		new := utils.GetPointInDirectionAtDistance(nearest, sampled, step_size_mt)
 
 		// 4. Check if connection from nearest to new is possible
 		isInObstacles, _, err := storage.IsLineInObstacles(nearest, new)
@@ -163,7 +150,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 		// }
 
 		// 6. Check if it's goal
-		if !goal_found && a.isGoal(new, end, STEP_SIZE_MT) {
+		if !goal_found && a.isGoal(new, end, step_size_mt) {
 			// 7. Check if can be connected to goal
 			isInObstacles, _, err := storage.IsLineInObstacles(new, end)
 			if err != nil {
@@ -178,7 +165,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 				
 				route, _ := storage.GetPathToRoot(end)
 				cost_km := utils.TotalHaversineDistance(route)
-				fmt.Printf("New goal found at iteration %d/%d.\n", current_iter, MAX_ITERATIONS)
+				fmt.Printf("New goal found at iteration %d/%d.\n", current_iter, max_iterations)
 				fmt.Printf("#wps: %d, cost: %.3f mt\n", len(route), cost_km)
 				goal_found = true
 			}
@@ -194,8 +181,38 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 		cost := utils.TotalHaversineDistance(route)
 		return route, cost, nil
 	} else {
-		return nil, 0.0, fmt.Errorf("goal not found with %d iterations", MAX_ITERATIONS)
+		return nil, 0.0, fmt.Errorf("goal not found with %d iterations", max_iterations)
 	}
+}
+
+func (a *RRTStarAlgorithm) GetParameters(parameters map[string]any, goal *models.Waypoint) (utils.Sampler, int, float64, float64) {
+	SAMPLER, MAX_ITERATIONS, STEP_SIZE_MT, GOAL_BIAS := a.RRTAlgorithm.GetParameters(parameters, goal)
+	
+	// TODO: Add other parameters or change defaults
+	// MAX_ITERATIONS := 10000
+	// GOAL_BIAS := 0.10
+	// SAMPLER := utils.NewGoalBiasSampler(
+	// 	utils.NewUniformSamplerWithSeed(945),
+	// 	// utils.NewHaltonSampler(),
+	// 	goal,
+	// 	GOAL_BIAS,
+	// )
+	// STEP_SIZE_MT := 10.0
+
+	// fmt.Printf("PARAMETERS\n")
+	// fmt.Printf("max_iterations: %d\n", MAX_ITERATIONS)
+	// fmt.Printf("step_size_mt: %f\n", STEP_SIZE_MT)
+	// fmt.Printf("goal_bias: %f\n", GOAL_BIAS)
+	// fmt.Printf("sampler: %+v\n", SAMPLER)
+	// fmt.Printf("--------------------------------------------------------\n")
+
+	
+	
+	fmt.Printf("k_init: %d\n", int(math.Floor(K_INIT)))
+	fmt.Printf("r_init_mt: %f\n", R_INIT_MT)
+	fmt.Printf("--------------------------------------------------------\n")
+
+	return SAMPLER, MAX_ITERATIONS, STEP_SIZE_MT, GOAL_BIAS
 }
 
 func (a *RRTStarAlgorithm) ConnectAndRewire(new, nearest *models.Waypoint, k int, storage storage.Storage) (bool, error) {

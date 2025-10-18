@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"geopathplanner/routing/internal/models"
 	"math/rand"
 	"time"
@@ -15,6 +16,17 @@ type Sampler interface {
 	SampleZ(minZ, maxZ float64) float64
 }
 
+func NewSampler(samplerType models.SamplerType, seed ...int64) (Sampler, error) {
+	switch samplerType {
+		case models.Uniform:
+			return NewUniformSampler(seed...), nil
+		case models.Halton:
+			return NewHaltonSampler(), nil
+		default:
+			return nil, fmt.Errorf("samplerType not recognized: %s", samplerType)
+	}
+}
+
 // ------------------------------------------------------
 
 // TODO: Test uniform sampler
@@ -22,16 +34,22 @@ type UniformSampler struct {
 	r *rand.Rand
 }
 
-func NewUniformSampler() *UniformSampler {
-	return &UniformSampler{
+func NewUniformSampler(seed ...int64) *UniformSampler {
+	// check if there is seed or no
+	s := &UniformSampler{
 		r: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
+
+	if seed != nil {
+		s.setSeed(seed[0])
+	}
+	
+	return s
 }
 
-func NewUniformSamplerWithSeed(seed int64) *UniformSampler {
-	return &UniformSampler{
-		r: rand.New(rand.NewSource(seed)),
-	}
+func (s *UniformSampler) setSeed(seed int64) *UniformSampler {
+	s.r = rand.New(rand.NewSource(seed))
+	return s
 }
 
 func (s *UniformSampler) SampleXY(minX, maxX, minY, maxY float64) (float64, float64) {

@@ -71,23 +71,8 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 
 	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
 
-	// TODO: Parameters
-	MAX_ITERATIONS := 10000
-	GOAL_BIAS := 0.10
-	SAMPLER := utils.NewGoalBiasSampler(
-		utils.NewUniformSamplerWithSeed(945),
-		// utils.NewHaltonSampler(),
-		end,
-		GOAL_BIAS,
-	)
-	STEP_SIZE_MT := 10.0
-
-	fmt.Printf("PARAMETERS\n")
-	fmt.Printf("max_iterations: %d\n", MAX_ITERATIONS)
-	fmt.Printf("step_size_mt: %f\n", STEP_SIZE_MT)
-	fmt.Printf("goal_bias: %f\n", GOAL_BIAS)
-	fmt.Printf("sampler: %+v\n", SAMPLER)
-	fmt.Printf("--------------------------------------------------------\n")
+	// Get Parameters
+	sampler, max_iterations, step_size_mt, _ := a.GetParameters(parameters, end)
 
 	// Add start to storage
 	err := storage.AddWaypointWithPrevious(nil, start)
@@ -98,9 +83,9 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 
 	// ------------------------------------------------------------------------------------------------------	
 	
-	for current_iter := range MAX_ITERATIONS {
+	for current_iter := range max_iterations {
 		// 1. Sample a new free wp
-		sampled, err := storage.SampleFree(SAMPLER, searchVolume, start.Alt)
+		sampled, err := storage.SampleFree(sampler, searchVolume, start.Alt)
 		if err != nil {
 			// Impossible to sample 
 			return nil, 0.0, err
@@ -113,7 +98,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 		}
 
 		// 3. Find wp starting from nearest in direction of sampled at distance (steering) STEP_SIZE_MT
-		new := utils.GetPointInDirectionAtDistance(nearest, sampled, STEP_SIZE_MT)
+		new := utils.GetPointInDirectionAtDistance(nearest, sampled, step_size_mt)
 
 		// 4. Check if connection from nearest to new is possible
 		isInObstacles, _, err := storage.IsLineInObstacles(nearest, new)
@@ -132,7 +117,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 		}
 
 		// 6. Check if it's goal
-		if a.isGoal(new, end, STEP_SIZE_MT) {
+		if a.isGoal(new, end, step_size_mt) {
 			// 7. Check if can be connected to goal
 			isInObstacles, _, err := storage.IsLineInObstacles(new, end)
 			if err != nil {
@@ -145,7 +130,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 					return nil, 0.0, err
 				}
 				goal_found = true
-				fmt.Printf("Goal found at iteration %d/%d.\n\n", current_iter, MAX_ITERATIONS)
+				fmt.Printf("Goal found at iteration %d/%d.\n\n", current_iter, max_iterations)
 				break
 			}
 		}
@@ -165,8 +150,38 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 		cost := utils.TotalHaversineDistance(route)
 		return route, cost, nil
 	} else {
-		return nil, 0.0, fmt.Errorf("goal not found with %d iterations", MAX_ITERATIONS)
+		return nil, 0.0, fmt.Errorf("goal not found with %d iterations", max_iterations)
 	}
+}
+
+func (a *RRTAlgorithm) GetParameters(parameters map[string]any, goal *models.Waypoint) (utils.Sampler, int, float64, float64) {
+	// TODO: Take parameters from the actual map, and use defaults if not found
+	MAX_ITERATIONS := utils.GetOrDefault(parameters, "max_iterations", 20000)
+	GOAL_BIAS := utils.GetOrDefault(parameters, "goal_bias", 0.10)
+	STEP_SIZE_MT := utils.GetOrDefault(parameters, "goal_bias", 10.0)
+	SAMPLER_TYPE := utils.GetOrDefault(parameters, "sampler_type", models.Uniform)
+	SEED := utils.GetOrDefault(parameters, "seed", 945)
+
+	// use sampler_type and sampler_seed
+	base_sampler, err := utils.NewSampler(SAMPLER_TYPE, int64(SEED))
+	if err != nil {
+		// TODO: HANDLE THIS
+	}
+
+	SAMPLER := utils.NewGoalBiasSampler(
+		base_sampler,
+		goal,
+		GOAL_BIAS,
+	)
+
+	fmt.Printf("PARAMETERS\n")
+	fmt.Printf("max_iterations: %d\n", MAX_ITERATIONS)
+	fmt.Printf("step_size_mt: %f\n", STEP_SIZE_MT)
+	fmt.Printf("goal_bias: %f\n", GOAL_BIAS)
+	fmt.Printf("sampler: %+v\n", SAMPLER)
+	fmt.Printf("--------------------------------------------------------\n")
+
+	return SAMPLER, MAX_ITERATIONS, STEP_SIZE_MT, GOAL_BIAS
 }
 
 func (a *RRTAlgorithm) isGoal(w, goal *models.Waypoint, tolerance_mt float64) bool {

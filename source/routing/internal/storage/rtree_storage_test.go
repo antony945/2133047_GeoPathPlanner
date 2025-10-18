@@ -1294,7 +1294,7 @@ func TestRTreeStorage_SampleFree(t *testing.T) {
     sampleVolume *models.Feature3D
     alt models.Altitude
 	}{
-		{ name: "RTREE - SampleFree with obstacles - uniform", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewUniformSamplerWithSeed(10), sampleVolume: search_volume, alt: a},
+		{ name: "RTREE - SampleFree with obstacles - uniform", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewUniformSampler(10), sampleVolume: search_volume, alt: a},
     { name: "RTREE - SampleFree with obstacles - halton", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewHaltonSampler(), sampleVolume: search_volume, alt: a},
 	}
 	for _, tt := range tests {
