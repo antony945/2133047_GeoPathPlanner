@@ -36,12 +36,39 @@ func _sublineInPolygon(quantizedLine []int, target int, start, end int) bool {
 	return false
 }
 
+type Int interface {
+	Func()
+	InnerFunc()
+}
+
+type ClassA struct {}
+
+func (c *ClassA) Func() {
+	fmt.Printf("ClassA - Func\n")
+	c.InnerFunc()
+}
+
+func (c *ClassA) InnerFunc() {
+	fmt.Printf("ClassA - InnerFunc\n")
+}
+
+type ClassB struct {
+	*ClassA
+}
+
+func (c *ClassB) InnerFunc() {
+	fmt.Printf("ClassB - InnerFunc\n")
+}
+
 func main() {
-	s := []int{2, 3, 5, 7, 11, 13, 20, 15, 10, 6, 55}
-	printSlice(s)
+	a := &ClassA{}
+	b := &ClassB{
+		ClassA: &ClassA{},
+	}
 
-	start := 0
-	end := len(s)-1
+	var intA Int = a
+	var intB Int = b
 
-	_sublineInPolygon(s, 14, start, end)
+	intA.Func()
+	intB.Func()
 }

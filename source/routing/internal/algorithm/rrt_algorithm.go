@@ -11,11 +11,9 @@ type RRTAlgorithm struct {
 }
 
 func NewRRTAlgorithm() (*RRTAlgorithm, error) {
-	// TODO: To implement
 	return &RRTAlgorithm{}, nil
 }
 
-// TODO: Implement RRT Algorithm
 func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D, parameters map[string]any, storageType models.StorageType) ([]*models.Waypoint, float64, error) {
 	// Create empty list of wps
 	route := make([]*models.Waypoint, 0)
@@ -38,7 +36,7 @@ func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*mode
 
 	// 2. For each pair of wp -> run rrt
 	for i := 0; i < len(waypoints)-1; i++ {
-		tmpRoute, tmpCost, err := a.Run(searchVolume, waypoints[i], waypoints[i+1], parameters, storage)
+		tmpRoute, tmpCost, err := a.Run(searchVolume, waypoints[i], waypoints[i+1], parameters, storage.Clone())
 		if err != nil {
 			// Return route until now
 			return route, cost, fmt.Errorf("interrupted RRT for error between wp[%d] and wp[%d]: %w", i, i+1, err)

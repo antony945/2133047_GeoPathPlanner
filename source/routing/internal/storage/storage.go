@@ -15,6 +15,8 @@ type Storage interface {
 
 	AddConstraint(c *models.Feature3D) error
 	AddConstraints(c_list []*models.Feature3D) error
+	GetConstraints() ([]*models.Feature3D, error)
+	MustGetConstraints() ([]*models.Feature3D)
 
 	WaypointsLen() int
 	
@@ -22,6 +24,9 @@ type Storage interface {
 	
 	Clear() error // Clear temporary data for a request
 	ClearWaypoints() error
+	ClearConstraints() error
+
+	Clone() Storage // Clone storage
 
 	AddWaypointWithPrevious(prev *models.Waypoint, w *models.Waypoint) error	
 	ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error

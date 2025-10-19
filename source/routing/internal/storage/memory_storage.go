@@ -49,9 +49,16 @@ func (m *MemoryStorage) Clear() error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 
-	// TODO: Think about putting them to nil
-	m.constraints = make([]*models.Feature3D, 0)
+	if err := m.ClearConstraints(); err != nil {
+		return err
+	}
+
 	return m.ClearWaypoints()
+}
+
+func (m *MemoryStorage) ClearConstraints() error {
+	m.constraints = make([]*models.Feature3D, 0)
+	return nil
 }
 
 func (m *MemoryStorage) ClearWaypoints() error {
@@ -66,6 +73,14 @@ func (m *MemoryStorage) WaypointsLen() int {
 
 func (m *MemoryStorage) ConstraintsLen() int {
 	return len(m.constraints)
+}
+
+func (m *MemoryStorage) Clone() Storage {
+	mClone, err := NewMemoryStorage(m.MustGetWaypoints(), m.MustGetConstraints())
+	if err != nil {
+		panic(err)
+	}
+	return mClone
 }
 
 // ---------------------------------------------------------------- WAYPOINTS
@@ -126,14 +141,12 @@ func (m *MemoryStorage) AddConstraints(c_list []*models.Feature3D) error {
 	return nil
 }
 
-// TODO: Probably not needed
 func (m *MemoryStorage) GetConstraints() ([]*models.Feature3D, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	return m.constraints, nil
 }
 
-// TODO: Probably not needed
 func (m *MemoryStorage) MustGetConstraints() []*models.Feature3D {
 	c, err := m.GetConstraints()
 	if err != nil {

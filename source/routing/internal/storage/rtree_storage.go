@@ -10,29 +10,28 @@ import (
 )
 
 const (
-	SPATIAL_DIMENSION = 2
-	MINIMUM_BRANCHING_FACTOR = 25
-	MAXIMUM_BRANCHING_FACTOR = 50
+	SPATIAL_DIMENSION int = 2
+	MINIMUM_BRANCHING_FACTOR int = 25
+	MAXIMUM_BRANCHING_FACTOR int = 50
 )
 
 type RTreeStorage struct {
-	// TODO: Think about using a list in case retrieving all waypoints at once is an important operation
-	waypoints []*models.Waypoint
+	*MemoryStorage
 	waypointsTree *rtreego.Rtree
 	constraintsTree *rtreego.Rtree
-	// TODO: Think if waypoints map is necessary or we could insert nodes in the RTree to avoid memory duplication
-	waypointsMap map[*models.Waypoint]*models.PointDist
 }
 
 // ---------------------------------------------------------------- CONSTRUCTORS
 
 func NewEmptyRTreeStorage() (*RTreeStorage, error) {
-	return &RTreeStorage{
-		waypointsMap: make(map[*models.Waypoint]*models.PointDist),
-		waypoints: make([]*models.Waypoint, 0),
+	rs := &RTreeStorage{
 		waypointsTree: rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR),
 		constraintsTree: rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR),
-	}, nil
+	}
+	
+	var err error
+	rs.MemoryStorage, err = NewEmptyMemoryStorage()
+	return rs, err
 }
 
 func NewRTreeStorage(w_list []*models.Waypoint, c_list []*models.Feature3D) (*RTreeStorage, error) {
@@ -55,15 +54,21 @@ func NewRTreeStorage(w_list []*models.Waypoint, c_list []*models.Feature3D) (*RT
 // ---------------------------------------------------------------- GENERAL
 
 func (r *RTreeStorage) Clear() error {
-	r.constraintsTree = rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR)
+	if err := r.ClearConstraints(); err != nil {
+		return err
+	}
+
 	return r.ClearWaypoints()
 }
 
+func (r *RTreeStorage) ClearConstraints() error {
+	r.constraintsTree = rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR)
+	return r.MemoryStorage.ClearConstraints()
+}
+
 func (r *RTreeStorage) ClearWaypoints() error {
-	r.waypoints = make([]*models.Waypoint, 0)
-	r.waypointsMap = make(map[*models.Waypoint]*models.PointDist)
 	r.waypointsTree = rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR)
-	return nil
+	return r.MemoryStorage.ClearWaypoints()
 }
 
 func (r *RTreeStorage) WaypointsLen() int {
@@ -74,12 +79,19 @@ func (r *RTreeStorage) ConstraintsLen() int {
 	return r.constraintsTree.Size()
 }
 
+func (r *RTreeStorage) Clone() Storage {
+	rClone, err := NewRTreeStorage(r.MustGetWaypoints(), r.MustGetConstraints())
+	if err != nil {
+		panic(err)
+	}
+	return rClone
+}
+
 // ---------------------------------------------------------------- WAYPOINTS
 
-func (r *RTreeStorage) AddWaypoint(w *models.Waypoint) error {
-	r.waypoints = append(r.waypoints, w)
+func (r *RTreeStorage) AddWaypoint(w *models.Waypoint) error {	
 	r.waypointsTree.Insert(w)
-	return nil
+	return r.MemoryStorage.AddWaypoint(w)
 }
 
 func (r *RTreeStorage) AddWaypoints(w_list []*models.Waypoint) error {
@@ -95,13 +107,11 @@ func (r *RTreeStorage) AddWaypoints(w_list []*models.Waypoint) error {
 	return nil
 }
 
-// TODO: Not efficient as it have to scan the keys of the map, think about maintaining an array if it's needed
 // Update: decided to maintain an array
 func (r *RTreeStorage) GetWaypoints() ([]*models.Waypoint, error) {
-	return r.waypoints, nil
+	return r.MemoryStorage.GetWaypoints()
 }
 
-// TODO: Not efficient as it have to scan the keys of the map, think about maintaining an array if it's needed
 // Update: decided to maintain an array
 func (r *RTreeStorage) MustGetWaypoints() []*models.Waypoint {
 	wps, err := r.GetWaypoints()
@@ -115,7 +125,7 @@ func (r *RTreeStorage) MustGetWaypoints() []*models.Waypoint {
 
 func (r *RTreeStorage) AddConstraint(c *models.Feature3D) error {
 	r.constraintsTree.Insert(c)
-	return nil
+	return r.MemoryStorage.AddConstraint(c)
 }
 
 func (r *RTreeStorage) AddConstraints(c_list []*models.Feature3D) error {
@@ -131,6 +141,18 @@ func (r *RTreeStorage) AddConstraints(c_list []*models.Feature3D) error {
 	return nil
 }
 
+func (r *RTreeStorage) GetConstraints() ([]*models.Feature3D, error) {
+	return r.MemoryStorage.GetConstraints()
+}
+
+func (r *RTreeStorage) MustGetConstraints() []*models.Feature3D {
+	wps, err := r.GetConstraints()
+	if err != nil {
+		panic(err)
+	}
+	return wps
+}
+
 // ================================================================= RRT
 
 func (r *RTreeStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models.Waypoint) error {
@@ -143,85 +165,21 @@ func (r *RTreeStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models.
 }
 
 func (r *RTreeStorage) ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error {
-	distance := 0.0
-	if new_prev != nil {
-		distance = utils.HaversineDistance3D(new_prev, w)
-	}
-	
-	// Just add it to the map
-	prev, ok := r.waypointsMap[w]
-	if !ok {
-		// w never added to the map, add it
-		r.waypointsMap[w] = models.NewPointDist(new_prev, distance)
-	} else {
-		// w already added
-		prev.Point = new_prev
-		prev.Distance = distance
-		r.waypointsMap[w] = prev
-	}
-	
-	return nil
+	return r.MemoryStorage.ChangePrevious(new_prev, w)
 }
 
 func (r *RTreeStorage) GetPrevious(w *models.Waypoint) (*models.Waypoint, error) {
-	// Search in the map
-	return r.waypointsMap[w].Point, nil
+	return r.MemoryStorage.GetPrevious(w)
 }
 
 // TODO: Same as memoryStorage, maybe put it in the utils
 func (r *RTreeStorage) GetPathToRoot(w *models.Waypoint) ([]*models.Waypoint, error) {
-	// Start from w and find its previous until there are no more previous
-	route := make([]*models.Waypoint, 0)
-	current := w
-	for {
-		// Check if current is nil, in case return
-		if current == nil {
-			// End of route
-			// Reverse route and return it
-			left := 0
-			right := len(route) - 1
-			for left < right {
-				route[left], route[right] = route[right], route[left]
-				left++
-				right--
-			}
-			return route, nil
-		}
-
-		route = append(route, current)
-
-		// Check if prev was already in the map, if no error
-		prev, ok := r.waypointsMap[current]
-		if !ok {
-    		return nil, fmt.Errorf("waypoint %+v not found in map", w)
-		}
-
-		current = prev.Point
-	}
+	return r.MemoryStorage.GetPathToRoot(w)
 }
 
 // TODO: Same as memoryStorage, maybe put it in the utils
 func (r *RTreeStorage) GetCostToRoot(w *models.Waypoint) (float64, error) {
-	// Iteratively do GetPrevious and search for the cost
-	current := w
-	cost := 0.0
-	for {
-		if current == nil {
-			// Reach root
-			break
-		}
-
-		// Add distance
-		prev, ok := r.waypointsMap[current]
-		if !ok {
-    		return 0.0, fmt.Errorf("waypoint %+v not found in map", w)
-		}
-
-		cost += prev.Distance
-		current = prev.Point
-	}
-
-	return cost, nil
+	return r.MemoryStorage.GetCostToRoot(w)
 }
 
 // ================================================================= Geometric helpers
@@ -336,7 +294,7 @@ func (r *RTreeStorage) NearestPointsInRadius(p *models.Waypoint, radius float64)
 		return !utils.PointInPolygon(object.(*models.Waypoint), circle), false
 	})
 
-		// Create list for points
+	// Create list for points
 	result := make([]*models.Waypoint, 0, len(points))
 	// And list for distances
 	distances := make([]float64, 0, len(points))
@@ -457,17 +415,6 @@ func (r *RTreeStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models
 	return lpi_list, nil
 }
 
-func (r *RTreeStorage) Sample(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {	
-	// TODO: Decide which to use
-	sampled, err := utils.SampleWithAltitude2D(sampler, sampleVolume.Geometry, alt)
-	if err != nil {
-		return nil, fmt.Errorf("unexpected error during memoryStorage Sample: %w", err)
-	}
-
-	// TODO: Check if sampled was already present
-	return sampled, nil
-}
-
 func (r *RTreeStorage) SampleFree(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {
 	isInObstacle := true
 	var sampled *models.Waypoint
@@ -476,7 +423,7 @@ func (r *RTreeStorage) SampleFree(sampler utils.Sampler, sampleVolume *models.Fe
 	for isInObstacle {
 		sampled, err = r.Sample(sampler, sampleVolume, alt)
 		if err != nil {
-			return nil, fmt.Errorf("unexpected error during memoryStorage SampleFree: %w", err)
+			return nil, fmt.Errorf("unexpected error during RTreeStorage SampleFree: %w", err)
 		}
 		isInObstacle, _, _ = r.IsPointInObstacles(sampled)
 	}
