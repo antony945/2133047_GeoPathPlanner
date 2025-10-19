@@ -8,9 +8,11 @@ import (
 type AlgorithmType string
 
 const (
-	RRT     AlgorithmType = "RRT"
-	RRTStar AlgorithmType = "RRTStar"
-	AntPath AlgorithmType = "AntPath"
+	RRT     AlgorithmType = "rrt"
+	RRTStar AlgorithmType = "rrtstar"
+	AntPath AlgorithmType = "antpath"
+	// TODO: Decide which one
+	DEFAULT_ALGORITHM AlgorithmType = RRTStar
 )
 
 // Validate algorithm type (enforce enum)

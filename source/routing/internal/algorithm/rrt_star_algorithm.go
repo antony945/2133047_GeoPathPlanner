@@ -313,26 +313,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 func (a *RRTStarAlgorithm) GetParameters(parameters map[string]any, goal *models.Waypoint) (utils.Sampler, int, float64, float64) {
 	SAMPLER, MAX_ITERATIONS, STEP_SIZE_MT, GOAL_BIAS := a.RRTAlgorithm.GetParameters(parameters, goal)
 	
-	// TODO: Add other parameters or change defaults
-	// MAX_ITERATIONS := 10000
-	// GOAL_BIAS := 0.10
-	// SAMPLER := utils.NewGoalBiasSampler(
-	// 	utils.NewUniformSamplerWithSeed(945),
-	// 	// utils.NewHaltonSampler(),
-	// 	goal,
-	// 	GOAL_BIAS,
-	// )
-	// STEP_SIZE_MT := 10.0
-
-	// fmt.Printf("PARAMETERS\n")
-	// fmt.Printf("max_iterations: %d\n", MAX_ITERATIONS)
-	// fmt.Printf("step_size_mt: %f\n", STEP_SIZE_MT)
-	// fmt.Printf("goal_bias: %f\n", GOAL_BIAS)
-	// fmt.Printf("sampler: %+v\n", SAMPLER)
-	// fmt.Printf("--------------------------------------------------------\n")
-
-	
-	
+	// TODO: Delete this, just for debug
 	fmt.Printf("k_init: %d\n", int(math.Floor(K_INIT)))
 	fmt.Printf("r_init_mt: %f\n", R_INIT_MT)
 	fmt.Printf("--------------------------------------------------------\n")

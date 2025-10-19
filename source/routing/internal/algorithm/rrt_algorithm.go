@@ -286,7 +286,7 @@ func (a *RRTAlgorithm) GetParameters(parameters map[string]any, goal *models.Way
 	SAMPLER_TYPE := utils.GetOrDefault(parameters, "sampler_type", models.Uniform)
 	SEED := utils.GetOrDefault(parameters, "seed", 945)
 
-	// use sampler_type and sampler_seed
+	// use sampler_type and seed
 	base_sampler, err := utils.NewSampler(SAMPLER_TYPE, int64(SEED))
 	if err != nil {
 		// TODO: HANDLE THIS
@@ -296,6 +296,7 @@ func (a *RRTAlgorithm) GetParameters(parameters map[string]any, goal *models.Way
 		base_sampler,
 		goal,
 		GOAL_BIAS,
+		int64(SEED),
 	)
 
 	fmt.Printf("PARAMETERS\n")

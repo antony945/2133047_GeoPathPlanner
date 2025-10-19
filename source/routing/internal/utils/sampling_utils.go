@@ -70,7 +70,7 @@ func (s *UniformSampler) SampleZ(minZ, maxZ float64) float64 {
 }
 
 func (s *UniformSampler) Sample(min, max float64) float64 {
-	return min + rand.Float64()*(max-min)
+	return min + s.r.Float64()*(max-min)
 }
 
 // --------------------------------------------------------
@@ -127,19 +127,33 @@ type GoalBiasSampler struct {
 	Goal *models.Waypoint
 	Bias float64
 	last_chosen_goal bool
+	r *rand.Rand
 }
 
-func NewGoalBiasSampler(sampler Sampler, goal *models.Waypoint, bias float64) *GoalBiasSampler {
-	return &GoalBiasSampler{
+func NewGoalBiasSampler(sampler Sampler, goal *models.Waypoint, bias float64, seed ...int64) *GoalBiasSampler {
+	// check if there is seed or no
+	s := &GoalBiasSampler{
 		InternalSampler: sampler,
 		Goal: goal,
 		Bias: bias,
 		last_chosen_goal: false,
+		r: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
+
+	if seed != nil {
+		s.setSeed(seed[0])
+	}
+	
+	return s
+}
+
+func (s *GoalBiasSampler) setSeed(seed int64) *GoalBiasSampler {
+	s.r = rand.New(rand.NewSource(seed))
+	return s
 }
 
 func (s *GoalBiasSampler) useGoal() bool {
-	s.last_chosen_goal = rand.Float64() < s.Bias
+	s.last_chosen_goal = s.r.Float64() < s.Bias
 	return s.last_chosen_goal
 }
 

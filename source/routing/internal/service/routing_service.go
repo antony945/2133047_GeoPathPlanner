@@ -26,13 +26,14 @@ func (rs *RoutingService) HandleRoutingRequest(input *models.RoutingRequest) (*m
 	}
 
 	// 2. Pick and create algorithm (from input)
-	algo, err := algorithm.NewAlgorithm(input.Algorithm)
+	algo, err := algorithm.NewAlgorithm(input.Algorithm())
 	if err != nil {
 		return models.NewRoutingResponseError(input.RequestID, input.ReceivedAt, err.Error())
 	}
 
 	// 3. Compute route
-	route, cost, err := algo.Compute(input.SearchVolume, input.Waypoints, input.Constraints, input.Parameters, input.Storage)
+	// TODO: Test with both compute and computeConcurrently
+	route, cost, err := algo.ComputeConcurrently(input.SearchVolume, input.Waypoints, input.Constraints, input.Parameters, input.Storage(), 0)
 	if err != nil {
 		return models.NewRoutingResponseError(input.RequestID, input.ReceivedAt, err.Error())
 	}

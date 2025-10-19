@@ -8,9 +8,10 @@ import (
 type StorageType string
 
 const (
-	Memory StorageType = "Memory"
-	Redis  StorageType = "Redis"
-	RTree StorageType = "RTree"
+	Memory StorageType = "memory"
+	Redis  StorageType = "redis"
+	RTree StorageType = "rtree"
+	DEFAULT_STORAGE StorageType = RTree
 )
 
 // Validate algorithm type (enforce enum)

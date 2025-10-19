@@ -83,22 +83,7 @@ func ExportToGeoJSON(folder string, waypoints []*models.Waypoint, polygons []*mo
 	fc := CreateFeatureCollection(waypoints, polygons, lineBetweenWaypoints, false, otherFeatures...)
 
 	// Marshal collection
-	data, err := json.MarshalIndent(fc, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshal feature collection: %w", err)
-	}
-
-	// Ensure dev/results exists
-	outDir := ResolvePath(filepath.Join("dev", "results", folder))
-	if err := os.MkdirAll(outDir, os.ModePerm); err != nil {
-		return fmt.Errorf("create results dir: %w", err)
-	}
-	
-	// Write to file
-	outPath := filepath.Join(outDir, filename+".geojson")
-	if err := os.WriteFile(outPath, data, 0644); err != nil {
-		return fmt.Errorf("write file: %w", err)
-	}
+	err := ExportToJSON(fc, folder, filename, true)
 
 	// TODO: Reset all properties of waypoints
 	for _, wp := range waypoints {
@@ -108,7 +93,7 @@ func ExportToGeoJSON(folder string, waypoints []*models.Waypoint, polygons []*mo
 		delete(wp.Feature.Properties, "inside")
 	}
 
-	return nil
+	return err
 }
 
 func ExportToGeoJSONRoute(folder string, route []*models.Waypoint, constraints []*models.Feature3D, searchVolume *models.Feature3D, filename string, ignoreIntermediateWaypoints bool) error {
@@ -128,9 +113,18 @@ func ExportToGeoJSONRoute(folder string, route []*models.Waypoint, constraints [
 	}
 
 	// Marshal collection
-	data, err := json.MarshalIndent(fc, "", "  ")
+	return ExportToJSON(fc, folder, filename, true)
+}
+
+func ExportToJSON(data any, folder, filename string, is_geojson bool) error {
+	if data == nil {
+		return fmt.Errorf("data is nil")
+	}
+
+	// Marshal the struct to JSON with indentation
+	jsonBytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal feature collection: %w", err)
+		return fmt.Errorf("failed to marshal data: %w", err)
 	}
 
 	// Ensure dev/results exists
@@ -140,8 +134,13 @@ func ExportToGeoJSONRoute(folder string, route []*models.Waypoint, constraints [
 	}
 	
 	// Write to file
-	outPath := filepath.Join(outDir, filename+".geojson")
-	if err := os.WriteFile(outPath, data, 0644); err != nil {
+	var outPath string
+	if is_geojson {
+		outPath = filepath.Join(outDir, filename+".geojson")
+	} else {
+		outPath = filepath.Join(outDir, filename+".json")
+	}
+	if err := os.WriteFile(outPath, jsonBytes, 0644); err != nil {
 		return fmt.Errorf("write file: %w", err)
 	}
 
