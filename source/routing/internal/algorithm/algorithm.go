@@ -7,6 +7,8 @@ import (
 
 type Algorithm interface {
 	Compute(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D, parameters map[string]any, storage models.StorageType) ([]*models.Waypoint, float64, error)
+	ComputeConcurrently(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D, parameters map[string]any, storage models.StorageType, maxWorkers int) ([]*models.Waypoint, float64, error)
+
 }
 
 func NewAlgorithm(algorithmType models.AlgorithmType) (Algorithm, error) {
