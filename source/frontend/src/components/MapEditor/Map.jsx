@@ -9,6 +9,20 @@ import './Map.css';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 
+// FIX: Manually import and configure Leaflet's default icons
+// This prevents issues with Vite/Webpack bundling where icon paths are lost.
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
 const DEFAULT_CENTER = [41.9028, 12.4964]; // Rome lat, lon
 const DEFAULT_ZOOM = 13;
 
