@@ -8,7 +8,7 @@ import (
 type StorageType string
 
 const (
-	Memory StorageType = "memory"
+	List StorageType = "list"
 	Redis  StorageType = "redis"
 	RTree StorageType = "rtree"
 	DEFAULT_STORAGE StorageType = RTree
@@ -17,10 +17,10 @@ const (
 // Validate algorithm type (enforce enum)
 func (s StorageType) Validate() error {
 	switch s {
-	case Memory, Redis, RTree:
+	case List, Redis, RTree:
 		return nil
 	default:
-		return fmt.Errorf("invalid storage type: %s, available options are %s, %s, %s", s, Memory, Redis, RTree)
+		return fmt.Errorf("invalid storage type: %s, available options are %s, %s, %s", s, List, Redis, RTree)
 	}
 }
 

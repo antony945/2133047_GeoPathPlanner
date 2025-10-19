@@ -15,8 +15,10 @@ const (
 	MAXIMUM_BRANCHING_FACTOR int = 50
 )
 
+
+// RTreeStorage stores everything in-memory using RTree data structure to optimize K-NN and intersect operations.
 type RTreeStorage struct {
-	*MemoryStorage
+	*ListStorage
 	waypointsTree *rtreego.Rtree
 	constraintsTree *rtreego.Rtree
 }
@@ -30,7 +32,7 @@ func NewEmptyRTreeStorage() (*RTreeStorage, error) {
 	}
 	
 	var err error
-	rs.MemoryStorage, err = NewEmptyMemoryStorage()
+	rs.ListStorage, err = NewEmptyListStorage()
 	return rs, err
 }
 
@@ -63,12 +65,12 @@ func (r *RTreeStorage) Clear() error {
 
 func (r *RTreeStorage) ClearConstraints() error {
 	r.constraintsTree = rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR)
-	return r.MemoryStorage.ClearConstraints()
+	return r.ListStorage.ClearConstraints()
 }
 
 func (r *RTreeStorage) ClearWaypoints() error {
 	r.waypointsTree = rtreego.NewTree(SPATIAL_DIMENSION, MINIMUM_BRANCHING_FACTOR, MAXIMUM_BRANCHING_FACTOR)
-	return r.MemoryStorage.ClearWaypoints()
+	return r.ListStorage.ClearWaypoints()
 }
 
 func (r *RTreeStorage) WaypointsLen() int {
@@ -91,7 +93,7 @@ func (r *RTreeStorage) Clone() Storage {
 
 func (r *RTreeStorage) AddWaypoint(w *models.Waypoint) error {	
 	r.waypointsTree.Insert(w)
-	return r.MemoryStorage.AddWaypoint(w)
+	return r.ListStorage.AddWaypoint(w)
 }
 
 func (r *RTreeStorage) AddWaypoints(w_list []*models.Waypoint) error {
@@ -109,7 +111,7 @@ func (r *RTreeStorage) AddWaypoints(w_list []*models.Waypoint) error {
 
 // Update: decided to maintain an array
 func (r *RTreeStorage) GetWaypoints() ([]*models.Waypoint, error) {
-	return r.MemoryStorage.GetWaypoints()
+	return r.ListStorage.GetWaypoints()
 }
 
 // Update: decided to maintain an array
@@ -125,7 +127,7 @@ func (r *RTreeStorage) MustGetWaypoints() []*models.Waypoint {
 
 func (r *RTreeStorage) AddConstraint(c *models.Feature3D) error {
 	r.constraintsTree.Insert(c)
-	return r.MemoryStorage.AddConstraint(c)
+	return r.ListStorage.AddConstraint(c)
 }
 
 func (r *RTreeStorage) AddConstraints(c_list []*models.Feature3D) error {
@@ -142,7 +144,7 @@ func (r *RTreeStorage) AddConstraints(c_list []*models.Feature3D) error {
 }
 
 func (r *RTreeStorage) GetConstraints() ([]*models.Feature3D, error) {
-	return r.MemoryStorage.GetConstraints()
+	return r.ListStorage.GetConstraints()
 }
 
 func (r *RTreeStorage) MustGetConstraints() []*models.Feature3D {
@@ -165,21 +167,21 @@ func (r *RTreeStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models.
 }
 
 func (r *RTreeStorage) ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error {
-	return r.MemoryStorage.ChangePrevious(new_prev, w)
+	return r.ListStorage.ChangePrevious(new_prev, w)
 }
 
 func (r *RTreeStorage) GetPrevious(w *models.Waypoint) (*models.Waypoint, error) {
-	return r.MemoryStorage.GetPrevious(w)
+	return r.ListStorage.GetPrevious(w)
 }
 
-// TODO: Same as memoryStorage, maybe put it in the utils
+// TODO: Same as ListStorage, maybe put it in the utils
 func (r *RTreeStorage) GetPathToRoot(w *models.Waypoint) ([]*models.Waypoint, error) {
-	return r.MemoryStorage.GetPathToRoot(w)
+	return r.ListStorage.GetPathToRoot(w)
 }
 
-// TODO: Same as memoryStorage, maybe put it in the utils
+// TODO: Same as ListStorage, maybe put it in the utils
 func (r *RTreeStorage) GetCostToRoot(w *models.Waypoint) (float64, error) {
-	return r.MemoryStorage.GetCostToRoot(w)
+	return r.ListStorage.GetCostToRoot(w)
 }
 
 // ================================================================= Geometric helpers

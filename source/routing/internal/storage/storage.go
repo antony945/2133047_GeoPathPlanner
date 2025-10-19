@@ -50,8 +50,8 @@ type Storage interface {
 
 func NewEmptyStorage(storageType models.StorageType) (Storage, error) {
 	switch storageType {
-		case models.Memory:
-			return NewEmptyMemoryStorage()
+		case models.List:
+			return NewEmptyListStorage()
 		case models.RTree:
 			return NewEmptyRTreeStorage()
 		case models.Redis:
@@ -63,8 +63,8 @@ func NewEmptyStorage(storageType models.StorageType) (Storage, error) {
 
 func NewStorage(w_list []*models.Waypoint, c_list []*models.Feature3D, storageType models.StorageType) (Storage, error) {
 	switch storageType {
-		case models.Memory:
-			return NewMemoryStorage(w_list, c_list)
+		case models.List:
+			return NewListStorage(w_list, c_list)
 		case models.RTree:
 			return NewRTreeStorage(w_list, c_list)
 		case models.Redis:

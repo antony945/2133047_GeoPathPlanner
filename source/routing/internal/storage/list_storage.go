@@ -8,8 +8,8 @@ import (
 	"slices"
 )
 
-// MemoryStorage stores everything in-memory (cleared after each request)
-type MemoryStorage struct {
+// ListStorage stores everything in-memory using lists data structure.
+type ListStorage struct {
 	// TODO: Duplicate of waypoints, probably we can use just the map and it will be ok. Or use just list but list of nodes
 	waypoints  []*models.Waypoint
 	constraints []*models.Feature3D
@@ -18,16 +18,16 @@ type MemoryStorage struct {
 
 // ---------------------------------------------------------------- CONSTRUCTORS
 
-func NewEmptyMemoryStorage() (*MemoryStorage, error) {
-	return &MemoryStorage{
+func NewEmptyListStorage() (*ListStorage, error) {
+	return &ListStorage{
 		waypoints: make([]*models.Waypoint, 0),
 		constraints: make([]*models.Feature3D, 0),
 		waypointsMap: make(map[*models.Waypoint]*models.PointDist),
 	}, nil
 }
 
-func NewMemoryStorage(w_list []*models.Waypoint, c_list []*models.Feature3D) (*MemoryStorage, error) {
-	ms, err := NewEmptyMemoryStorage()
+func NewListStorage(w_list []*models.Waypoint, c_list []*models.Feature3D) (*ListStorage, error) {
+	ms, err := NewEmptyListStorage()
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func NewMemoryStorage(w_list []*models.Waypoint, c_list []*models.Feature3D) (*M
 
 // ---------------------------------------------------------------- GENERAL
 
-func (m *MemoryStorage) Clear() error {
+func (m *ListStorage) Clear() error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 
@@ -56,27 +56,27 @@ func (m *MemoryStorage) Clear() error {
 	return m.ClearWaypoints()
 }
 
-func (m *MemoryStorage) ClearConstraints() error {
+func (m *ListStorage) ClearConstraints() error {
 	m.constraints = make([]*models.Feature3D, 0)
 	return nil
 }
 
-func (m *MemoryStorage) ClearWaypoints() error {
+func (m *ListStorage) ClearWaypoints() error {
 	m.waypoints = make([]*models.Waypoint, 0)
 	m.waypointsMap = make(map[*models.Waypoint]*models.PointDist)
 	return nil
 }
 
-func (m *MemoryStorage) WaypointsLen() int {
+func (m *ListStorage) WaypointsLen() int {
 	return len(m.waypoints)
 }
 
-func (m *MemoryStorage) ConstraintsLen() int {
+func (m *ListStorage) ConstraintsLen() int {
 	return len(m.constraints)
 }
 
-func (m *MemoryStorage) Clone() Storage {
-	mClone, err := NewMemoryStorage(m.MustGetWaypoints(), m.MustGetConstraints())
+func (m *ListStorage) Clone() Storage {
+	mClone, err := NewListStorage(m.MustGetWaypoints(), m.MustGetConstraints())
 	if err != nil {
 		panic(err)
 	}
@@ -85,14 +85,14 @@ func (m *MemoryStorage) Clone() Storage {
 
 // ---------------------------------------------------------------- WAYPOINTS
 
-func (m *MemoryStorage) AddWaypoint(w *models.Waypoint) error {
+func (m *ListStorage) AddWaypoint(w *models.Waypoint) error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	m.waypoints = append(m.waypoints, w)
 	return nil
 }
 
-func (m *MemoryStorage) AddWaypoints(w_list []*models.Waypoint) error {
+func (m *ListStorage) AddWaypoints(w_list []*models.Waypoint) error {
 	if w_list == nil {
 		return nil
 	}
@@ -105,13 +105,13 @@ func (m *MemoryStorage) AddWaypoints(w_list []*models.Waypoint) error {
 	return nil
 }
 
-func (m *MemoryStorage) GetWaypoints() ([]*models.Waypoint, error) {
+func (m *ListStorage) GetWaypoints() ([]*models.Waypoint, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	return m.waypoints, nil
 }
 
-func (m *MemoryStorage) MustGetWaypoints() []*models.Waypoint {
+func (m *ListStorage) MustGetWaypoints() []*models.Waypoint {
 	wps, err := m.GetWaypoints()
 	if err != nil {
 		panic(err)
@@ -121,14 +121,14 @@ func (m *MemoryStorage) MustGetWaypoints() []*models.Waypoint {
 
 // ---------------------------------------------------------------- CONSTRAINTS
 
-func (m *MemoryStorage) AddConstraint(c *models.Feature3D) error {
+func (m *ListStorage) AddConstraint(c *models.Feature3D) error {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	m.constraints = append(m.constraints, c)
 	return nil
 }
 
-func (m *MemoryStorage) AddConstraints(c_list []*models.Feature3D) error {
+func (m *ListStorage) AddConstraints(c_list []*models.Feature3D) error {
 	if c_list == nil {
 		return nil
 	}
@@ -141,13 +141,13 @@ func (m *MemoryStorage) AddConstraints(c_list []*models.Feature3D) error {
 	return nil
 }
 
-func (m *MemoryStorage) GetConstraints() ([]*models.Feature3D, error) {
+func (m *ListStorage) GetConstraints() ([]*models.Feature3D, error) {
 	// m.mu.Lock()
 	// defer m.mu.Unlock()
 	return m.constraints, nil
 }
 
-func (m *MemoryStorage) MustGetConstraints() []*models.Feature3D {
+func (m *ListStorage) MustGetConstraints() []*models.Feature3D {
 	c, err := m.GetConstraints()
 	if err != nil {
 		panic(err)
@@ -157,7 +157,7 @@ func (m *MemoryStorage) MustGetConstraints() []*models.Feature3D {
 
 // ================================================================= RRT
 
-func (m *MemoryStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models.Waypoint) error {
+func (m *ListStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models.Waypoint) error {
 	// Add waypoint to the list of waypoints
 	m.AddWaypoint(w)
 
@@ -166,7 +166,7 @@ func (m *MemoryStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models
 	return nil
 }
 
-func (m *MemoryStorage)	ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error {
+func (m *ListStorage)	ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error {
 	distance := 0.0
 	if new_prev != nil {
 		distance = utils.HaversineDistance3D(new_prev, w)
@@ -187,12 +187,12 @@ func (m *MemoryStorage)	ChangePrevious(new_prev *models.Waypoint, w *models.Wayp
 	return nil
 }
 
-func (m *MemoryStorage) GetPrevious(w *models.Waypoint) (*models.Waypoint, error) {
+func (m *ListStorage) GetPrevious(w *models.Waypoint) (*models.Waypoint, error) {
 	// Search in the map
 	return m.waypointsMap[w].Point, nil
 }
 
-func (m *MemoryStorage) GetPathToRoot(w *models.Waypoint) ([]*models.Waypoint, error) {
+func (m *ListStorage) GetPathToRoot(w *models.Waypoint) ([]*models.Waypoint, error) {
 	// Start from w and find its previous until there are no more previous
 	route := make([]*models.Waypoint, 0)
 	current := w
@@ -223,7 +223,7 @@ func (m *MemoryStorage) GetPathToRoot(w *models.Waypoint) ([]*models.Waypoint, e
 	}
 }
 
-func (m *MemoryStorage) GetCostToRoot(w *models.Waypoint) (float64, error) {
+func (m *ListStorage) GetCostToRoot(w *models.Waypoint) (float64, error) {
 	// Iteratively do GetPrevious and search for the cost
 	current := w
 	cost := 0.0
@@ -250,7 +250,7 @@ func (m *MemoryStorage) GetCostToRoot(w *models.Waypoint) (float64, error) {
 
 // Scan full list of points until you find nearest one
 // O(N)
-func (m *MemoryStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, float64, error) {
+func (m *ListStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, float64, error) {
 	// TODO: Just for visual debug
 	delete(p.Feature.Properties, "parameter")
 	delete(p.Feature.Properties, "nearest")
@@ -282,7 +282,7 @@ func (m *MemoryStorage) NearestPoint(p *models.Waypoint) (*models.Waypoint, floa
 
 // Compute distance from p to every point in the list and then sort based on that distance, retaining only the first k.
 // O(N*logN)
-func (m *MemoryStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Waypoint, []float64, error) {
+func (m *ListStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Waypoint, []float64, error) {
 	// TODO: Just for visual debug
 	delete(p.Feature.Properties, "parameter")
 	delete(p.Feature.Properties, "near")
@@ -347,7 +347,7 @@ func (m *MemoryStorage) KNearestPoints(p *models.Waypoint, k int) ([]*models.Way
 
 // Compute distance from p to every point in the list discarding everyone that is more distant than radius. Then sort based on that distance.
 // O(N*logN)
-func (m *MemoryStorage) NearestPointsInRadius(p *models.Waypoint, radius float64) ([]*models.Waypoint, []float64, error) {
+func (m *ListStorage) NearestPointsInRadius(p *models.Waypoint, radius float64) ([]*models.Waypoint, []float64, error) {
 	// TODO: Just for visual debug
 	delete(p.Feature.Properties, "parameter")
 	delete(p.Feature.Properties, "near")
@@ -412,7 +412,7 @@ func (m *MemoryStorage) NearestPointsInRadius(p *models.Waypoint, radius float64
 
 // Scan list of obstacle until you find someone that intersect
 // O(#obstacles)
-func (m *MemoryStorage) IsPointInObstacles(p *models.Waypoint) (bool, *models.Feature3D, error) {
+func (m *ListStorage) IsPointInObstacles(p *models.Waypoint) (bool, *models.Feature3D, error) {
 	for _, obstacle := range m.constraints {
 		if utils.PointInPolygon(p, obstacle) {
 			return true, obstacle, nil
@@ -424,7 +424,7 @@ func (m *MemoryStorage) IsPointInObstacles(p *models.Waypoint) (bool, *models.Fe
 
 // Scan list of obstacle and return every obstacle that collide with point
 // O(#obstacles)
-func (m *MemoryStorage) GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*models.Feature3D, error) {
+func (m *ListStorage) GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*models.Feature3D, error) {
 	obstacles := make([]*models.Feature3D, 0)
 	
 	for _, obstacle := range m.constraints {
@@ -438,14 +438,14 @@ func (m *MemoryStorage) GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*m
 
 // Scan list of obstacle until you find someone that intersect line
 // O(#obstacles)
-func (m *MemoryStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*models.Waypoint, error) {
+func (m *ListStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*models.Waypoint, error) {
 	// TODO: First check line bounds with polygon bounds
 	in, line := utils.LineInPolygon(p1, p2, m.constraints...)
 	return in, line, nil
 }
 
 // Get intersection points (useful for AntPath)
-func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
+func (m *ListStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
 	// Divide line into point and then check if any individual point lies in polygon
 	quantizedLine := utils.DefaultResampleLineToInterval(p1, p2)
 	// For every point, check if it intersect with a polygon and mark it as:
@@ -491,18 +491,18 @@ func (m *MemoryStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*model
 	return lpi_list, nil
 }
 
-func (m *MemoryStorage) Sample(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {	
+func (m *ListStorage) Sample(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {	
 	// TODO: Decide which to use
 	sampled, err := utils.SampleWithAltitude2D(sampler, sampleVolume.Geometry, alt)
 	if err != nil {
-		return nil, fmt.Errorf("unexpected error during memoryStorage Sample: %w", err)
+		return nil, fmt.Errorf("unexpected error during ListStorage Sample: %w", err)
 	}
 
 	// TODO: Check if sampled was already present
 	return sampled, nil
 }
 
-func (m *MemoryStorage) SampleFree(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {
+func (m *ListStorage) SampleFree(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error) {
 	isInObstacle := true
 	var sampled *models.Waypoint
 	var err error
@@ -510,7 +510,7 @@ func (m *MemoryStorage) SampleFree(sampler utils.Sampler, sampleVolume *models.F
 	for isInObstacle {
 		sampled, err = m.Sample(sampler, sampleVolume, alt)
 		if err != nil {
-			return nil, fmt.Errorf("unexpected error during memoryStorage SampleFree: %w", err)
+			return nil, fmt.Errorf("unexpected error during ListStorage SampleFree: %w", err)
 		}
 		isInObstacle, _, _ = m.IsPointInObstacles(sampled)
 	}

@@ -64,7 +64,6 @@ func TestNewRoutingRequestFromJson(t *testing.T) {
                         }
                     }
                 ],
-                "constraints": [],
                 "search_volume": {
                     "type": "Feature",
                     "properties": {},
@@ -98,7 +97,7 @@ func TestNewRoutingRequestFromJson(t *testing.T) {
                 },
                 "parameters": {
                     "algorithm": "rrt",
-                    "storage": "memory",
+                    "storage": "list",
                     "sampler": "uniform",
                     "seed": 10,
                     "max_iterations": 10000,
@@ -362,7 +361,7 @@ func TestNewRoutingRequestFromJson(t *testing.T) {
                 },
                 "parameters": {
                     "algorithm": "rrt",
-                    "storage": "memory",
+                    "storage": "list",
                     "sampler": "uniform",
                     "seed": 10,
                     "max_iterations": 10000,
@@ -564,7 +563,7 @@ func TestNewRoutingRequestFromJson(t *testing.T) {
                 },
                 "parameters": {
                     "algorithm": "rrt",
-                    "storage": "memory",
+                    "storage": "list",
                     "sampler": "uniform",
                     "seed": 10,
                     "max_iterations": 10000,
@@ -714,7 +713,7 @@ func TestNewRoutingRequestFromJson(t *testing.T) {
                 },
                 "parameters": {
                     "algorithm": "rrt",
-                    "storage": "memory",
+                    "storage": "list",
                     "sampler": "uniform",
                     "seed": 10,
                     "max_iterations": 10000,

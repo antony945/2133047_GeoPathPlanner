@@ -15,10 +15,10 @@ type DefaultValidator struct {
 }
 
 func NewDefaultValidator() (*DefaultValidator, error) {
-	// TODO: For now use MemoryStorage that's easy
-	s, err := storage.NewEmptyMemoryStorage()
+	// TODO: For now use ListStorage that's easy
+	s, err := storage.NewEmptyListStorage()
 	if err != nil {
-		return nil, fmt.Errorf("error while creating empty memory storage: %w", err)
+		return nil, fmt.Errorf("error while creating empty list storage: %w", err)
 	}
 	return &DefaultValidator{
 		s: s,

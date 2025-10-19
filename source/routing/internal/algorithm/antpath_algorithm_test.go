@@ -24,11 +24,11 @@ func TestAntPathAlgorithm_run(t *testing.T) {
 		wantCost float64
 		wantErr bool
 	}{
-		// {name: "AntPath with non-overlapping obstacles - MEMORY", storageType: models.Memory, start: w1, end: w2, constraints: c_list, wantErr: false},
+		// {name: "AntPath with non-overlapping obstacles - LIST", storageType: models.List, start: w1, end: w2, constraints: c_list, wantErr: false},
 		{name: "AntPath with non-overlapping obstacles - RTREE", storageType: models.RTree, start: w1, end: w2, constraints: c_list, wantErr: false},
-		// {name: "AntPath with overlapping obstacles - MEMORY", storageType: models.Memory, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
+		// {name: "AntPath with overlapping obstacles - LIST", storageType: models.List, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
 		{name: "AntPath with overlapping obstacles - RTREE", storageType: models.RTree, start: w1, end: w2, constraints: append(c_list, c_overlapping...), wantErr: false},
-		// {name: "AntPath with no obstacles - MEMORY", storageType: models.Memory, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
+		// {name: "AntPath with no obstacles - LIST", storageType: models.List, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
 		{name: "AntPath with no obstacles - RTREE", storageType: models.RTree, start: w1, end: w2, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {
@@ -77,11 +77,11 @@ func TestAntPathAlgorithm_Compute(t *testing.T) {
 		wantCost float64
 		wantErr bool
 	}{
-		// {name: "AntPathFull with non-overlapping obstacles - MEMORY", storageType: models.Memory, waypoints: w_list, constraints: c_list, wantErr: false},
+		// {name: "AntPathFull with non-overlapping obstacles - LIST", storageType: models.List, waypoints: w_list, constraints: c_list, wantErr: false},
 		{name: "AntPathFull with non-overlapping obstacles - RTREE", storageType: models.RTree, waypoints: w_list, constraints: c_list, wantErr: false},
-		// {name: "AntPathFull with overlapping obstacles - MEMORY", storageType: models.Memory, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
+		// {name: "AntPathFull with overlapping obstacles - LIST", storageType: models.List, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
 		{name: "AntPathFull with overlapping obstacles - RTREE", storageType: models.RTree, waypoints: w_list, constraints: append(c_list, c_overlapping...), wantErr: false},
-		// {name: "AntPathFull with no obstacles - MEMORY", storageType: models.Memory, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
+		// {name: "AntPathFull with no obstacles - LIST", storageType: models.List, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
 		{name: "AntPathFull with no obstacles - RTREE", storageType: models.RTree, waypoints: w_list, constraints: []*models.Feature3D{}, wantErr: false},
 	}
 	for _, tt := range tests {

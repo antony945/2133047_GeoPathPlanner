@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMemoryStorage_NearestPoint(t *testing.T) {
+func TestListStorage_NearestPoint(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
   high, _ := models.NewAltitude(1000, models.MT)
 
@@ -190,14 +190,14 @@ func TestMemoryStorage_NearestPoint(t *testing.T) {
 		want    *models.Waypoint
 		wantErr bool
 	}{
-		{ name: "MEMORY - Find NearestPoint to external point", w_list: w_list, c_list: c_list, p: w, want: w_list[2], wantErr: false, },
-		{ name: "MEMORY - Find NearestPoint to external point - closer", w_list: w_list, c_list: c_list, p: w2, want: w_list[0], wantErr: false, },
-		{ name: "MEMORY - Find NearestPoint to internal point", w_list: w_list, c_list: c_list, p: w_list[0], want: w_list[0], wantErr: false, },
-		{ name: "MEMORY - Find NearestPoint to external point in presence of a 2d but not 3d nearest", w_list: w_list, c_list: c_list, p: w, want: w_list[2], wantErr: false, },
+		{ name: "LIST - Find NearestPoint to external point", w_list: w_list, c_list: c_list, p: w, want: w_list[2], wantErr: false, },
+		{ name: "LIST - Find NearestPoint to external point - closer", w_list: w_list, c_list: c_list, p: w2, want: w_list[0], wantErr: false, },
+		{ name: "LIST - Find NearestPoint to internal point", w_list: w_list, c_list: c_list, p: w_list[0], want: w_list[0], wantErr: false, },
+		{ name: "LIST - Find NearestPoint to external point in presence of a 2d but not 3d nearest", w_list: w_list, c_list: c_list, p: w, want: w_list[2], wantErr: false, },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := storage.NewMemoryStorage(tt.w_list, tt.c_list)
+			m, err := storage.NewListStorage(tt.w_list, tt.c_list)
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
@@ -224,7 +224,7 @@ func TestMemoryStorage_NearestPoint(t *testing.T) {
 	}
 }
 
-func TestMemoryStorage_KNearestPoints(t *testing.T) {
+func TestListStorage_KNearestPoints(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
 	w := models.MustNewWaypoint(4, 40.41470804648725, -3.7105863826680263, a)
 
@@ -400,16 +400,16 @@ func TestMemoryStorage_KNearestPoints(t *testing.T) {
 		want    []*models.Waypoint
 		wantErr bool
 	}{
-		{ name: "MEMORY - KNN - external point - k=0", w_list: w_list, c_list: c_list, p: w, k: 0, want: []*models.Waypoint{}, wantErr: false },
-		{ name: "MEMORY - KNN - external point - k=1", w_list: w_list, c_list: c_list, p: w2, k: 1, want: []*models.Waypoint{w_list[0]}, wantErr: false },
-		{ name: "MEMORY - KNN - external point - k=3", w_list: w_list, c_list: c_list, p: w2, k: 3, want: []*models.Waypoint{w_list[0], w_list[3], w_list[1]}, wantErr: false },
-		{ name: "MEMORY - KNN - external point - k>#wps", w_list: w_list, c_list: c_list, p: w2, k: 7, want: []*models.Waypoint{w_list[0], w_list[3], w_list[1], w_list[2]}, wantErr: false },
-		{ name: "MEMORY - KNN - internal point - k=1", w_list: w_list, c_list: c_list, p: w_list[0], k: 1, want: []*models.Waypoint{w_list[0]}, wantErr: false },
-		{ name: "MEMORY - KNN - internal point - k=2", w_list: w_list, c_list: c_list, p: w_list[0], k: 2, want: []*models.Waypoint{w_list[0], w_list[3]}, wantErr: false },
+		{ name: "LIST - KNN - external point - k=0", w_list: w_list, c_list: c_list, p: w, k: 0, want: []*models.Waypoint{}, wantErr: false },
+		{ name: "LIST - KNN - external point - k=1", w_list: w_list, c_list: c_list, p: w2, k: 1, want: []*models.Waypoint{w_list[0]}, wantErr: false },
+		{ name: "LIST - KNN - external point - k=3", w_list: w_list, c_list: c_list, p: w2, k: 3, want: []*models.Waypoint{w_list[0], w_list[3], w_list[1]}, wantErr: false },
+		{ name: "LIST - KNN - external point - k>#wps", w_list: w_list, c_list: c_list, p: w2, k: 7, want: []*models.Waypoint{w_list[0], w_list[3], w_list[1], w_list[2]}, wantErr: false },
+		{ name: "LIST - KNN - internal point - k=1", w_list: w_list, c_list: c_list, p: w_list[0], k: 1, want: []*models.Waypoint{w_list[0]}, wantErr: false },
+		{ name: "LIST - KNN - internal point - k=2", w_list: w_list, c_list: c_list, p: w_list[0], k: 2, want: []*models.Waypoint{w_list[0], w_list[3]}, wantErr: false },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := storage.NewMemoryStorage(tt.w_list, tt.c_list)
+			m, err := storage.NewListStorage(tt.w_list, tt.c_list)
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
@@ -436,7 +436,7 @@ func TestMemoryStorage_KNearestPoints(t *testing.T) {
 	}
 }
 
-func TestMemoryStorage_NearestPointsInRadius(t *testing.T) {
+func TestListStorage_NearestPointsInRadius(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
 	w := models.MustNewWaypoint(4, 40.41470804648725, -3.7105863826680263, a) //far
 	w2 := models.MustNewWaypoint(5, 40.4196041474128, -3.711548885387799, a) //closer
@@ -611,18 +611,18 @@ func TestMemoryStorage_NearestPointsInRadius(t *testing.T) {
 		want    *[]models.Waypoint
 		wantErr bool
 	}{
-		{ name: "MEMORY - RadiusNN - external point - r=0", w_list: w_list, c_list: c_list, p: w2, r: 0, wantErr: false },
-		{ name: "MEMORY - RadiusNN - external point - r<0", w_list: w_list, c_list: c_list, p: w2, r: -10.5, wantErr: true },
-		{ name: "MEMORY - RadiusNN - external point - r=8.5", w_list: w_list, c_list: c_list, p: w2, r: 8.5, wantErr: false },
-		{ name: "MEMORY - RadiusNN - external point - r=150", w_list: w_list, c_list: c_list, p: w2, r: 150, wantErr: false },
-		{ name: "MEMORY - RadiusNN - external point - r=500", w_list: w_list, c_list: c_list, p: w2, r: 500, wantErr: false },
-		{ name: "MEMORY - RadiusNN - external point2 - r=500", w_list: w_list, c_list: c_list, p: w, r: 500, wantErr: false },
-		{ name: "MEMORY - RadiusNN - internal point - r=0.05", w_list: w_list, c_list: c_list, p: w_list[0], r: 0.05, wantErr: false },
-		{ name: "MEMORY - RadiusNN - internal point - r=500", w_list: w_list, c_list: c_list, p: w_list[0], r: 500, wantErr: false },
+		{ name: "LIST - RadiusNN - external point - r=0", w_list: w_list, c_list: c_list, p: w2, r: 0, wantErr: false },
+		{ name: "LIST - RadiusNN - external point - r<0", w_list: w_list, c_list: c_list, p: w2, r: -10.5, wantErr: true },
+		{ name: "LIST - RadiusNN - external point - r=8.5", w_list: w_list, c_list: c_list, p: w2, r: 8.5, wantErr: false },
+		{ name: "LIST - RadiusNN - external point - r=150", w_list: w_list, c_list: c_list, p: w2, r: 150, wantErr: false },
+		{ name: "LIST - RadiusNN - external point - r=500", w_list: w_list, c_list: c_list, p: w2, r: 500, wantErr: false },
+		{ name: "LIST - RadiusNN - external point2 - r=500", w_list: w_list, c_list: c_list, p: w, r: 500, wantErr: false },
+		{ name: "LIST - RadiusNN - internal point - r=0.05", w_list: w_list, c_list: c_list, p: w_list[0], r: 0.05, wantErr: false },
+		{ name: "LIST - RadiusNN - internal point - r=500", w_list: w_list, c_list: c_list, p: w_list[0], r: 500, wantErr: false },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := storage.NewMemoryStorage(tt.w_list, tt.c_list)
+			m, err := storage.NewListStorage(tt.w_list, tt.c_list)
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
@@ -646,7 +646,7 @@ func TestMemoryStorage_NearestPointsInRadius(t *testing.T) {
 	}
 }
 
-func TestMemoryStorage_IsPointInObstacles(t *testing.T) {
+func TestListStorage_IsPointInObstacles(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
 	w := models.MustNewWaypoint(4, 40.41470804648725, -3.7105863826680263, a) //far
 	w2 := models.MustNewWaypoint(5, 40.4196041474128, -3.711548885387799, a) //closer
@@ -820,16 +820,16 @@ func TestMemoryStorage_IsPointInObstacles(t *testing.T) {
 		want    bool
 		wantErr bool
 	}{
-		{ name: "MEMORY - PiP - external point0", w_list: w_list, c_list: c_list, p: w, wantErr: false },
-		{ name: "MEMORY - PiP - external point1", w_list: w_list, c_list: c_list, p: w2, wantErr: false },
-		{ name: "MEMORY - PiP - external point2", w_list: w_list, c_list: c_list, p: w_list[0], wantErr: false },
-		{ name: "MEMORY - PiP - external point3", w_list: w_list, c_list: c_list, p: w_list[1], wantErr: false },
-		{ name: "MEMORY - PiP - external point4", w_list: w_list, c_list: c_list, p: w_list[2], wantErr: false },
-		{ name: "MEMORY - PiP - external point5", w_list: w_list, c_list: c_list, p: w_list[3], wantErr: false },
+		{ name: "LIST - PiP - external point0", w_list: w_list, c_list: c_list, p: w, wantErr: false },
+		{ name: "LIST - PiP - external point1", w_list: w_list, c_list: c_list, p: w2, wantErr: false },
+		{ name: "LIST - PiP - external point2", w_list: w_list, c_list: c_list, p: w_list[0], wantErr: false },
+		{ name: "LIST - PiP - external point3", w_list: w_list, c_list: c_list, p: w_list[1], wantErr: false },
+		{ name: "LIST - PiP - external point4", w_list: w_list, c_list: c_list, p: w_list[2], wantErr: false },
+		{ name: "LIST - PiP - external point5", w_list: w_list, c_list: c_list, p: w_list[3], wantErr: false },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := storage.NewMemoryStorage(tt.w_list, tt.c_list)
+			m, err := storage.NewListStorage(tt.w_list, tt.c_list)
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
@@ -851,7 +851,7 @@ func TestMemoryStorage_IsPointInObstacles(t *testing.T) {
 	}
 }
 
-func TestMemoryStorage_IsLineInObstacles(t *testing.T) {
+func TestListStorage_IsLineInObstacles(t *testing.T) {
 	a, _ := models.NewAltitude(100, models.MT)
 	w := models.MustNewWaypoint(4, 40.41470804648725, -3.7105863826680263, a) //far
 	w2 := models.MustNewWaypoint(5, 40.4196041474128, -3.711548885387799, a) //closer
@@ -1027,17 +1027,17 @@ func TestMemoryStorage_IsLineInObstacles(t *testing.T) {
 		want    bool
 		wantErr bool
 	}{
-		{ name: "MEMORY - LiP - samePoint", w_list: w_list, c_list: c_list, p: w, p2: w, want: false, wantErr: false },
-		{ name: "MEMORY - LiP - w-w2", w_list: w_list, c_list: c_list, p: w, p2: w2, want: true, wantErr: false },
-		{ name: "MEMORY - LiP - 0-1", w_list: w_list, c_list: c_list, p: w_list[0], p2: w_list[1], want: true, wantErr: false },
-		{ name: "MEMORY - LiP - 1-2", w_list: w_list, c_list: c_list, p: w_list[1], p2: w_list[2], want: true, wantErr: false },
-		{ name: "MEMORY - LiP - 2-3", w_list: w_list, c_list: c_list, p: w_list[2], p2: w_list[3], want: true, wantErr: false },
-		{ name: "MEMORY - LiP - 3-w", w_list: w_list, c_list: c_list, p: w_list[3], p2: w, want: true, wantErr: false },
-		{ name: "MEMORY - LiP - w-w3", w_list: w_list, c_list: c_list, p: w, p2: w3, want: false, wantErr: false },
+		{ name: "LIST - LiP - samePoint", w_list: w_list, c_list: c_list, p: w, p2: w, want: false, wantErr: false },
+		{ name: "LIST - LiP - w-w2", w_list: w_list, c_list: c_list, p: w, p2: w2, want: true, wantErr: false },
+		{ name: "LIST - LiP - 0-1", w_list: w_list, c_list: c_list, p: w_list[0], p2: w_list[1], want: true, wantErr: false },
+		{ name: "LIST - LiP - 1-2", w_list: w_list, c_list: c_list, p: w_list[1], p2: w_list[2], want: true, wantErr: false },
+		{ name: "LIST - LiP - 2-3", w_list: w_list, c_list: c_list, p: w_list[2], p2: w_list[3], want: true, wantErr: false },
+		{ name: "LIST - LiP - 3-w", w_list: w_list, c_list: c_list, p: w_list[3], p2: w, want: true, wantErr: false },
+		{ name: "LIST - LiP - w-w3", w_list: w_list, c_list: c_list, p: w, p2: w3, want: false, wantErr: false },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := storage.NewMemoryStorage(tt.w_list, tt.c_list)
+			m, err := storage.NewListStorage(tt.w_list, tt.c_list)
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
@@ -1063,7 +1063,7 @@ func TestMemoryStorage_IsLineInObstacles(t *testing.T) {
 	}
 }
 
-func TestMemoryStorage_SampleFree(t *testing.T) {
+func TestListStorage_SampleFree(t *testing.T) {
   a, _ := models.NewAltitude(100, models.MT)
   w1 := models.MustNewWaypoint(0, 50.872778105839274, 4.433724687935722, a) // p1
 	w2 := models.MustNewWaypoint(1, 50.884400404439646, 4.46992531620532, a) // p2
@@ -1268,12 +1268,12 @@ func TestMemoryStorage_SampleFree(t *testing.T) {
     sampleVolume *models.Feature3D
     alt models.Altitude
 	}{
-		{ name: "MEMORY - SampleFree with obstacles - uniform", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewUniformSampler(10), sampleVolume: search_volume, alt: a},
-    { name: "MEMORY - SampleFree with obstacles - halton", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewHaltonSampler(), sampleVolume: search_volume, alt: a},
+		{ name: "LIST - SampleFree with obstacles - uniform", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewUniformSampler(10), sampleVolume: search_volume, alt: a},
+    { name: "LIST - SampleFree with obstacles - halton", w_list: []*models.Waypoint{w1, w2}, c_list: c_list, sampler: utils.NewHaltonSampler(), sampleVolume: search_volume, alt: a},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := storage.NewMemoryStorage(tt.w_list, tt.c_list)
+			m, err := storage.NewListStorage(tt.w_list, tt.c_list)
 			if err != nil {
 				t.Fatalf("could not construct receiver type: %v", err)
 			}
