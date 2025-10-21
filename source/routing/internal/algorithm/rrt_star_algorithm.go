@@ -198,6 +198,11 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 	storage.ClearWaypoints()
 	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
 
+	// First thing to do if to check if a straight line connection is possible
+	if obstacleBetweenStartEnd, _, _ := storage.IsLineInObstacles(start, end); !obstacleBetweenStartEnd {
+		return []*models.Waypoint{start, end}, utils.HaversineDistance3D(start, end), nil
+	}
+
 	// TODO: Parameters
 	// TODO: Think about not to use max_iterations directly, rather continue until a certain condition happen (e.g. cost of route stopped decreasing for a while) 
 	// Get Parameters

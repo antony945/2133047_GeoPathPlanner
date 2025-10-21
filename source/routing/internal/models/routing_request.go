@@ -35,6 +35,15 @@ func NewRoutingRequestFromJson(jsonString string) (*RoutingRequest, error) {
 	return r, nil
 }
 
+func MustNewRoutingRequestFromJson(jsonString string) (*RoutingRequest) {
+	r, err := NewRoutingRequestFromJson(jsonString)
+	if err != nil {
+		panic(err)
+	}
+
+	return r
+}
+
 func (r *RoutingRequest) Algorithm() AlgorithmType {
 	if r.Parameters == nil {
 		// no parameters -> default algorithm

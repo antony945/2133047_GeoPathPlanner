@@ -182,6 +182,12 @@ func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*mode
 func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Waypoint, parameters map[string]any, storage storage.Storage) ([]*models.Waypoint, float64, error) {
 	// TODO: Think if this is the correct place
 	storage.ClearWaypoints()
+	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
+
+	// First thing to do if to check if a straight line connection is possible
+	if obstacleBetweenStartEnd, _, _ := storage.IsLineInObstacles(start, end); !obstacleBetweenStartEnd {
+		return []*models.Waypoint{start, end}, utils.HaversineDistance3D(start, end), nil
+	}
 	
 	// HERE IMPLEMENT RRT
 	// start from start
@@ -193,7 +199,6 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 	// check if connection from free to goal is possible
 	// if yes break from the loop, if not continue
 
-	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
 
 	// Get Parameters
 	sampler, max_iterations, step_size_mt, _ := a.GetParameters(parameters, end)
