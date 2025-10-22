@@ -8,8 +8,14 @@ require (
 )
 
 require (
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.8.0
 	github.com/twpayne/go-geom v1.3.6
+)
+
+require (
+	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+	github.com/segmentio/kafka-go v0.4.49 // indirect
 )
 
 require github.com/dhconnelly/rtreego v1.2.0 // direct
