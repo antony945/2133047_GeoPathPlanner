@@ -74,7 +74,7 @@ func (k *KakfaService) ProduceMessage(data []byte) error {
 	return nil
 }
 
-func (k *KakfaService) ConsumeMessage(handleRecord func(*kgo.Record)) {
+func (k *KakfaService) ConsumeMessage(handleRecord func(*kgo.Record) error) {
 	fmt.Printf("Waiting for messages to be consumed...\n\n")
 	
 	// 2.) Consuming messages from a topic
@@ -99,7 +99,10 @@ func (k *KakfaService) ConsumeMessage(handleRecord func(*kgo.Record)) {
 					string(record.Value),
 				)
 
-				handleRecord(record)
+				err := handleRecord(record)
+				if err != nil {
+					// TODO: Stop listening
+				}
 			}
 		})
 	}

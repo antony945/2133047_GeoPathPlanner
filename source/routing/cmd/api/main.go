@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"geopathplanner/routing/internal/kafka"
+	"geopathplanner/routing/internal/models"
 	"geopathplanner/routing/internal/service"
 	"log"
 	"math/rand"
@@ -41,55 +43,51 @@ func Run() error {
 	if err != nil {
 		return fmt.Errorf("error while creating KafkaService: %v", err)
 	}
+	defer k.Close()
 
 	// Create RoutingService
-	_, err = service.NewRoutingService()
+	rs, err := service.NewRoutingService()
 	if err != nil {
 		return fmt.Errorf("error while creating RoutingService: %v", err)
 	}
 
 	// ========== MAIN LOOP =============
-	// TODO: Run the KAFKA consumer for it to wait for upcoming messages
-	k.ConsumeMessage(func(r *kgo.Record) {
+	// Run the KAFKA consumer for it to wait for upcoming messages
+	k.ConsumeMessage(func(r *kgo.Record) error {
 		// Generate random number between 1 to 10
 		n := rand.Intn(10) + 1
 		log.Printf("Handling request (%ds)...\n", n)
 		// TODO: Just for testing, simulate Ns cooldown and then send a response
 		time.Sleep(time.Duration(n) * time.Second)
 
-		k.ProduceMessage([]byte(fmt.Sprintf(
-			"Response to topic=%s partition=%d offset=%d key=%s value=%s\n",
-			r.Topic,
-			r.Partition,
-			r.Offset,
-			string(r.Key),
-			string(r.Value),
-		)))
-
 		// TODO: Implement validation
-		// // 1. Validate data to make sure it is a valide RoutingRequest
-		// req, err := models.NewRoutingRequestFromJson(string(r.Value))
-		// if err != nil {
-		// 	fmt.Printf("Error decoding RoutingRequest (topic=%s, partition=%d, offset=%d): %v",
-		// 		r.Topic, r.Partition, r.Offset, err)
-		// 	return
-		// }
+		// 1. Validate data to make sure it is a valide RoutingRequest
+		req, err := models.NewRoutingRequestFromJson(string(r.Value))
+		if err != nil {
+			error_msg := fmt.Sprintf("error decoding RoutingRequest (topic=%s, partition=%d, offset=%d): %v",
+				r.Topic, r.Partition, r.Offset, err)
+			fmt.Println(error_msg)
+			// TODO: What to do if we get something that is not a routingRequest? For now let's send an error msg and continue
+			k.ProduceMessage([]byte(error_msg))
+			return nil
+		}
 
-		// fmt.Printf("Received RoutingRequest %s with %d waypoints",
-		// 	req.RequestID, len(req.Waypoints))
+		fmt.Printf("Received RoutingRequest %s with %d waypoints\n",
+			req.RequestID, len(req.Waypoints))
 
-		// // 2. Run RoutingService
-		// response := rs.HandleRoutingRequest(req)
+		// 2. Run RoutingService
+		response := rs.HandleRoutingRequest(req)
 		
-		// // 3. Marshal response to obtain []byte
-		// data, err := json.Marshal(response)
-		// if err != nil {
-		// 	fmt.Printf("Failed to marshal RoutingResponse: %v", err)
-		// 	return
-		// }
+		// 3. Marshal response to obtain []byte
+		data, err := json.Marshal(response)
+		if err != nil {
+			fmt.Printf("Failed to marshal RoutingResponse: %v", err)
+			return nil
+		}
 
-		// // 4. Send the output produced by RoutingService as a new msg on another KAFKA topic, acting as producer
-		// k.ProduceMessage(data)
+		// 4. Send the output produced by RoutingService as a new msg on another KAFKA topic, acting as producer
+		k.ProduceMessage(data)
+		return nil
 	})	
 
 	return nil
