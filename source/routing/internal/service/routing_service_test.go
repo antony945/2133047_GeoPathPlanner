@@ -1080,7 +1080,7 @@ func TestRoutingService_HandleRoutingRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rs := service.NewRoutingService()
+			rs, _ := service.NewRoutingService()
 			got := rs.HandleRoutingRequest(tt.input)
 			
 			utils.ExportToJSON(got, "service", tt.name, false)

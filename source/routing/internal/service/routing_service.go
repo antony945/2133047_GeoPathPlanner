@@ -9,8 +9,8 @@ import (
 type RoutingService struct {
 }
 
-func NewRoutingService() *RoutingService {
-	return &RoutingService{}
+func NewRoutingService() (*RoutingService, error) {
+	return &RoutingService{}, nil
 }
 
 func (rs *RoutingService) HandleRoutingRequest(input *models.RoutingRequest) (*models.RoutingResponse) {

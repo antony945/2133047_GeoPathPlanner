@@ -3,108 +3,109 @@ package kafka
 import (
 	"context"
 	"fmt"
-	"time"
+	"sync"
 
-	"github.com/segmentio/kafka-go"
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-// Consume message from a specific topic and pass it to the RoutingService to handle it.
-// Return the output of the RoutingService to be later used in the producer.
-// Implement consumer in a way that a worker pool can exist, each processing one or more messages at the "same time"
-
-// Given the output of the RoutingService, act as a producer by sending it onto a kafka topic so for the backend to read it.
-// Do it in a coordinate way as the consumer (maybe same number of workers in working pool?)
-
-func TestKafka() error {
-	topic := "test-go-topic"
-    partition := 0
-    conn, err := connect(topic, partition)
-	if err != nil {
-		return fmt.Errorf("failed to open connection: %w", err)
-	}
-
-    writeMessages(conn, []string{"msg 1", "msg 22","msg 333"})
-    readMessages(conn, 10, 10e3)
-    readWithReader(topic, "consumer-through-kafka 1")
-
-    if err := conn.Close(); err != nil {
-		return fmt.Errorf("failed to close connection: %w", err)
-    }
-
-    return nil
+type KakfaService struct {
+	Client        *kgo.Client
+	RequestTopic  string
+	ResponseTopic string
+	GroupID       string
+	Brokers       []string
+	Ctx context.Context
 }
 
-//Connect to the specified topic and partition in the server
-// Non-containerized apps can connect through: localhost:9092
-// Dockerized apps con connect through: kafka:9093
-func connect(topic string, partition int)(*kafka.Conn, error){
-    conn, err := kafka.DialLeader(context.Background(), "tcp", 
-        "kafka:9093", topic, partition)
-    if err != nil {
-        fmt.Println("failed to dial leader")
-    }
-    return conn, err
-} //end connect
+func NewKafkaService(ctx context.Context, brokers []string, groupID, requestTopic, responseTopic string) (*KakfaService, error) {
 
-//Writes the messages in the string slice to the topic
-func writeMessages(conn *kafka.Conn, msgs []string){
-    var err error
-    conn.SetWriteDeadline(time.Now().Add(10*time.Second)) 
+	// Create the client
+	// One client can both produce and consume!
+	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.
+	client, err := kgo.NewClient(
+		kgo.SeedBrokers(brokers...),
+		kgo.ConsumerGroup(groupID),
+		kgo.ConsumeTopics(requestTopic),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kafka client: %w", err)
+	}
 
-    for _, msg := range msgs{
-        _, err = conn.WriteMessages(
-        kafka.Message{Value: []byte(msg)},)
-    }
-    if err != nil {
-        fmt.Println("failed to write messages:", err)
-    }
-} //end writeMessages
+	fmt.Printf("Successfully created Kafka client with '%s' groupID listening on '%s' topic..\n", groupID, requestTopic)
 
-//Reads all messages in the partition from the start
-//Specify a minimum and maximum size in bytes to read (1 char = 1 byte)
-func readMessages(conn *kafka.Conn, minSize int, maxSize int){
-    conn.SetReadDeadline(time.Now().Add(5*time.Second))
-    batch := conn.ReadBatch(minSize, maxSize) //in bytes
+	return &KakfaService{
+		Client: client,
+		RequestTopic: requestTopic,
+		ResponseTopic: responseTopic,
+		GroupID: groupID,
+		Brokers: brokers,
+		Ctx: ctx,
+	}, nil
+}
 
-    msg:= make([]byte, 10e3)     //set the max length of each message
-    for {
-        msgSize, err := batch.Read(msg)
-        if err != nil {
-            break
-        }
-        fmt.Printf("CONSUMED MESSAGE -> %s\n", string(msg[:msgSize]))
-    }
+func (k *KakfaService) ProduceMessage(data []byte) error {
+	fmt.Printf("Producing msg...\n\n")
 
-    if err := batch.Close(); err != nil {   //make sure to close the batch
-        fmt.Println("failed to close batch:", err)
-    }
-} //end readMessages
+	// ctx := context.Background()
 
-//Read from the topic using kafka.Reader
-//Readers can use consumer groups (but are not required to)
-func readWithReader(topic string, groupID string){
-    r := kafka.NewReader(kafka.ReaderConfig{
-        Brokers:    []string{"localhost:9092", "localhost:9093", "localhost:9094"},
-        // Brokers:    []string{"localhost:9092", "kafka:9093"},
-        GroupID:    groupID,
-        Topic:      topic,
-        MaxBytes:   100,     //per message
-        // more options are available
-    })
+	// 1.) Producing a message
+	// All record production goes through Produce, and the callback can be used
+	// to allow for synchronous or asynchronous production.
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-    //Create a deadline
-    readDeadline, _ := context.WithDeadline(context.Background(),
-        time.Now().Add(5*time.Second))
-    for {
-        msg, err := r.ReadMessage(readDeadline)
-        if err != nil {
-            break
-        }
-        fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", 
-            msg.Topic, msg.Partition, msg.Offset, string(msg.Key), string(msg.Value))
-    }
+	// Create record to put on topic
+	record := &kgo.Record{Topic: k.ResponseTopic, Value: data}
+	
+	k.Client.Produce(k.Ctx, record, func(_ *kgo.Record, err error) {
+		defer wg.Done()
+		if err != nil {
+			fmt.Printf("record had a produce error: %v\n", err)
+		}
 
-    if err := r.Close(); err != nil {
-        fmt.Println("failed to close reader:", err)
-    }
+	})
+	wg.Wait()
+
+	// // Alternatively, ProduceSync exists to synchronously produce a batch of records.
+	// if err := k.Client.ProduceSync(ctx, record).FirstErr(); err != nil {
+	// 	fmt.Printf("record had a produce error while synchronously producing: %v\n", err)
+	// }
+
+	return nil
+}
+
+func (k *KakfaService) ConsumeMessage(handleRecord func(*kgo.Record)) {
+	fmt.Printf("Waiting for messages to be consumed...\n\n")
+	
+	// 2.) Consuming messages from a topic
+	for {
+		fetches := k.Client.PollFetches(k.Ctx)
+		if errs := fetches.Errors(); len(errs) > 0 {
+			// All errors are retried internally when fetching, but non-retriable errors are
+			// returned from polls so that users can notice and take action.
+			panic(fmt.Sprint(errs))
+		}
+
+		// or a callback function.
+		fetches.EachPartition(func(p kgo.FetchTopicPartition) {
+			for _, record := range p.Records {
+				// What to do with each record that we have
+				fmt.Printf(
+					"> Consumed from topic=%s partition=%d offset=%d key=%s value=%s\n",
+					record.Topic,
+					record.Partition,
+					record.Offset,
+					string(record.Key),
+					string(record.Value),
+				)
+
+				handleRecord(record)
+			}
+		})
+	}
+}
+
+func (k *KakfaService) Close() error {
+	k.Client.Close()
+	return nil
 }
