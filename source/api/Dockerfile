@@ -6,12 +6,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install Python packages
+# --- NEW: uninstall any preinstalled bcrypt first ---
+RUN pip uninstall -y bcrypt || true
+
+# Copy requirements and install everything cleanly
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the app code
+# Copy your app
 COPY app ./app
 
 EXPOSE 8000
-CMD ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
+CMD ["python","-m","uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
