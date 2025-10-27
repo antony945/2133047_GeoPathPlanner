@@ -148,20 +148,37 @@ func ResampleLineToInterval(p1, p2 *models.Waypoint, distMt float64) []*models.W
 	if (dist <= distMt) {
 		return []*models.Waypoint{p1, p2}
 	}
-
+	elev := p1.Alt.Distance(p2.Alt).ConvertTo(models.MT).Value
+	// dist2D := geo.DistanceHaversine(p1.Point2D(), p2.Point2D())
+	
 	// Define numStep, altStepSize and stepSize
-	numStep := int(dist / distMt)
-	altStepSizeMt := p1.Alt.Distance(p2.Alt).ConvertTo(models.MT).Value / float64(numStep)
+	numStep := math.Ceil(dist / distMt)
+	altStepSizeMt := elev / numStep
 	
 	// Pythagorean theorem to find x stepSize
 	stepSizeMt := math.Sqrt(distMt*distMt - altStepSizeMt*altStepSizeMt)
 
-	quantizedPoints := make([]*models.Waypoint, 0, numStep)
+	// ls := p1.GetLineString(p2)
+	// total, dists := func() (float64, []float64) {
+	// 	total := 0.0
+	// 	dists := make([]float64, len(ls)-1)
+	// 	for i := 0; i < len(ls)-1; i++ {
+	// 		dists[i] = geo.DistanceHaversine(ls[i], ls[i+1])
+	// 		total += dists[i]
+	// 	}
+	// 	return total, dists
+	// }()
+
+	// totalPoints := int(total/stepSizeMt) + 1
+	// fmt.Printf("dist3D: %.3f, distX: %.3f, distY: %.3f, distMt: %.3f, numStep: %d, altStepSizeMt: %.3f, stepSizeMt: %.3f, total: %.3f, dists: %.3f, totalPoints: %d\n\n", dist, dist2D, elev, distMt, numStep, altStepSizeMt, stepSizeMt, total, dists, totalPoints)
+	// fmt.Printf("(p1) lat: %v lon: %v alt: %v\n", p1.Lat, p1.Lon, p1.Alt)
+	// fmt.Printf("(p2) lat: %v lon: %v alt: %v\n", p2.Lat, p2.Lon, p2.Alt)
 
 	// 2D resample line	
 	resampledLine := resample.ToInterval(p1.GetLineString(p2), geo.DistanceHaversine, stepSizeMt)
 	
 	// For each point in resampleLine, add the altitude interpolated
+	quantizedPoints := make([]*models.Waypoint, 0, int(numStep))
 	startingAltVal := p1.Alt.ConvertTo(models.MT).Value
 	for i, p := range resampledLine {
 		// For altitude linearly interpolate

@@ -17,96 +17,97 @@ func TestRoutingService_HandleRoutingRequest(t *testing.T) {
         foundRoute bool
 	}{
 		// TODO: Add test cases.
-		// {
-        //     name: "RR-NoConstraints",
-        //     input: models.MustNewRoutingRequestFromJson(`{
-        //         "request_id": "1",
-        //         "waypoints": [
-        //             {
-        //                 "type": "Feature",
-        //                 "properties": {
-        //                     "altitudeUnit": "mt",
-        //                     "altitudeValue": 200
-        //                 },
-        //                 "geometry": {
-        //                     "type": "Point",            
-        //                     "coordinates": [
-        //                         4.433724687935722,
-        //                         50.872778105839274
-        //                     ]
-        //                 }
-        //             },
-        //             {
-        //                 "type": "Feature",
-        //                 "properties": {
-        //                     "altitudeUnit": "mt",
-        //                     "altitudeValue": 300
-        //                 },
-        //                 "geometry": {
-        //                     "type": "Point",            
-        //                     "coordinates": [
-        //                         4.46992531620532,
-        //                         50.884400404439646
-        //                     ]
-        //                 }
-        //             },
-        //             {
-        //                 "type": "Feature",
-        //                 "properties": {
-        //                     "altitudeUnit": "mt",
-        //                     "altitudeValue": 400
-        //                 },
-        //                 "geometry": {
-        //                     "type": "Point",            
-        //                     "coordinates": [
-        //                         4.45503208121508,
-        //                         50.890383059561145
-        //                     ]
-        //                 }
-        //             }
-        //         ],
-        //         "search_volume": {
-        //             "type": "Feature",
-        //             "properties": {},
-        //             "geometry": {
-        //                 "type": "Polygon",
-        //                 "coordinates": [
-        //                     [
-        //                     [
-        //                         4.424480223895728,
-        //                         50.89367115387381
-        //                     ],
-        //                     [
-        //                         4.424480223895728,
-        //                         50.867778999101745
-        //                     ],
-        //                     [
-        //                         4.480653371960557,
-        //                         50.867778999101745
-        //                     ],
-        //                     [
-        //                         4.480653371960557,
-        //                         50.89367115387381
-        //                     ],
-        //                     [
-        //                         4.424480223895728,
-        //                         50.89367115387381
-        //                     ]
-        //                     ]
-        //                 ]
-        //             }
-        //         },
-        //         "parameters": {
-        //             "algorithm": "rrt",
-        //             "storage": "list",
-        //             "sampler": "uniform",
-        //             "seed": 10,
-        //             "max_iterations": 10000,
-        //             "step_size_mt": 20,
-        //             "goal_bias": 0.10
-        //         }
-        //     }`),
-        // },
+		{
+            name: "RR-NoConstraints",
+            foundRoute: true,
+            input: models.MustNewRoutingRequestFromJson(`{
+                "request_id": "1",
+                "waypoints": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "altitudeUnit": "mt",
+                            "altitudeValue": 200
+                        },
+                        "geometry": {
+                            "type": "Point",            
+                            "coordinates": [
+                                4.433724687935722,
+                                50.872778105839274
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "altitudeUnit": "mt",
+                            "altitudeValue": 300
+                        },
+                        "geometry": {
+                            "type": "Point",            
+                            "coordinates": [
+                                4.46992531620532,
+                                50.884400404439646
+                            ]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "altitudeUnit": "mt",
+                            "altitudeValue": 400
+                        },
+                        "geometry": {
+                            "type": "Point",            
+                            "coordinates": [
+                                4.45503208121508,
+                                50.890383059561145
+                            ]
+                        }
+                    }
+                ],
+                "search_volume": {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                            [
+                                4.424480223895728,
+                                50.89367115387381
+                            ],
+                            [
+                                4.424480223895728,
+                                50.867778999101745
+                            ],
+                            [
+                                4.480653371960557,
+                                50.867778999101745
+                            ],
+                            [
+                                4.480653371960557,
+                                50.89367115387381
+                            ],
+                            [
+                                4.424480223895728,
+                                50.89367115387381
+                            ]
+                            ]
+                        ]
+                    }
+                },
+                "parameters": {
+                    "algorithm": "rrt",
+                    "storage": "list",
+                    "sampler": "uniform",
+                    "seed": 10,
+                    "max_iterations": 10000,
+                    "step_size_mt": 20,
+                    "goal_bias": 0.10
+                }
+            }`),
+        },
         // {
         //     name: "RR-NoSearchVolume",
         //     input: models.MustNewRoutingRequestFromJson(`{
@@ -2342,7 +2343,7 @@ func TestRoutingService_HandleRoutingRequest(t *testing.T) {
             
             // Export result in geojson
             utils.MarkWaypointsAsOriginal(tt.input.Waypoints...)
-            utils.ExportToGeoJSONRoute("service", got.Route, got.Constraints, got.SearchVolume, tt.name, true)
+            utils.ExportToGeoJSONRoute("service", got.Route, got.Constraints, got.SearchVolume, tt.name, false)
 			utils.ExportToJSON(got, "service", tt.name, false)
 
 			// TODO: update the condition below to compare got with tt.want.
