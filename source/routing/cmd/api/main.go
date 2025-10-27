@@ -64,7 +64,7 @@ func Run() error {
 			// k.ProduceMessage([]byte(error_msg))
 			return nil
 		}
-		fmt.Printf("✅ Valid RoutingRequest %s with %d waypoints received", req.RequestID, len(req.Waypoints))
+		fmt.Printf("✅ Valid RoutingRequest %s with %d waypoints received\n", req.RequestID, len(req.Waypoints))
 
 		// 2. Run RoutingService
 		response := rs.HandleRoutingRequest(req, v)

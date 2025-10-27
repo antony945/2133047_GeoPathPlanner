@@ -1,5 +1,5 @@
 {
-  "request_id": "1",
+  "request_id": "abc123",
   "waypoints": [
     {
       "type": "Feature",
@@ -206,7 +206,7 @@
     }
   },
   "parameters": {
-    "algorithm": "rrtstar",
+    "algorithm": "rrt",
     "storage": "rtree",
     "goal_bias": 0.1,
     "max_iterations": 10000,

@@ -1,4 +1,4 @@
-package algorithm
+package utils
 
 import "geopathplanner/routing/internal/models"
 

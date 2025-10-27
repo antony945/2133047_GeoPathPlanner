@@ -9,7 +9,7 @@ import (
 )
 
 func TestRRTAlgorithm_run(t *testing.T) {
-  sv, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  sv, w_list, c_list, c_overlapping := utils.SetupTestScenario()
   w1 := w_list[0]
   w2 := w_list[1]
 
@@ -65,7 +65,7 @@ func TestRRTAlgorithm_run(t *testing.T) {
 }
 
 func TestRRTAlgorithm_Compute(t *testing.T) {
-  sv, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  sv, w_list, c_list, c_overlapping := utils.SetupTestScenario()
 
 	tests := []struct {
 		name string // description of this test case
@@ -97,7 +97,7 @@ func TestRRTAlgorithm_Compute(t *testing.T) {
 			got, _, gotErr := a.Compute(tt.searchVolume, tt.waypoints, tt.constraints, nil, tt.storageType)
 
 			// TODO: For visually testing, export results in geojson
-      utils.MarkWaypointsAsOriginal(tt.waypoints...)
+      		utils.MarkWaypointsAsOriginal(tt.waypoints...)
 			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, true)
 
 			if gotErr != nil {
@@ -114,7 +114,7 @@ func TestRRTAlgorithm_Compute(t *testing.T) {
 }
 
 func TestRRTAlgorithm_ComputeConcurrently(t *testing.T) {
-  sv, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  sv, w_list, c_list, c_overlapping := utils.SetupTestScenario()
 
 	tests := []struct {
 		name string // description of this test case

@@ -9,7 +9,7 @@ import (
 )
 
 func TestAntPathAlgorithm_run(t *testing.T) {
-  _, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  _, w_list, c_list, c_overlapping := utils.SetupTestScenario()
   w1 := w_list[0]
   w2 := w_list[1]
 
@@ -65,7 +65,7 @@ func TestAntPathAlgorithm_run(t *testing.T) {
 }
 
 func TestAntPathAlgorithm_Compute(t *testing.T) {
-  _, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  _, w_list, c_list, c_overlapping := utils.SetupTestScenario()
 
 	tests := []struct {
 		name string // description of this test case
@@ -112,7 +112,7 @@ func TestAntPathAlgorithm_Compute(t *testing.T) {
 }
 
 func TestAntPathAlgorithm_ComputeConcurrently(t *testing.T) {
-  	_, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  	_, w_list, c_list, c_overlapping := utils.SetupTestScenario()
 
 	tests := []struct {
 		name string // description of this test case

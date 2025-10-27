@@ -213,6 +213,11 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 	// ------------------------------------------------------------------------------------------------------	
 	
 	for current_iter := range max_iterations {
+		if current_iter % 1000 == 0 {
+			fmt.Printf("[%d/%d] #wps: %d, goal not found yet\n", current_iter, max_iterations, storage.WaypointsLen())
+			// fmt.Printf("[%d/%d] radius: %.2fmt, goal not found yet\n", current_iter, MAX_ITERATIONS, R)
+		}
+
 		// 1. Sample a new free wp
 		sampled, err := storage.SampleFree(sampler, searchVolume, start.Alt)
 		if err != nil {

@@ -44,10 +44,14 @@ func (v *DefaultValidator) ValidateInput(searchVolume *models.Feature3D, waypoin
 	// TODO: 1. Check search volume
 	
 	// 2. Check constraints, discard ones that are not in search volume
+	// for _, obs := range constraints {
+	// 	fmt.Printf("old_obstacle: %v\n", obs)
+	// }
 	validatedConstraints, err := s.GetAllObstaclesInSearchVolume(searchVolume)
 	if err != nil {
 		return nil, nil, err
 	}
+	fmt.Printf("retained %d/%d constraints\n", len(validatedConstraints), len(constraints))
 
 	// Check if waypoints are blocked by constraints
 	// TODO: Check if waypoints are inside search volume
@@ -59,7 +63,7 @@ func (v *DefaultValidator) ValidateInput(searchVolume *models.Feature3D, waypoin
 		}
 
 		// If wp is "good" then add it to validated ones
-		if !inside {
+		if inside {
 			fmt.Printf("wp[%d] blocked by poly %v\n", i, poly)
 		} else {
 			validatedWaypoints = append(validatedWaypoints, wp)

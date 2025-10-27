@@ -381,6 +381,7 @@ func (r *RTreeStorage) GetAllObstaclesInSearchVolume(sv *models.Feature3D) ([]*m
 	for _, obs := range intersectedConstraintsBBox {
 		obstacle := obs.(*models.Feature3D)
 		obstacles = append(obstacles, obstacle)
+		// fmt.Printf("obstacle: %v\n", obs)
 	}
 
 	return obstacles, nil

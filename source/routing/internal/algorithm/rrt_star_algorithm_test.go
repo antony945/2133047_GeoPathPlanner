@@ -9,7 +9,7 @@ import (
 )
 
 func TestRRTStarAlgorithm_run(t *testing.T) {
-  sv, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  sv, w_list, c_list, c_overlapping := utils.SetupTestScenario()
   w1 := w_list[0]
   w2 := w_list[1]
 
@@ -65,7 +65,7 @@ func TestRRTStarAlgorithm_run(t *testing.T) {
 }
 
 func TestRRTStarAlgorithm_Compute(t *testing.T) {
-  sv, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  sv, w_list, c_list, c_overlapping := utils.SetupTestScenario()
 
 	tests := []struct {
 		name string // description of this test case
@@ -112,7 +112,7 @@ func TestRRTStarAlgorithm_Compute(t *testing.T) {
 }
 
 func TestRRTStarAlgorithm_ComputeConcurrently(t *testing.T) {
-  sv, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+  sv, w_list, c_list, c_overlapping := utils.SetupTestScenario()
 
 	tests := []struct {
 		name string // description of this test case
@@ -159,7 +159,7 @@ func TestRRTStarAlgorithm_ComputeConcurrently(t *testing.T) {
 }
 
 func BenchmarkRRTStarAlgorithm(b *testing.B) {
-	sv, w_list, c_list, c_overlapping := algorithm.SetupTestScenario()
+	sv, w_list, c_list, c_overlapping := utils.SetupTestScenario()
 
 	tests := []struct {
 		name        string
