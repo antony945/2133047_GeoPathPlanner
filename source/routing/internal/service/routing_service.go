@@ -29,7 +29,7 @@ func (rs *RoutingService) HandleRoutingRequest(input *models.RoutingRequest, val
 
 	// 3. Compute route
 	// TODO: Test with both compute and computeConcurrently
-	route, cost, err := algo.ComputeConcurrently(input.SearchVolume, wps, constraints, input.Parameters, input.Storage(), 0)
+	route, cost, err := algo.Compute(input.SearchVolume, wps, constraints, input.Parameters, input.Storage())
 	if err != nil {
 		return models.NewRoutingResponseError(input.RequestID, input.ReceivedAt, err.Error())
 	}
