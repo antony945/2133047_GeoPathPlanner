@@ -26,12 +26,13 @@ func (a *RRTAlgorithm) ComputeConcurrently(searchVolume *models.Feature3D, waypo
 	}
 	
 	maxCPU := runtime.NumCPU()
+	fmt.Printf("[WARN] Requested %d workers (%d cores, %d wpsPairs)\n", maxWorkers, maxCPU, numPairs)
 	if maxWorkers <= 0 {
 		maxWorkers = min(maxCPU, numPairs)
 	} else {
-		// fmt.Printf("[WARN] Requested %d workers exceeds %d cores, limiting to %d",
 		maxWorkers = min(maxWorkers, maxCPU, numPairs)
 	}
+	fmt.Printf("[WARN] Assigned %d workers (%d cores, %d wpsPairs)\n", maxWorkers, maxCPU, numPairs)
 
 	// If just 1 worker, use the normal version
 	if maxWorkers == 1 {
@@ -182,10 +183,11 @@ func (a *RRTAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*mode
 func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Waypoint, parameters map[string]any, storage storage.Storage) ([]*models.Waypoint, float64, error) {
 	// TODO: Think if this is the correct place
 	storage.ClearWaypoints()
-	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
+	fmt.Printf("wpA: %v, wpB: %v, storage starts with %d constraints and %d sampled waypoints.\n", start, end, storage.ConstraintsLen(), storage.WaypointsLen())
 
 	// First thing to do if to check if a straight line connection is possible
 	if obstacleBetweenStartEnd, _, _ := storage.IsLineInObstacles(start, end); !obstacleBetweenStartEnd {
+		fmt.Printf("Goal immediately found: straight line collision-free\n\n")
 		return []*models.Waypoint{start, end}, utils.HaversineDistance3D(start, end), nil
 	}
 	
@@ -198,7 +200,6 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 	// check if it's goal (approximately)
 	// check if connection from free to goal is possible
 	// if yes break from the loop, if not continue
-
 
 	// Get Parameters
 	sampler, max_iterations, step_size_mt, _ := a.GetParameters(parameters, end)
@@ -219,7 +220,7 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 		}
 
 		// 1. Sample a new free wp
-		sampled, err := storage.SampleFree(sampler, searchVolume, start.Alt)
+		sampled, err := storage.SampleFree(sampler, searchVolume, end.Alt)
 		if err != nil {
 			// Impossible to sample 
 			return nil, 0.0, err

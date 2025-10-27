@@ -196,10 +196,11 @@ func (a *RRTStarAlgorithm) Compute(searchVolume *models.Feature3D, waypoints []*
 func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Waypoint, parameters map[string]any, storage storage.Storage) ([]*models.Waypoint, float64, error) {
 	// TODO: Think if this is the correct place
 	storage.ClearWaypoints()
-	fmt.Printf("Storage has %d constraints and %d waypoints.\n\n", storage.ConstraintsLen(), storage.WaypointsLen())
+	fmt.Printf("wpA: %v, wpB: %v, storage starts with %d constraints and %d sampled waypoints.\n", start, end, storage.ConstraintsLen(), storage.WaypointsLen())
 
 	// First thing to do if to check if a straight line connection is possible
 	if obstacleBetweenStartEnd, _, _ := storage.IsLineInObstacles(start, end); !obstacleBetweenStartEnd {
+		fmt.Printf("Goal immediately found: straight line collision-free\n\n")
 		return []*models.Waypoint{start, end}, utils.HaversineDistance3D(start, end), nil
 	}
 
@@ -236,7 +237,7 @@ func (a *RRTStarAlgorithm) Run(searchVolume *models.Feature3D, start, end *model
 		}
 
 		// 1. Sample a new free wp
-		sampled, err := storage.SampleFree(sampler, searchVolume, start.Alt)
+		sampled, err := storage.SampleFree(sampler, searchVolume, end.Alt)
 		if err != nil {
 			// Impossible to sample 
 			return nil, 0.0, err

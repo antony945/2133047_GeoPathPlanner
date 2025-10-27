@@ -3,6 +3,7 @@ package service
 import (
 	"geopathplanner/routing/internal/algorithm"
 	"geopathplanner/routing/internal/models"
+	"geopathplanner/routing/internal/utils"
 	"geopathplanner/routing/internal/validator"
 )
 
@@ -21,6 +22,10 @@ func (rs *RoutingService) HandleRoutingRequest(input *models.RoutingRequest, val
 		return models.NewRoutingResponseError(input, err.Error()), false
 	}
 
+	// TODO: Just for visual debug
+	utils.MarkWaypointsAsInsideSearchVolume(input.Waypoints, wps...)
+	utils.MarkConstraintsAsInsideSearchVolume(input.Constraints, constraints...)
+
 	// 2. Pick and create algorithm (from input)
 	algo, err := algorithm.NewAlgorithm(input.Algorithm())
 	if err != nil {
@@ -29,7 +34,7 @@ func (rs *RoutingService) HandleRoutingRequest(input *models.RoutingRequest, val
 
 	// 3. Compute route
 	// TODO: Test with both compute and computeConcurrently
-	route, cost, err := algo.ComputeConcurrently(input.SearchVolume, wps, constraints, input.Parameters, input.Storage(), 0)
+	route, cost, err := algo.ComputeConcurrently(input.SearchVolume, wps, constraints, input.Parameters, input.Storage(), 1)
 	if err != nil {
 		return models.NewRoutingResponseError(input, err.Error()), false
 	}
