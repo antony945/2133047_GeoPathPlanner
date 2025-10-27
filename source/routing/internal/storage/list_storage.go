@@ -436,7 +436,7 @@ func (m *ListStorage) GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*mod
 	return obstacles, nil
 }
 
-// Scan list of obstacle and return every obstacle that collide with point
+// Scan list of obstacle and return every obstacle that collide with search volume
 // O(#obstacles)
 func (m *ListStorage) GetAllObstaclesInSearchVolume(sv *models.Feature3D) ([]*models.Feature3D, error) {
 	obstacles := make([]*models.Feature3D, 0)
@@ -448,6 +448,20 @@ func (m *ListStorage) GetAllObstaclesInSearchVolume(sv *models.Feature3D) ([]*mo
 	}
 
 	return obstacles, nil
+}
+
+// Scan list of points and return every points that collide with search volume
+// O(#obstacles)
+func (m *ListStorage) GetAllWaypointsInSearchVolume(sv *models.Feature3D) ([]*models.Waypoint, error) {
+	waypoints := make([]*models.Waypoint, 0)
+	
+	for _, waypoint := range m.waypoints {
+		if utils.PointInPolygon(waypoint, sv) {
+			waypoints = append(waypoints, waypoint)
+		}
+	}
+
+	return waypoints, nil
 }
 
 // Scan list of obstacle until you find someone that intersect line

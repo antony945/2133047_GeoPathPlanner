@@ -57,6 +57,15 @@ func (s WaypointStyler) AdvancedStyle(f *geojson.Feature, color string, stroke_w
 type PolygonStyler struct {}
 func (s PolygonStyler) Style(f *geojson.Feature) *geojson.Feature {
 	color := "#555555"
+	if isInsidePolygon := f.Properties["inside"]; isInsidePolygon != nil {
+		flag, _ := isInsidePolygon.(bool)
+		if flag {
+			color = "#d24141"
+		} else {
+			color = "#3ca32e"
+		}
+	}
+
 	return s.AdvancedStyle(f, color)
 }
 
@@ -150,6 +159,30 @@ func ExportToJSON(data any, folder, filename string, is_geojson bool) error {
 func MarkWaypointsAsOriginal(waypoints ...*models.Waypoint) error {
 	for _, wp := range waypoints {
 		wp.Feature.Properties["original"] = true
+	}
+
+	return nil
+}
+
+func MarkWaypointsAsInsideSearchVolume(original_wps []*models.Waypoint, waypoints ...*models.Waypoint) error {
+	for _, wp := range original_wps {
+		wp.Feature.Properties["inside"] = true
+	}
+
+	for _, wp := range waypoints {
+		wp.Feature.Properties["inside"] = false
+	}
+
+	return nil
+}
+
+func MarkConstraintsAsInsideSearchVolume(original_constraints []*models.Feature3D, constraints ...*models.Feature3D) error {
+	for _, c := range original_constraints {
+		c.Feature.Properties["inside"] = true
+	}
+
+	for _, c := range constraints {
+		c.Feature.Properties["inside"] = false
 	}
 
 	return nil

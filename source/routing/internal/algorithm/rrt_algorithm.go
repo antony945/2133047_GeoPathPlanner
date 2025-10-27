@@ -291,9 +291,9 @@ func (a *RRTAlgorithm) Run(searchVolume *models.Feature3D, start, end *models.Wa
 func (a *RRTAlgorithm) GetParameters(parameters map[string]any, goal *models.Waypoint) (utils.Sampler, int, float64, float64) {
 	// TODO: Take parameters from the actual map, and use defaults if not found
 	fmt.Printf("parameters: %+v\n", parameters)
-	MAX_ITERATIONS := utils.GetOrDefault(parameters, "max_iterations", 20000)
+	MAX_ITERATIONS := int(utils.GetOrDefault(parameters, "max_iterations", 100000.0))
 	GOAL_BIAS := utils.GetOrDefault(parameters, "goal_bias", 0.10)
-	STEP_SIZE_MT := utils.GetOrDefault(parameters, "step_size_mt", 10.0)
+	STEP_SIZE_MT := utils.GetOrDefault(parameters, "step_size_mt", 20.0)
 	SAMPLER_TYPE := utils.GetOrDefault(parameters, "sampler_type", models.Uniform)
 	SEED := utils.GetOrDefault(parameters, "seed", 945)
 

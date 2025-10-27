@@ -67,8 +67,13 @@ func Run() error {
 		fmt.Printf("✅ Valid RoutingRequest %s with %d waypoints received\n", req.RequestID, len(req.Waypoints))
 
 		// 2. Run RoutingService
-		response := rs.HandleRoutingRequest(req, v)
-		
+		response, found := rs.HandleRoutingRequest(req, v)
+		if found {
+			fmt.Printf("✅ ROUTE FOUND\n")
+		} else {
+			fmt.Printf("❌ ROUTE NOT FOUND\n")
+		}
+
 		// 3. Marshal response to obtain []byte
 		data, err := json.Marshal(response)
 		if err != nil {

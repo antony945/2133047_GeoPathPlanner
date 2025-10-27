@@ -105,7 +105,7 @@ func (c *Feature3D) SetAltitude(min, max Altitude) error {
 	// Write altitudes in the properties
 	c.Feature.Properties["minAltitudeValue"] = float64(c.MinAltitude.Value)
 	c.Feature.Properties["maxAltitudeValue"] = float64(c.MaxAltitude.Value)
-	c.Feature.Properties["altitudeUnit"] = c.MinAltitude.Unit
+	c.Feature.Properties["altitudeUnit"] = string(c.MinAltitude.Unit)
 	return nil
 }
 

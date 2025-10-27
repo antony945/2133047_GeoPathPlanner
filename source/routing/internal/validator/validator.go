@@ -32,7 +32,6 @@ func (v *DefaultValidator) ValidateMessage(data []byte) (*models.RoutingRequest,
 	// }
 }
 
-
 func (v *DefaultValidator) ValidateInput(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D) ([]*models.Waypoint, []*models.Feature3D, error) {
 	// Create temp RTree storage
 	s, err := storage.NewEmptyRTreeStorage()
@@ -40,6 +39,7 @@ func (v *DefaultValidator) ValidateInput(searchVolume *models.Feature3D, waypoin
 		return nil, nil, fmt.Errorf("error while creating empty rtree storage in validator: %w", err)
 	}
 	s.AddConstraints(constraints)
+	s.AddWaypoints(waypoints)
 
 	// TODO: 1. Check search volume
 	
@@ -51,29 +51,34 @@ func (v *DefaultValidator) ValidateInput(searchVolume *models.Feature3D, waypoin
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Printf("retained %d/%d constraints\n", len(validatedConstraints), len(constraints))
+	fmt.Printf("%d/%d constraints are in search volume\n", len(validatedConstraints), len(constraints))
 
-	// Check if waypoints are blocked by constraints
-	// TODO: Check if waypoints are inside search volume
-	validatedWaypoints := make([]*models.Waypoint, 0, len(waypoints))
-	for i, wp := range waypoints {
-		inside, poly, err := s.IsPointInObstacles(wp)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// If wp is "good" then add it to validated ones
-		if inside {
-			fmt.Printf("wp[%d] blocked by poly %v\n", i, poly)
-		} else {
-			validatedWaypoints = append(validatedWaypoints, wp)
-		}
+	// 3. Check waypoints, discard ones that are not in search volume
+	validatedWaypoints, err := s.GetAllWaypointsInSearchVolume(searchVolume)
+	if err != nil {
+		return nil, nil, err
 	}
+	fmt.Printf("%d/%d waypoints are in search volume\n", len(validatedWaypoints), len(waypoints))
+	
+	// TODO: Check if waypoints are blocked by constraints
+	// for i, wp := range waypoints {
+	// 	inside, poly, err := s.IsPointInObstacles(wp)
+	// 	if err != nil {
+	// 		return nil, nil, err
+	// 	}
 
-	// If wps < 2:
-	if len(validatedWaypoints) < 2 {
-		return nil, nil, fmt.Errorf("error while validating waypoints, only %d/%d are valid (not blocked by constraints): %w", len(validatedWaypoints), len(waypoints), err)
-	}
+	// 	// If wp is "good" then add it to validated ones
+	// 	if inside {
+	// 		fmt.Printf("wp[%d] blocked by poly %v\n", i, poly)
+	// 	} else {
+	// 		validatedWaypoints = append(validatedWaypoints, wp)
+	// 	}
+	// }
+
+	// // If wps < 2:
+	// if len(validatedWaypoints) < 2 {
+	// 	return nil, nil, fmt.Errorf("error while validating waypoints, only %d/%d are valid (not blocked by constraints): %w", len(validatedWaypoints), len(waypoints), err)
+	// }
 
 	return validatedWaypoints, validatedConstraints, nil
 }

@@ -29,6 +29,15 @@ func NewAltitude(value float64, unit AltitudeUnit) (Altitude, error) {
 	return a, nil
 }
 
+func MustNewAltitude(value float64, unit AltitudeUnit) (Altitude) {
+	a, err := NewAltitude(value, unit)
+	if err != nil {
+		panic(err)
+	}
+
+	return a
+}
+
 // Validate Altitude (unit must be just MT or FT)
 func (a Altitude) Validate() error {
 	return a.Unit.Validate()

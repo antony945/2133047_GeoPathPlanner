@@ -43,12 +43,12 @@ func TestRRTAlgorithm_run(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not construct storage: %v", err)
 			}
-      s.AddConstraints(tt.constraints)
+      		s.AddConstraints(tt.constraints)
 
 			got, _, gotErr := a.Run(tt.searchVolume, tt.start, tt.end, nil, s)
 
 			// TODO: For visually testing, export results in geojson
-      utils.MarkWaypointsAsOriginal(tt.start, tt.end)
+			utils.MarkWaypointsAsOriginal(tt.start, tt.end)
 			utils.ExportToGeoJSONRoute("algorithm", got, tt.constraints, tt.searchVolume, tt.name, true)
 
 			if gotErr != nil {
