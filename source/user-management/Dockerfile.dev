@@ -1,0 +1,22 @@
+# Dockerfile.dev
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Installa le dipendenze globali necessarie
+RUN npm install -g @nestjs/cli
+
+# Copia package.json e package-lock.json
+COPY package*.json ./
+
+# Installa tutte le dipendenze (incluse quelle di sviluppo)
+RUN npm install
+
+# Copia tutto il codice sorgente
+COPY . .
+
+# Espone la porta
+EXPOSE 3000
+
+# Comando per avviare in modalità sviluppo con hot reload
+CMD ["npm", "run", "start:dev"]
