@@ -17,6 +17,21 @@ const (
 	DEFAULT_LINE_DIVISION_MAX_STEP_SIZE_MT = 5
 )
 
+// Implement POLYGON-POLYGON intersection (return true if the bbox intersects)
+func PolygonInPolygon(poly1, poly2 *models.Feature3D) bool {
+	// 1. First check intersection with BBox of poly -> if not, then immediately return false
+	if !poly1.Geometry.Bound().Intersects(poly2.Geometry.Bound()) {
+		return false 
+	}
+
+	// 2. If yes, check the altitude -> if max altitude of 1 is < than min altitude of 2, then immediately return false
+	if poly1.MaxAltitude.Compare(poly2.MinAltitude) < 0 {
+		return false
+	}
+
+	return true
+}
+
 // Implement POINT-POLYGON intersection
 func PointInPolygon(p *models.Waypoint, poly *models.Feature3D) bool {	
 	// 1. First check intersection with BBox of poly -> if not, then immediately return false

@@ -43,6 +43,7 @@ type Storage interface {
 	
 	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error)
 	GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*models.Feature3D, error)
+	GetAllObstaclesInSearchVolume(sv *models.Feature3D) ([]*models.Feature3D, error)
 	
 	Sample(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error)
 	SampleFree(sampler utils.Sampler, sampleVolume *models.Feature3D, alt models.Altitude) (*models.Waypoint, error)

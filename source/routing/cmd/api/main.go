@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"geopathplanner/routing/internal/kafka"
-	"geopathplanner/routing/internal/models"
 	"geopathplanner/routing/internal/service"
-	"log"
-	"math/rand"
+	"geopathplanner/routing/internal/validator"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 )
@@ -54,29 +51,23 @@ func Run() error {
 	// ========== MAIN LOOP =============
 	// Run the KAFKA consumer for it to wait for upcoming messages
 	k.ConsumeMessage(func(r *kgo.Record) error {
-		// Generate random number between 1 to 10
-		n := rand.Intn(10) + 1
-		log.Printf("Handling request (%ds)...\n", n)
-		// TODO: Just for testing, simulate Ns cooldown and then send a response
-		time.Sleep(time.Duration(n) * time.Second)
-
-		// TODO: Implement validation
+		
 		// 1. Validate data to make sure it is a valide RoutingRequest
-		req, err := models.NewRoutingRequestFromJson(string(r.Value))
+		v := validator.NewDefaultValidator()
+		req, err := v.ValidateMessage(r.Value)
 		if err != nil {
 			error_msg := fmt.Sprintf("error decoding RoutingRequest (topic=%s, partition=%d, offset=%d): %v",
 				r.Topic, r.Partition, r.Offset, err)
 			fmt.Println(error_msg)
-			// TODO: What to do if we get something that is not a routingRequest? For now let's send an error msg and continue
-			k.ProduceMessage([]byte(error_msg))
+			// TODO: What to do if we get something that is not a routingRequest? For now let's ignore it
+			// Alternative: send an error msg and continue
+			// k.ProduceMessage([]byte(error_msg))
 			return nil
 		}
-
-		fmt.Printf("Received RoutingRequest %s with %d waypoints\n",
-			req.RequestID, len(req.Waypoints))
+		fmt.Printf("✅ Valid RoutingRequest %s with %d waypoints received", req.RequestID, len(req.Waypoints))
 
 		// 2. Run RoutingService
-		response := rs.HandleRoutingRequest(req)
+		response := rs.HandleRoutingRequest(req, v)
 		
 		// 3. Marshal response to obtain []byte
 		data, err := json.Marshal(response)

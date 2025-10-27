@@ -7,44 +7,71 @@ import (
 )
 
 type Validator interface {
-	ValidateInput(searchVolume *models.Feature3D, waypoints *models.Waypoint, constraints []*models.Feature3D) error
+	ValidateMessage(data []byte) (*models.RoutingRequest, error)
+	ValidateInput(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D) ([]*models.Waypoint, []*models.Feature3D, error)
 }
 
 type DefaultValidator struct {
-	s storage.Storage
 }
 
-func NewDefaultValidator() (*DefaultValidator, error) {
-	// TODO: For now use ListStorage that's easy
-	s, err := storage.NewEmptyListStorage()
+func NewDefaultValidator() *DefaultValidator {
+	return &DefaultValidator{}
+}
+
+func (v *DefaultValidator) ValidateMessage(data []byte) (*models.RoutingRequest, error) {
+	req, err := models.NewRoutingRequestFromJson(string(data))
 	if err != nil {
-		return nil, fmt.Errorf("error while creating empty list storage: %w", err)
+		return nil, err
 	}
-	return &DefaultValidator{
-		s: s,
-	}, nil
+
+	// TODO: Ensure that data is here (at least routingID, at least 2 wps, at least search_volume, ..)
+	return req, nil
+
+	// if !req.IsValid() {
+	// 	fmt.Printf("⚠️ Ignoring invalid RoutingRequest: %+v", req)
+	// }
 }
 
-func (v *DefaultValidator) ValidateInput(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D) error {
-	// TODO: Check search volume
-	
-	// TODO: Check constraints
-	// newConstraints, err := v.ConstraintUnion(constraints)
-	// if err != nil {
-	// 	return err
-	// }
 
-	// TODO: Check if waypoints are blocked by constraints
+func (v *DefaultValidator) ValidateInput(searchVolume *models.Feature3D, waypoints []*models.Waypoint, constraints []*models.Feature3D) ([]*models.Waypoint, []*models.Feature3D, error) {
+	// Create temp RTree storage
+	s, err := storage.NewEmptyRTreeStorage()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error while creating empty rtree storage in validator: %w", err)
+	}
+	s.AddConstraints(constraints)
+
+	// TODO: 1. Check search volume
+	
+	// 2. Check constraints, discard ones that are not in search volume
+	validatedConstraints, err := s.GetAllObstaclesInSearchVolume(searchVolume)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Check if waypoints are blocked by constraints
+	// TODO: Check if waypoints are inside search volume
+	validatedWaypoints := make([]*models.Waypoint, 0, len(waypoints))
 	for i, wp := range waypoints {
-		inside, poly, err := v.s.IsPointInObstacles(wp)
-		if inside {
-			return fmt.Errorf("wp[%d] blocked by poly %v", i, poly)
-		}
+		inside, poly, err := s.IsPointInObstacles(wp)
 		if err != nil {
-			return err
+			return nil, nil, err
+		}
+
+		// If wp is "good" then add it to validated ones
+		if !inside {
+			fmt.Printf("wp[%d] blocked by poly %v\n", i, poly)
+		} else {
+			validatedWaypoints = append(validatedWaypoints, wp)
 		}
 	}
-	return nil
+
+	// If wps < 2:
+	if len(validatedWaypoints) < 2 {
+		return nil, nil, fmt.Errorf("error while validating waypoints, only %d/%d are valid (not blocked by constraints): %w", len(validatedWaypoints), len(waypoints), err)
+	}
+
+	return validatedWaypoints, validatedConstraints, nil
 }
 
 // func (v *DefaultValidator) ConstraintUnion(constraints []*models.Feature3D) ([]*models.Feature3D, error) {

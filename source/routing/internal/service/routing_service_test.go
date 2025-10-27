@@ -4,6 +4,7 @@ import (
 	"geopathplanner/routing/internal/models"
 	"geopathplanner/routing/internal/service"
 	"geopathplanner/routing/internal/utils"
+	"geopathplanner/routing/internal/validator"
 	"testing"
 )
 
@@ -1081,7 +1082,7 @@ func TestRoutingService_HandleRoutingRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rs, _ := service.NewRoutingService()
-			got := rs.HandleRoutingRequest(tt.input)
+			got := rs.HandleRoutingRequest(tt.input, validator.NewDefaultValidator())
 			
 			utils.ExportToJSON(got, "service", tt.name, false)
 

@@ -370,6 +370,22 @@ func (r *RTreeStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*mode
 	return in, line, nil
 }
 
+// Use Rtree to efficiently get constraints whose bbox intersects with search volume.
+// O(logM)
+func (r *RTreeStorage) GetAllObstaclesInSearchVolume(sv *models.Feature3D) ([]*models.Feature3D, error) {
+	// Get obstacles that the point intersects with their bbox
+	intersectedConstraintsBBox := r.constraintsTree.SearchIntersect(sv.Bounds())
+	
+	obstacles := make([]*models.Feature3D, 0, len(intersectedConstraintsBBox))
+	
+	for _, obs := range intersectedConstraintsBBox {
+		obstacle := obs.(*models.Feature3D)
+		obstacles = append(obstacles, obstacle)
+	}
+
+	return obstacles, nil
+}
+
 // Get intersection points (useful for AntPath)
 func (r *RTreeStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
 	// Divide line into point and then check if any individual point lies in polygon

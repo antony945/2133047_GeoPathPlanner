@@ -166,7 +166,7 @@ func (m *ListStorage) AddWaypointWithPrevious(prev *models.Waypoint, w *models.W
 	return nil
 }
 
-func (m *ListStorage)	ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error {
+func (m *ListStorage) ChangePrevious(new_prev *models.Waypoint, w *models.Waypoint) error {
 	distance := 0.0
 	if new_prev != nil {
 		distance = utils.HaversineDistance3D(new_prev, w)
@@ -436,6 +436,20 @@ func (m *ListStorage) GetAllObstaclesContainingPoint(p *models.Waypoint) ([]*mod
 	return obstacles, nil
 }
 
+// Scan list of obstacle and return every obstacle that collide with point
+// O(#obstacles)
+func (m *ListStorage) GetAllObstaclesInSearchVolume(sv *models.Feature3D) ([]*models.Feature3D, error) {
+	obstacles := make([]*models.Feature3D, 0)
+	
+	for _, obstacle := range m.constraints {
+		if utils.PolygonInPolygon(sv, obstacle) {
+			obstacles = append(obstacles, obstacle)
+		}
+	}
+
+	return obstacles, nil
+}
+
 // Scan list of obstacle until you find someone that intersect line
 // O(#obstacles)
 func (m *ListStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*models.Waypoint, error) {
@@ -445,7 +459,7 @@ func (m *ListStorage) IsLineInObstacles(p1, p2 *models.Waypoint) (bool, []*model
 }
 
 // Get intersection points (useful for AntPath)
-func (m *ListStorage)	GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
+func (m *ListStorage) GetIntersectionPoints(p1, p2 *models.Waypoint) ([]*models.LinePolygonIntersection, error) {
 	// Divide line into point and then check if any individual point lies in polygon
 	quantizedLine := utils.DefaultResampleLineToInterval(p1, p2)
 	// For every point, check if it intersect with a polygon and mark it as:

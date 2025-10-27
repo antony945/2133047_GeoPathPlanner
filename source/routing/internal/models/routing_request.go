@@ -28,7 +28,7 @@ func NewRoutingRequestFromJsonFile(filename string) (*RoutingRequest, error) {
 func NewRoutingRequestFromJson(jsonString string) (*RoutingRequest, error) {
 	var r *RoutingRequest
 	if err := json.Unmarshal([]byte(jsonString), &r); err != nil {
-		return nil, fmt.Errorf("unmarshaling geojson: %w", err)
+		return nil, fmt.Errorf("unmarshaling json: %w", err)
 	}
 
 	// fmt.Printf("routingRequest: %+v\n", r)
