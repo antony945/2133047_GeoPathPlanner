@@ -5,10 +5,10 @@ services:
       dockerfile: Dockerfile
     # container_name: app
     # Important to bind/mount your codebase dir to /app dir for live reload
-    develop:
-      watch:
-        - action: rebuild
-          path: ./**/*.go
+    # develop:
+    #   watch:
+    #     - action: rebuild
+    #       path: ./**/*.go
 
     deploy:
       mode: replicated
@@ -17,9 +17,8 @@ services:
       - .env
 
     depends_on:
-      kafka:
-        condition: service_healthy
-        restart: true
+      kafka-init-topics:
+        condition: service_completed_successfully
 
   # redis:
   #   image: redis:7
@@ -66,8 +65,20 @@ services:
       # Override default number of kafka partitions
       KAFKA_NUM_PARTITIONS: ${REPLICAS}
 
-      # TODO: Just for local dev
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+  kafka-init-topics:
+    image: apache/kafka
+    container_name: kafka-init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+        restart: true
+    entrypoint: >
+      bash -c "
+      echo 'Waiting for Kafka to be ready...';
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9093 --create --if-not-exists --topic routing-requests --partitions ${REPLICAS};
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9093 --create --if-not-exists --topic routing-responses --partitions 1;
+      echo 'Topics created successfully!';
+      "
 
   kafka-ui:
     image: kafbat/kafka-ui:main

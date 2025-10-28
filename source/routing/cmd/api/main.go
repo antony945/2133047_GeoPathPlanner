@@ -51,12 +51,12 @@ func Run() error {
 	// ========== MAIN LOOP =============
 	// Run the KAFKA consumer for it to wait for upcoming messages
 	k.ConsumeMessage(func(r *kgo.Record) error {
-		
+		// What to do with each record that we have
 		// 1. Validate data to make sure it is a valide RoutingRequest
 		v := validator.NewDefaultValidator()
 		req, err := v.ValidateMessage(r.Value)
 		if err != nil {
-			error_msg := fmt.Sprintf("error decoding RoutingRequest (topic=%s, partition=%d, offset=%d): %v",
+			error_msg := fmt.Sprintf("❌ error decoding RoutingRequest (topic=%s, partition=%d, offset=%d): %v",
 				r.Topic, r.Partition, r.Offset, err)
 			fmt.Println(error_msg)
 			// TODO: What to do if we get something that is not a routingRequest? For now let's ignore it
@@ -64,7 +64,8 @@ func Run() error {
 			// k.ProduceMessage([]byte(error_msg))
 			return nil
 		}
-		fmt.Printf("✅ Valid RoutingRequest %s with %d waypoints received\n", req.RequestID, len(req.Waypoints))
+
+		fmt.Printf("✅ Valid RoutingRequest %s with %d wps and %d constraints (topic=%s, partition=%d, offset=%d)\n", req.RequestID, len(req.Waypoints), len(req.Constraints), r.Topic, r.Partition, r.Offset)
 
 		// 2. Run RoutingService
 		response, found := rs.HandleRoutingRequest(req, v)
@@ -77,7 +78,7 @@ func Run() error {
 		// 3. Marshal response to obtain []byte
 		data, err := json.Marshal(response)
 		if err != nil {
-			fmt.Printf("Failed to marshal RoutingResponse: %v", err)
+			fmt.Printf("failed to marshal RoutingResponse: %v", err)
 			return nil
 		}
 

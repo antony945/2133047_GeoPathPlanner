@@ -89,16 +89,6 @@ func (k *KakfaService) ConsumeMessage(handleRecord func(*kgo.Record) error) {
 		// or a callback function.
 		fetches.EachPartition(func(p kgo.FetchTopicPartition) {
 			for _, record := range p.Records {
-				// What to do with each record that we have
-				fmt.Printf(
-					"> Consumed from topic=%s partition=%d offset=%d key=%s value=%s\n",
-					record.Topic,
-					record.Partition,
-					record.Offset,
-					string(record.Key),
-					string(record.Value),
-				)
-
 				err := handleRecord(record)
 				if err != nil {
 					// TODO: Stop listening
