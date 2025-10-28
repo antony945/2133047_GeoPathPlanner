@@ -1,9 +1,10 @@
 services:
-  app:
+  routing:
+    image: geopathplanner/routing:latest
     build:
       context: .
       dockerfile: Dockerfile
-    # container_name: app
+    # container_name: routing
     # Important to bind/mount your codebase dir to /app dir for live reload
     # develop:
     #   watch:
@@ -12,7 +13,7 @@ services:
 
     deploy:
       mode: replicated
-      replicas: ${REPLICAS}
+      replicas: ${KAFKA_REQUEST_TOPIC_PARTITIONS}
     env_file:
       - .env
 
@@ -30,7 +31,7 @@ services:
   #     - "${REDIS_PORT}:6379"
 
   kafka:
-    image: apache/kafka
+    image: apache/kafka:latest
     healthcheck:
       test:
         [
@@ -63,10 +64,10 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
       # Override default number of kafka partitions
-      KAFKA_NUM_PARTITIONS: ${REPLICAS}
+      KAFKA_NUM_PARTITIONS: ${KAFKA_REQUEST_TOPIC_PARTITIONS}
 
   kafka-init-topics:
-    image: apache/kafka
+    image: apache/kafka:latest
     container_name: kafka-init-topics
     depends_on:
       kafka:
@@ -75,8 +76,8 @@ services:
     entrypoint: >
       bash -c "
       echo 'Waiting for Kafka to be ready...';
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9093 --create --if-not-exists --topic routing-requests --partitions ${REPLICAS};
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9093 --create --if-not-exists --topic routing-responses --partitions 1;
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_BROKERS} --create --if-not-exists --topic ${KAFKA_REQUEST_TOPIC} --partitions ${KAFKA_REQUEST_TOPIC_PARTITIONS};
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_BROKERS} --create --if-not-exists --topic ${KAFKA_RESPONSE_TOPIC} --partitions ${KAFKA_RESPONSE_TOPIC_PARTITIONS};
       echo 'Topics created successfully!';
       "
 
@@ -88,7 +89,7 @@ services:
     environment:
       DYNAMIC_CONFIG_ENABLED: "true"
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_BROKERS}
     depends_on:
       kafka:
         condition: service_healthy

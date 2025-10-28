@@ -1,45 +1,26 @@
-version: "3.9"
-
 services:
-  api:
-    image: geopathplanner/api:latest
+  routing:
+    image: geopathplanner/routing:latest
     build:
-      context: .
+      context: routing
       dockerfile: Dockerfile
+    deploy:
+      mode: replicated
+      replicas: ${KAFKA_REQUEST_TOPIC_PARTITIONS}
     env_file:
       - .env
     depends_on:
-      db:
-        condition: service_started
       kafka-init-topics:
         condition: service_completed_successfully
-    ports:
-      - "8080:8000"
-    volumes:
-      - .:/app
-    # command:
-    #   - uvicorn
-    #   - app.main:app
-    #   - --host
-    #   - 0.0.0.0
-    #   - --port
-    #   - "8000"
-    #   - --reload
 
-  db:
-    image: postgis/postgis:16-3.4
-    env_file:
-      - .env
-    ports:
-      - "5433:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
-    #   interval: 30s
-    #   timeout: 60s
-    #   retries: 5
-    #   start_period: 80s
+  # redis:
+  #   image: redis:7
+  #   container_name: redis
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "${REDIS_PORT}:6379"
 
   kafka:
     image: apache/kafka:latest
@@ -105,20 +86,3 @@ services:
       kafka:
         condition: service_healthy
         restart: true
-
-  # consumer:
-  #   build: .
-  #   depends_on:
-  #     - kafka
-  #     - db
-  #   environment:
-  #     - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/geopathplanner
-  #     - KAFKA_BROKER_URL=kafka:9092
-  #     - KAFKA_TOPIC=routing_requests
-  #   command: ["python", "consumer.py"]
-  #   volumes:
-  #     - .:/app
-  #   restart: always
-
-volumes:
-  db_data:
