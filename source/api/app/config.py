@@ -26,7 +26,17 @@ JWT_ISSUER = os.getenv("JWT_ISSUER", "geopathplanner-auth-service")
 # ✅ Application Settings
 # ===============================
 APP_NAME = os.getenv("APP_NAME", "GeoPathPlannerAPI")
+APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
 APP_ENV = os.getenv("APP_ENV", "dev")
 APP_PORT = int(os.getenv("APP_PORT", "8000"))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 RESPONSE_TIMEOUT_SECONDS = float(os.getenv("RESPONSE_TIMEOUT_SECONDS", "20.0"))
+
+# ===============================
+# ✅ Postgres DB
+# ===============================
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
+POSTGRES_CONTAINER_PORT = int(os.getenv("POSTGRES_CONTAINER_PORT", "5432"))
+POSTGRES_DB = os.getenv("POSTGRES_DB", "routes_history")
+DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_USER}@db:{POSTGRES_CONTAINER_PORT}/{POSTGRES_DB}"

@@ -249,7 +249,7 @@
     "parameters": {
         "algorithm": "antpath",
         "goal_bias": 0.1,
-        "max_iterations": 50000,
+        "max_iterations": 10000,
         "sampler": "uniform",
         "step_size_mt": 20,
         "storage": "rtree"

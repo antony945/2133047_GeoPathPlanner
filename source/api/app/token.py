@@ -1,26 +1,37 @@
-from fastapi import Header, HTTPException, Depends, Query
+from fastapi import Query, Header, HTTPException
 from jwt import exceptions as jwt_exceptions
 import jwt
 import os
 from app.config import JWT_SECRET_KEY, JWT_ALGORITHM
+from typing import Optional
 
-JWT_SECRET = os.getenv("JWT_SECRET", "default_secret")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-
-def verify_jwt_token(auth_header: str = Header(...)):
+# TODO: Just for now, maybe it's better to always have a token, also for unregistered user, boh
+async def verify_jwt_token(
+    authorization: Optional[str] = Header(None),
+    user_id: str | None = Query(None),
+) -> dict | None:
     """
-    Extract and verify JWT from Authorization header.
+    Verifies JWT token from the Authorization header for a given user_id.
+
+    - If `user_id` is not provided, returns None (no verification needed).
+    - If `user_id` is provided but the Authorization header is missing or invalid, raises HTTPException.
+    - Returns the decoded JWT payload as a dictionary if valid.
     """
-    # TODO: to check this
-    return
-    if not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid Authorization header")
+    # TODO: Just for testing, now return always None
+    return None
 
-    token = auth_header.split(" ")[1]
+    if not user_id:
+        return None
 
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    
     try:
-        payload = jwt.decode(token, JWT_ALGORITHM, algorithms=[JWT_SECRET_KEY])
-    except jwt_exceptions.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt_exceptions.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        # Remove "Bearer " prefix if present
+        token = authorization.replace("Bearer ", "")
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt_exceptions.ExpiredSignatureError as e:
+        raise HTTPException(status_code=401, detail=f"Expired JWT token: {e}")
+    except jwt_exceptions.InvalidTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid JWT token: {e}")

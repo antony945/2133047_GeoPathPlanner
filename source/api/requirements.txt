@@ -1,10 +1,8 @@
 fastapi[standard]>=0.110
 uvicorn[standard]>=0.27
-SQLAlchemy>=2.0
+sqlalchemy
 asyncpg>=0.29
-passlib[bcrypt]>=1.7.4
-bcrypt==4.1.3
-python-jose[cryptography]>=3.3
+geoalchemy2
 pydantic>=2.6
 geojson-pydantic
 aiokafka>=0.10

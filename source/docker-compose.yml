@@ -30,8 +30,8 @@ services:
     env_file:
       - .env
     depends_on:
-      # db:
-      #   condition: service_healthy
+      db:
+        condition: service_healthy
       kafka-init-topics:
         condition: service_completed_successfully
     ports:
@@ -47,6 +47,37 @@ services:
   #     - .env
   #   ports:
   #     - "${REDIS_PORT}:6379"
+
+  db:
+    container_name: db
+    restart: always
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:${POSTGRES_CONTAINER_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 60s
+      retries: 5
+      start_period: 10s
+    # volumes:
+    #   - db_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
+      PGADMIN_DEFAULT_PASSWORD: strong-password
+    # volumes:
+    # - pgadmin-data:/var/lib/pgadmin
 
   kafka:
     image: apache/kafka:latest
@@ -112,3 +143,6 @@ services:
       kafka:
         condition: service_healthy
         restart: true
+# volumes:
+#   db_data:
+#   pgadmin-data:
