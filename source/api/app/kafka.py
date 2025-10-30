@@ -17,7 +17,7 @@ class KafkaService:
         """Initialize and start producer and consumer."""
         self.producer = AIOKafkaProducer(
             bootstrap_servers=KAFKA_BROKERS,
-            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+            value_serializer=lambda v: v.encode("utf-8"),
         )
 
         self.consumer = AIOKafkaConsumer(

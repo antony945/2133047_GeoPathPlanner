@@ -5,6 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /code
 
+# Install curl and then clean apt cache to reduce size
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # --- NEW: uninstall any preinstalled bcrypt first ---
 RUN pip uninstall -y bcrypt || true
 

@@ -20,13 +20,13 @@ func Run() error {
 	brokersEnv := os.Getenv("KAFKA_BROKERS")
 	requestTopic := os.Getenv("KAFKA_REQUEST_TOPIC")
 	responseTopic := os.Getenv("KAFKA_RESPONSE_TOPIC")
-	groupID := os.Getenv("KAFKA_GROUP_ID")
+	groupID := os.Getenv("KAFKA_ROUTING_CONSUMER_GROUP_ID")
 
 	fmt.Println("Kafka configuration:")
 	fmt.Printf("  KAFKA_BROKERS        = %s\n", brokersEnv)
 	fmt.Printf("  KAFKA_REQUEST_TOPIC  = %s\n", requestTopic)
 	fmt.Printf("  KAFKA_RESPONSE_TOPIC = %s\n", responseTopic)
-	fmt.Printf("  KAFKA_GROUP_ID       = %s\n", groupID)
+	fmt.Printf("  KAFKA_ROUTING_CONSUMER_GROUP_ID       = %s\n", groupID)
 
 	if brokersEnv == "" || requestTopic == "" || responseTopic == "" || groupID == "" {
 		return fmt.Errorf("missing required Kafka environment variables")

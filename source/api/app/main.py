@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Header, HTTPException, Depends, Query
+from fastapi.responses import JSONResponse
 from app.models import RoutingRequest, RoutingResponse
 from app.token import verify_jwt_token
 from app.kafka import KafkaService
@@ -42,11 +43,21 @@ async def root():
 @app.get("/health")
 async def health_check():
     logger.debug("🩺 Healthcheck endpoint called.")
-    kafka_status = "connected" if kafka and kafka.producer and kafka.consumer else "disconnected"
-    return {
-        "status": "ok",
+    kafka_status = "unknown"
+    try:
+        # This assumes your Kafka client has a method to check if it's ready
+        kafka_status = "ok" if kafka.consumer is not None and kafka.producer is not None else "not ready"
+    except Exception:
+        kafka_status = "error"
+
+    status = {
+        "api": "ok",
         "kafka": kafka_status
     }
+
+    # If any service is not ok, return 503
+    if kafka_status != "ok":
+        return JSONResponse(content=status, status_code=503)
 
 # -------------------------------
 # 🧭 Compute route endpoint

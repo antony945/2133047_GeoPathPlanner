@@ -37,10 +37,10 @@ All configuration values are stored in a `.env` file at the project root.
 Example:
 
 ```bash
-KAFKA_BROKERS=kafka:9093,kafka:9094
-KAFKA_REQUEST_TOPIC=routing_requests
-KAFKA_RESPONSE_TOPIC=routing_responses
-KAFKA_GROUP_ID=routing_group
+KAFKA_BROKERS=kafka:9093
+KAFKA_REQUEST_TOPIC=routing-requests
+KAFKA_RESPONSE_TOPIC=routing-responses
+KAFKA_ROUTING_CONSUMER_GROUP_ID=routing-group
 REPLICAS=3
 ```
 

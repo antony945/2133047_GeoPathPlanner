@@ -13,7 +13,7 @@ KAFKA_REQUEST_TOPIC = os.getenv("KAFKA_REQUEST_TOPIC", "routing-requests")
 # The topic this microservice listens on for routing responses
 KAFKA_RESPONSE_TOPIC = os.getenv("KAFKA_RESPONSE_TOPIC", "routing-responses")
 # Optional: Kafka consumer group (you can override per microservice)
-KAFKA_CONSUMER_GROUP = os.getenv("KAFKA_CONSUMER_GROUP", "geo_routing_api_group")
+KAFKA_CONSUMER_GROUP = os.getenv("KAFKA_API_CONSUMER_GROUP_ID", "geo_routing_api_group")
 
 # ===============================
 # ✅ JWT / Authentication
