@@ -6,7 +6,8 @@ from datetime import datetime
 # If you already have a Base in your project (e.g., app.db.base),
 # import that Base instead of creating a new one.
 try:
-    from app.db.base import Base
+    # from src.main.base import Base
+    from main.db.base import Base
 except Exception:
     Base = declarative_base()
 
