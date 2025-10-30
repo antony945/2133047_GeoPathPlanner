@@ -2,7 +2,7 @@ import os
 from typing import List, Optional
 from datetime import datetime, timezone
 from app.logger import logger
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from fastapi.encoders import jsonable_encoder
 
 from sqlalchemy import Column, String, JSON, DateTime
@@ -94,6 +94,28 @@ async def get_responses_by_user(user_id: str) -> List[RoutingResponseDB]:
                 .order_by(RoutingResponseDB.created_at.desc())
         )
         return result.scalars().all()
+
+async def delete_routing_response(request_id: str) -> bool:
+    """
+    Delete a routing response by request_id and user_id.
+    Returns True if a row was deleted, False if no matching row was found.
+    """
+    async with async_session() as session:
+        try:
+            stmt = delete(RoutingResponseDB).where(
+                RoutingResponseDB.request_id == request_id
+                # RoutingResponseDB.user_id == user_id
+            ).returning(RoutingResponseDB.request_id)
+
+            result = await session.execute(stmt)
+            await session.commit()
+
+            deleted_request_id = result.scalar()
+            return deleted_request_id is not None
+
+        except Exception as e:
+            logger.error(f"Failed to delete routing response request_id={request_id}: {e}")
+            return False
 
 # # --- GEOMETRY CONVERSION HELPERS ---
 # from shapely.geometry import MultiPoint, MultiPolygon, shape

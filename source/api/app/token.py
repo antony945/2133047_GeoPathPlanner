@@ -4,24 +4,34 @@ import jwt
 import os
 from app.config import JWT_SECRET_KEY, JWT_ALGORITHM
 from typing import Optional
+from app.logger import logger
 
 # TODO: Just for now, maybe it's better to always have a token, also for unregistered user, boh
-async def verify_jwt_token(
+async def verify_jwt_token(    
     authorization: Optional[str] = Header(None),
     user_id: str | None = Query(None),
-) -> dict | None:
+) -> dict:
     """
-    Verifies JWT token from the Authorization header for a given user_id.
+    Verify a JWT token from the Authorization header.
 
-    - If `user_id` is not provided, returns None (no verification needed).
-    - If `user_id` is provided but the Authorization header is missing or invalid, raises HTTPException.
-    - Returns the decoded JWT payload as a dictionary if valid.
+    Raises an HTTPException if:
+        - The Authorization header is missing (401).
+        - The JWT token is expired (401).
+        - The JWT token is invalid (401).
+        - The user_id is provided and does not match the token's 'sub' claim (403).
+
+    If no exception is raised, the token is valid, and execution can continue.
+
+    Args:
+        authorization (Optional[str]): JWT token from the "Authorization" header.
+        user_id (Optional[str]): User ID to verify against the token's "sub" claim.
+
+    Returns:
+        dict: The decoded JWT payload.
     """
-    # TODO: Just for testing, now return always None
+        
+    # TODO: For now return here so we can test without the actual jwt token
     return None
-
-    if not user_id:
-        return None
 
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
@@ -30,7 +40,19 @@ async def verify_jwt_token(
         # Remove "Bearer " prefix if present
         token = authorization.replace("Bearer ", "")
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        return payload
+        
+        # TODO: check if decode could raise other expeections 
+
+        if user_id and payload:
+            jwt_sub = payload.get("sub")
+            if user_id and str(jwt_sub) != str(user_id):
+                logger.warning(f"🔒 User ID mismatch: token.sub={jwt_sub}, query.user_id={user_id}")
+                raise HTTPException(status_code=403, detail="User ID mismatch")
+            else:
+                logger.debug(f"✅ JWT validated for user_id={jwt_sub or user_id}")
+        else:
+            logger.info("⚠️ No User ID provided — treating as anonymous request.")
+
     except jwt_exceptions.ExpiredSignatureError as e:
         raise HTTPException(status_code=401, detail=f"Expired JWT token: {e}")
     except jwt_exceptions.InvalidTokenError as e:

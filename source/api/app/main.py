@@ -1,12 +1,18 @@
-from fastapi import FastAPI, Header, HTTPException, Depends, Query
+from fastapi import FastAPI, Header, HTTPException, Depends, Query, Path
 from fastapi.responses import JSONResponse
 from app.models import RoutingRequest, RoutingResponse
 from app.token import verify_jwt_token
 from app.kafka import KafkaService
 from app.logger import logger
 from app.config import RESPONSE_TIMEOUT_SECONDS, APP_NAME, APP_VERSION
-from app.db import init_db, insert_routing_response, get_responses_by_user, db_healthcheck
+from app.db import init_db, insert_routing_response, get_responses_by_user, db_healthcheck, delete_routing_response
 from contextlib import asynccontextmanager
+
+# -------------------------------
+# Standard response helper
+# -------------------------------
+def standard_response(data=None, status="success", message=None):
+    return {"status": status, "message": message, "data": data}
 
 # Create kafka service
 kafka = KafkaService()
@@ -36,12 +42,14 @@ app = FastAPI(title=APP_NAME, version=APP_VERSION, lifespan=lifespan)
 @app.get("/")
 async def root():
     logger.info("📡 Root endpoint called.")
-    return {
-        "service": app.title,
-        "status": "running",
-        "message": "Welcome to the GeoPathPlanner Routing API 🚀",
-        "version": app.version
-    }
+    return standard_response(
+        data = {
+            "service": app.title,
+            "status": "running",
+            "message": "Welcome to the GeoPathPlanner Routing API 🚀",
+            "version": app.version
+        }
+    )
 
 # -------------------------------
 # 💓 Healthcheck endpoint
@@ -67,34 +75,20 @@ async def health_check():
         "database": db_status
     }
 
-    # If any service is not ok, return 503
-    if kafka_status != "ok" or db_status != "ok":
-        return JSONResponse(content=status, status_code=503)
-
-    return status
+    # If any service is not ok, return 503 otherwise 200
+    code = 503 if kafka_status != "ok" or db_status != "ok" else 200
+    return JSONResponse(content=standard_response(data=status), status_code=code)
 
 # -------------------------------
 # 🧭 Compute route endpoint
 # -------------------------------
-@app.post("/compute", response_model=RoutingResponse)
+@app.post("/routes/compute", response_model=RoutingResponse)
 async def compute_route(
     request: RoutingRequest,
     user_id: str | None = Query(None),
-    token_payload: dict | None = Depends(verify_jwt_token)  # <- inject verification
+    token_payload: dict = Depends(verify_jwt_token)
 ):
     logger.info(f"📨 Received routing request (request_id={request.request_id})")
-
-    # Handle authenticated users (with token)
-    # TODO: To check
-    # if user_id and token_payload:
-    #     jwt_sub = token_payload.get("sub")
-    #     if user_id and str(jwt_sub) != str(user_id):
-    #         logger.warning(f"🔒 User ID mismatch: token.sub={jwt_sub}, query.user_id={user_id}")
-    #         raise HTTPException(status_code=403, detail="User ID mismatch")
-    #     else:
-    #         logger.debug(f"✅ JWT validated for user_id={jwt_sub or user_id}")
-    # else:
-    #     logger.info("⚠️ No JWT token provided — treating as anonymous request.")
 
     # Produce to Kafka
     logger.info(f"📤 Producing routing request {request.request_id} to Kafka...")
@@ -119,13 +113,16 @@ async def compute_route(
         except Exception as e:
             logger.error(f"❌ Failed to save routing response to DB: {e}")
     
-    return response
+    return JSONResponse(content=response, status_code=200)
 
 # -------------------------------
 # 🕘 Retrieve past routes/history
 # -------------------------------
-@app.get("/history", response_model=list[RoutingResponse])
-async def get_user_history(user_id: str = Query(..., description="User ID to retrieve route history for")):
+@app.get("/routes/history", response_model=list[RoutingResponse])
+async def get_user_history(
+    user_id: str = Query(..., description="User ID to retrieve route history for"),
+    token_payload: dict = Depends(verify_jwt_token)
+):
     """
     Retrieve all past routing responses associated with a specific user_id.
     """
@@ -154,4 +151,28 @@ async def get_user_history(user_id: str = Query(..., description="User ID to ret
         except Exception as e:
             logger.warning(f"⚠️ Failed to parse routing response for request_id={entry.request_id}: {e}")
 
-    return routes
+    return JSONResponse(content=routes, status_code=200)
+
+# -------------------------------
+# 🗑️ Delete a past route
+# -------------------------------
+@app.delete("/routes/{request_id}")
+async def delete_route(
+    request_id: str = Path(..., description="Request ID of the route to delete"),
+    user_id: str = Query(..., description="User ID associated with the route"),
+    token_payload: dict = Depends(verify_jwt_token)
+):
+    logger.info(f"🗑️ Deleting routing response request_id={request_id} for user_id={user_id}")
+
+    try:
+        deleted = await delete_routing_response(request_id, user_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Route not found")
+    except Exception as e:
+        logger.error(f"❌ Failed to delete routing response: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete routing response")
+
+    return JSONResponse(standard_response(
+        data={"deleted_request_id": request_id},
+        message="Route successfully removed"
+    ))
