@@ -85,7 +85,7 @@ async def insert_routing_response(response: RoutingResponse, user_id: str):
         session.add(db_entry)
         await session.commit()
 
-async def get_responses_by_user(user_id: str) -> List[RoutingResponseDB]:
+async def get_routing_responses_by_user(user_id: str) -> List[RoutingResponseDB]:
     """Return all routing responses associated with a specific user_id."""
     async with async_session() as session:
         result = await session.execute(
@@ -95,7 +95,7 @@ async def get_responses_by_user(user_id: str) -> List[RoutingResponseDB]:
         )
         return result.scalars().all()
 
-async def delete_routing_response(request_id: str) -> bool:
+async def delete_routing_response(request_id: str) -> Optional[RoutingResponseDB]:
     """
     Delete a routing response by request_id and user_id.
     Returns True if a row was deleted, False if no matching row was found.
@@ -105,17 +105,45 @@ async def delete_routing_response(request_id: str) -> bool:
             stmt = delete(RoutingResponseDB).where(
                 RoutingResponseDB.request_id == request_id
                 # RoutingResponseDB.user_id == user_id
-            ).returning(RoutingResponseDB.request_id)
+            )
 
             result = await session.execute(stmt)
             await session.commit()
 
-            deleted_request_id = result.scalar()
-            return deleted_request_id is not None
+            return result.scalar_one_or_none()
 
         except Exception as e:
             logger.error(f"Failed to delete routing response request_id={request_id}: {e}")
-            return False
+            return None
+
+async def get_routing_response(request_id: str) -> Optional[RoutingResponseDB]:
+    """
+    Retrieve a single routing response from the database by request ID and user ID.
+
+    Args:
+        request_id (str): The unique ID of the routing request.
+        user_id (str): The user ID associated with the routing response.
+
+    Returns:
+        Optional[RoutingResponseDB]: The matching RoutingResponseDB record if found, otherwise None.
+
+    Raises:
+        Exception: Propagates unexpected database errors.
+    """
+    async with async_session() as session:
+        try:
+            result = await session.execute(
+                select(RoutingResponseDB)
+                .where(
+                    RoutingResponseDB.request_id == request_id,
+                    # RoutingResponseDB.user_id == user_id
+                )
+            )
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logger.error(f"Failed to delete routing response request_id={request_id}: {e}")
+            return None
+
 
 # # --- GEOMETRY CONVERSION HELPERS ---
 # from shapely.geometry import MultiPoint, MultiPolygon, shape

@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Header, HTTPException, Depends, Query, Path
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from app.models import RoutingRequest, RoutingResponse
 from app.token import verify_jwt_token
 from app.kafka import KafkaService
 from app.logger import logger
 from app.config import RESPONSE_TIMEOUT_SECONDS, APP_NAME, APP_VERSION
-from app.db import init_db, insert_routing_response, get_responses_by_user, db_healthcheck, delete_routing_response
+from app.db import init_db, insert_routing_response, get_routing_response, get_routing_responses_by_user, db_healthcheck, delete_routing_response
 from contextlib import asynccontextmanager
 
 # -------------------------------
@@ -77,7 +78,7 @@ async def health_check():
 
     # If any service is not ok, return 503 otherwise 200
     code = 503 if kafka_status != "ok" or db_status != "ok" else 200
-    return JSONResponse(content=standard_response(data=status), status_code=code)
+    return JSONResponse(content=standard_response(status), status_code=code)
 
 # -------------------------------
 # 🧭 Compute route endpoint
@@ -113,12 +114,12 @@ async def compute_route(
         except Exception as e:
             logger.error(f"❌ Failed to save routing response to DB: {e}")
     
-    return JSONResponse(content=response, status_code=200)
+    return JSONResponse(content=standard_response(jsonable_encoder(response)), status_code=200)
 
 # -------------------------------
 # 🕘 Retrieve past routes/history
 # -------------------------------
-@app.get("/routes/history", response_model=list[RoutingResponse])
+@app.get("/routes", response_model=list[RoutingResponse])
 async def get_user_history(
     user_id: str = Query(..., description="User ID to retrieve route history for"),
     token_payload: dict = Depends(verify_jwt_token)
@@ -129,7 +130,7 @@ async def get_user_history(
     logger.info(f"📥 Retrieving routing history for user_id={user_id}")
 
     try:
-        db_entries = await get_responses_by_user(user_id)
+        db_entries = await get_routing_responses_by_user(user_id)
         
         # TODO: Think what to do when no entries
         # if not db_entries:
@@ -151,7 +152,7 @@ async def get_user_history(
         except Exception as e:
             logger.warning(f"⚠️ Failed to parse routing response for request_id={entry.request_id}: {e}")
 
-    return JSONResponse(content=routes, status_code=200)
+    return JSONResponse(content=standard_response(jsonable_encoder(routes)), status_code=200)
 
 # -------------------------------
 # 🗑️ Delete a past route
@@ -172,7 +173,38 @@ async def delete_route(
         logger.error(f"❌ Failed to delete routing response: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete routing response")
 
-    return JSONResponse(standard_response(
-        data={"deleted_request_id": request_id},
-        message="Route successfully removed"
-    ))
+    return JSONResponse(
+        content=standard_response(
+            data=jsonable_encoder(deleted.response),
+            message="Route successfully removed"
+        ),
+        status_code=200
+    )
+
+# -------------------------------
+# 📦 Retrieve a single route
+# -------------------------------
+@app.get("/routes/{request_id}")
+async def get_route(
+    request_id: str = Path(..., description="Request ID of the route to retrieve"),
+    user_id: str = Query(..., description="User ID associated with the route"),
+    token_payload: dict = Depends(verify_jwt_token)
+):
+    logger.info(f"📦 Retrieving routing response request_id={request_id} for user_id={user_id}")
+
+    try:
+        route = await get_routing_response(request_id)
+        if not route:
+            raise HTTPException(status_code=404, detail="Route not found")
+
+    except Exception as e:
+        logger.error(f"❌ Failed to retrieve routing response: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve routing response")
+    
+    return JSONResponse(
+        content=standard_response(
+            data=jsonable_encoder(route.response),
+            message="Route successfully retrieved"
+        ),
+        status_code=200
+    )
