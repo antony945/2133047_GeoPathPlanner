@@ -71,7 +71,7 @@ function LoginPage() {
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label">Username</label>
+                  <label className="form-label">Email</label>
                   <input type="text" name="email" className="form-control" onChange={handleChange} required />
                 </div>
 
