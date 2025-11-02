@@ -2,13 +2,47 @@ import { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 import { getCurrentPosition , geocodeNominatim } from '../../assets/js/utils/geolocation.js';
 
-function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady }) {
+function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing }) {
+  const [parameters, setParameters] = useState({
+    algorithm: 'rrtstar',
+    goal_bias: 0.1,
+    max_iterations: 10000,
+    step_size_mt: 20.0,
+    sampler: 'uniform',
+    seed: 10,
+    storage: 'rtree'
+  });
   const [tab, setTab] = useState('waypoint');
+  const [altitudeValue, setAltitudeValue] = useState(0);
+  const [altitudeUnit, setAltitudeUnit] = useState('m');
+  const [minAltitudeValue, setMinAltitudeValue] = useState(100);
+  const [maxAltitudeValue, setMaxAltitudeValue] = useState(500);
+  const [obstacleAltitudeUnit, setObstacleAltitudeUnit] = useState('m');
   const [query, setQuery] = useState('');
   const [displayQuery, setDisplayQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const searchTimer = useRef(null);
+
+  const handleParamChange = (e) => {
+    const { name, value, type } = e.target;
+    setParameters(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value
+    }));
+  };
+
+  useEffect(() => {
+    if (onObstacleAltitudeChange) {
+      onObstacleAltitudeChange({ min: minAltitudeValue, max: maxAltitudeValue, unit: obstacleAltitudeUnit });
+    }
+  }, [minAltitudeValue, maxAltitudeValue, obstacleAltitudeUnit, onObstacleAltitudeChange]);
+
+  useEffect(() => {
+    if (onAltitudeChange) {
+      onAltitudeChange({ value: altitudeValue, unit: altitudeUnit });
+    }
+  }, [altitudeValue, altitudeUnit, onAltitudeChange]);
 
   useEffect(() => {
     if (!query) return setSuggestions([]);
@@ -83,12 +117,29 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady }
       <div className="flex-fill overflow-auto p-3" style={{ minHeight: 0 }}>
         {tab === 'waypoint' && (
           <div>
-            <div className="mb-3">
-              <label className="form-label">Unità di misura altezza</label>
-              <select className="form-select">
-                <option value="m">Metri (m)</option>
-                <option value="ft">Piedi (ft)</option>
-              </select>
+            <div className="row g-2 mb-3">
+              <div className="col-md">
+                <label htmlFor="altitude-value" className="form-label">Altitude</label>
+                <input
+                  type="number"
+                  id="altitude-value"
+                  className="form-control"
+                  value={altitudeValue}
+                  onChange={e => setAltitudeValue(Number(e.target.value))}
+                />
+              </div>
+              <div className="col-md">
+                <label htmlFor="altitude-unit" className="form-label">Unit</label>
+                <select
+                  id="altitude-unit"
+                  className="form-select"
+                  value={altitudeUnit}
+                  onChange={e => setAltitudeUnit(e.target.value)}
+                >
+                  <option value="m">Meters (m)</option>
+                  <option value="ft">Feet (ft)</option>
+                </select>
+              </div>
             </div>
 
             <div className="mb-3">
@@ -127,6 +178,23 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady }
         {tab === 'obstacles' && (
           <div>
             <div className="mb-3">
+                <label className="form-label">Altitude</label>
+                <div className="row g-2">
+                    <div className="col-md">
+                        <input type="number" className="form-control" placeholder="Min" value={minAltitudeValue} onChange={e => setMinAltitudeValue(Number(e.target.value))} />
+                    </div>
+                    <div className="col-md">
+                        <input type="number" className="form-control" placeholder="Max" value={maxAltitudeValue} onChange={e => setMaxAltitudeValue(Number(e.target.value))} />
+                    </div>
+                    <div className="col-md">
+                        <select className="form-select" value={obstacleAltitudeUnit} onChange={e => setObstacleAltitudeUnit(e.target.value)}>
+                            <option value="m">m</option>
+                            <option value="ft">ft</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div className="mb-3">
               {/* <button type="button" className="btn btn-outline-primary w-100 mb-2" onClick={() => onToggleDraw && onToggleDraw('polygon')}> <i className="bi bi-vector-pen"></i> Disegna poligono</button> */}
               <button type="button" className="btn btn-outline-success w-100" onClick={onGenerateRandomObstacles} disabled={!isMapReady}> <i className="bi bi-magic"></i> Genera ostacoli a caso</button>
             </div>
@@ -140,22 +208,64 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady }
           </div>
         )}
         {tab === 'parameters' && (
-          <div>
+          <form onSubmit={(e) => e.preventDefault()}>
             <div className="mb-3">
-              <label htmlFor="algorithm-select" className="form-label">Algoritmo</label>
-              <select id="algorithm-select" className="form-select">
-                <option value="RTT">Veloce</option>
-                <option value="RTTStar">Ottimale</option>
+              <label htmlFor="algorithm" className="form-label">Algorithm</label>
+              <select id="algorithm" name="algorithm" className="form-select" value={parameters.algorithm} onChange={handleParamChange}>
+                <option value="antpath">Ant Path</option>
+                <option value="rrt">RRT</option>
+                <option value="rrtstar">RRT*</option>
               </select>
             </div>
             <div className="mb-3">
-              <label htmlFor="iterations-input" className="form-label">Numero di iterazioni</label>
-              <input type="number" id="iterations-input" className="form-control" defaultValue="1000" min="100" step="100" />
+              <label htmlFor="goal_bias" className="form-label">Goal Bias</label>
+              <input type="number" id="goal_bias" name="goal_bias" className="form-control" value={parameters.goal_bias} onChange={handleParamChange} min="0" max="1" step="0.05" />
             </div>
-          </div>
+            <div className="mb-3">
+              <label htmlFor="max_iterations" className="form-label">Max Iterations</label>
+              <input type="number" id="max_iterations" name="max_iterations" className="form-control" value={parameters.max_iterations} onChange={handleParamChange} min="1" />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="step_size_mt" className="form-label">Step Size (meters)</label>
+              <input type="number" id="step_size_mt" name="step_size_mt" className="form-control" value={parameters.step_size_mt} onChange={handleParamChange} min="0" step="0.5" />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="sampler" className="form-label">Sampler</label>
+              <select id="sampler" name="sampler" className="form-select" value={parameters.sampler} onChange={handleParamChange}>
+                <option value="uniform">Uniform</option>
+                <option value="halton">Halton</option>
+              </select>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="seed" className="form-label">Seed</label>
+              <input type="number" id="seed" name="seed" className="form-control" value={parameters.seed} onChange={handleParamChange} />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="storage" className="form-label">Storage</label>
+              <select id="storage" name="storage" className="form-select" value={parameters.storage} onChange={handleParamChange}>
+                <option value="list">List</option>
+                <option value="rtree">R-Tree</option>
+              </select>
+            </div>
+            <hr />
+            <div className="d-grid">
+                <button 
+                    type="button" 
+                    className="btn btn-primary" 
+                    onClick={() => onCompute(parameters)} 
+                    disabled={isComputing}
+                >
+                    {isComputing ? (
+                        <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span className="ms-2">Computing...</span>
+                        </>
+                    ) : 'Compute'}
+                </button>
+            </div>
+          </form>
         )}
       </div>
-      {/* TODO: Add tab parametri: algoritmo, numero di iterazioni, ... */}
     </div>
   );
 }

@@ -2,13 +2,26 @@
 import React, { useCallback, useRef, useState } from 'react';
 import Sidebar from "../../components/MapEditor/Sidebar";
 import Map from "../../components/MapEditor/Map";
+import ResultModal from '../../components/ResultModal/ResultModal';
 
 function Homepage() {
+  const [modalState, setModalState] = useState('closed'); // closed, loading, success, error
+  const [lastComputation, setLastComputation] = useState({ params: null, result: null });
   const mapRef = useRef();
   const [drawMode, setDrawMode] = useState('marker');
   const [waypoints, setWaypoints] = useState([]);
   const [obstacles, setObstacles] = useState([]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [currentAltitude, setCurrentAltitude] = useState({ value: 0, unit: 'm' });
+  const [currentObstacleAltitude, setCurrentObstacleAltitude] = useState({ min: 100, max: 500, unit: 'm' });
+
+  const handleObstacleAltitudeChange = useCallback((altitude) => {
+    setCurrentObstacleAltitude(altitude);
+  }, []);
+
+  const handleAltitudeChange = useCallback((altitude) => {
+    setCurrentAltitude(altitude);
+  }, []);
 
   function handleSelectLocation({ lat, lon }) {
     mapRef.current?.goTo({ lat, lon, zoom: 14 });
@@ -20,9 +33,26 @@ function Homepage() {
 
   const handleFeatureCreated = (feature, type) => {
     if (type === 'marker') {
-      setWaypoints(current => [...current, feature]);
+      const newWaypoint = {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          altitudeValue: currentAltitude.value,
+          altitudeUnit: currentAltitude.unit,
+        }
+      };
+      setWaypoints(current => [...current, newWaypoint]);
     } else if (type === 'polygon') {
-      setObstacles(current => [...current, feature]);
+      const newObstacle = {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          minAltitudeValue: currentObstacleAltitude.min,
+          maxAltitudeValue: currentObstacleAltitude.max,
+          altitudeUnit: currentObstacleAltitude.unit,
+        }
+      };
+      setObstacles(current => [...current, newObstacle]);
     }
   };
 
@@ -78,7 +108,11 @@ function Homepage() {
 
       const polygonGeoJSON = {
         type: 'Feature',
-        properties: {},
+        properties: {
+          minAltitudeValue: currentObstacleAltitude.min,
+          maxAltitudeValue: currentObstacleAltitude.max,
+          altitudeUnit: currentObstacleAltitude.unit,
+        },
         geometry: {
           type: 'Polygon',
           coordinates: [points]
@@ -98,6 +132,79 @@ function Homepage() {
     setIsMapReady(true);
   }, []);
 
+  const handleCompute = (params) => {
+    setModalState('loading');
+    setLastComputation(prev => ({ ...prev, params }));
+
+    const bounds = mapRef.current.getBounds();
+    if (!bounds) {
+        alert("Could not get map bounds.");
+        setModalState('closed');
+        return;
+    }
+    const southWest = bounds.getSouthWest();
+    const northEast = bounds.getNorthEast();
+
+    const searchVolume = {
+        type: "Feature",
+        geometry: {
+            type: "Polygon",
+            coordinates: [[
+                [southWest.lng, northEast.lat],
+                [northEast.lng, northEast.lat],
+                [northEast.lng, southWest.lat],
+                [southWest.lng, southWest.lat],
+                [southWest.lng, northEast.lat]
+            ]]
+        },
+        properties: {
+            minAltitudeValue: -999999,
+            maxAltitudeValue: 999999,
+            altitudeUnit: "m"
+        }
+    };
+
+    const requestPayload = {
+        waypoints: waypoints,
+        constraints: obstacles,
+        search_volume: searchVolume,
+        parameters: {
+            ...params,
+            max_step_size_mt: params.step_size_mt // Renaming for the backend
+        }
+    };
+    delete requestPayload.parameters.step_size_mt;
+
+    console.log("Request Payload:", JSON.stringify(requestPayload, null, 2));
+
+    // Simulate API call
+    setTimeout(() => {
+        const isSuccess = Math.random() > 0.3; // 70% chance of success
+        if (isSuccess) {
+            const fakeResult = {
+                pathLength: Math.floor(Math.random() * 50) + 10,
+                waypointsCount: waypoints.length,
+                distance: (Math.random() * 100).toFixed(2),
+                duration: `${Math.floor(Math.random() * 60) + 5} minutes`
+            };
+            setLastComputation(prev => ({ ...prev, result: fakeResult }));
+            setModalState('success');
+        } else {
+            setModalState('error');
+        }
+    }, 2000);
+  };
+
+  const handleRetry = () => {
+    if (lastComputation.params) {
+        handleCompute(lastComputation.params);
+    }
+  };
+
+  const handleModalClose = () => {
+    setModalState('closed');
+  };
+
   return (
     <div className="container-fluid px-0" style={{ overflow: "hidden" }}>
       <div className="row no-gutters" style={{ height: "calc(100vh - 64px)" }}>
@@ -107,6 +214,10 @@ function Homepage() {
             onGoto={handleSelectLocation}
             onToggleDraw={handleToggleDraw}
             onGenerateRandomObstacles={handleGenerateRandomObstacles}
+            onAltitudeChange={handleAltitudeChange}
+            onObstacleAltitudeChange={handleObstacleAltitudeChange}
+            onCompute={handleCompute}
+            isComputing={modalState === 'loading'}
             onRequestGeolocate={() => { /* call util then goto */ }}
             isMapReady={isMapReady}
           />
@@ -123,6 +234,13 @@ function Homepage() {
           </div>
         </div>
       </div>
+      <ResultModal 
+        state={modalState}
+        result={lastComputation.result}
+        onRetry={handleRetry}
+        onEdit={handleModalClose}
+        onClose={handleModalClose}
+      />
     </div>
   );
 }
