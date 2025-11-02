@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Link, Navigate, NavLink } from 'react-router-dom';
 import Homepage from './pages/Homepage/Homepage';
 import LoginPage from './pages/Login/Login';
+import HistoryPage from './pages/History/HistoryPage';
 import ProfilePage from './pages/Profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -51,6 +52,7 @@ function Navigation() {
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end">
                   <li><Link className="dropdown-item" to="/profile">Profile</Link></li>
+                  <li><Link className="dropdown-item" to="/history">Route History</Link></li>
                   <li><hr className="dropdown-divider" /></li>
                   <li><button className="dropdown-item" onClick={logout}>Logout</button></li>
                 </ul>
@@ -87,6 +89,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/history" 
+            element={
+              <ProtectedRoute>
+                <HistoryPage />
               </ProtectedRoute>
             } 
           />

@@ -2,16 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 import { getCurrentPosition , geocodeNominatim } from '../../assets/js/utils/geolocation.js';
 
-function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing }) {
-  const [parameters, setParameters] = useState({
-    algorithm: 'rrtstar',
-    goal_bias: 0.1,
-    max_iterations: 10000,
-    step_size_mt: 20.0,
-    sampler: 'uniform',
-    seed: 10,
-    storage: 'rtree'
-  });
+function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing, parameters, onParametersChange }) {
   const [tab, setTab] = useState('waypoint');
   const [altitudeValue, setAltitudeValue] = useState(0);
   const [altitudeUnit, setAltitudeUnit] = useState('m');
@@ -23,14 +14,6 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const searchTimer = useRef(null);
-
-  const handleParamChange = (e) => {
-    const { name, value, type } = e.target;
-    setParameters(prev => ({
-      ...prev,
-      [name]: type === 'number' ? Number(value) : value
-    }));
-  };
 
   useEffect(() => {
     if (onObstacleAltitudeChange) {
@@ -211,7 +194,7 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
           <form onSubmit={(e) => e.preventDefault()}>
             <div className="mb-3">
               <label htmlFor="algorithm" className="form-label">Algorithm</label>
-              <select id="algorithm" name="algorithm" className="form-select" value={parameters.algorithm} onChange={handleParamChange}>
+              <select id="algorithm" name="algorithm" className="form-select" value={parameters.algorithm} onChange={(e) => onParametersChange({...parameters, algorithm: e.target.value})}>
                 <option value="antpath">Ant Path</option>
                 <option value="rrt">RRT</option>
                 <option value="rrtstar">RRT*</option>
@@ -219,30 +202,30 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
             </div>
             <div className="mb-3">
               <label htmlFor="goal_bias" className="form-label">Goal Bias</label>
-              <input type="number" id="goal_bias" name="goal_bias" className="form-control" value={parameters.goal_bias} onChange={handleParamChange} min="0" max="1" step="0.05" />
+              <input type="number" id="goal_bias" name="goal_bias" className="form-control" value={parameters.goal_bias} onChange={(e) => onParametersChange({...parameters, goal_bias: Number(e.target.value)})} min="0" max="1" step="0.05" />
             </div>
             <div className="mb-3">
               <label htmlFor="max_iterations" className="form-label">Max Iterations</label>
-              <input type="number" id="max_iterations" name="max_iterations" className="form-control" value={parameters.max_iterations} onChange={handleParamChange} min="1" />
+              <input type="number" id="max_iterations" name="max_iterations" className="form-control" value={parameters.max_iterations} onChange={(e) => onParametersChange({...parameters, max_iterations: Number(e.target.value)})} min="1" />
             </div>
             <div className="mb-3">
               <label htmlFor="step_size_mt" className="form-label">Step Size (meters)</label>
-              <input type="number" id="step_size_mt" name="step_size_mt" className="form-control" value={parameters.step_size_mt} onChange={handleParamChange} min="0" step="0.5" />
+              <input type="number" id="step_size_mt" name="step_size_mt" className="form-control" value={parameters.step_size_mt} onChange={(e) => onParametersChange({...parameters, step_size_mt: Number(e.target.value)})} min="0" step="0.5" />
             </div>
             <div className="mb-3">
               <label htmlFor="sampler" className="form-label">Sampler</label>
-              <select id="sampler" name="sampler" className="form-select" value={parameters.sampler} onChange={handleParamChange}>
+              <select id="sampler" name="sampler" className="form-select" value={parameters.sampler} onChange={(e) => onParametersChange({...parameters, sampler: e.target.value})}>
                 <option value="uniform">Uniform</option>
                 <option value="halton">Halton</option>
               </select>
             </div>
             <div className="mb-3">
               <label htmlFor="seed" className="form-label">Seed</label>
-              <input type="number" id="seed" name="seed" className="form-control" value={parameters.seed} onChange={handleParamChange} />
+              <input type="number" id="seed" name="seed" className="form-control" value={parameters.seed} onChange={(e) => onParametersChange({...parameters, seed: Number(e.target.value)})} />
             </div>
             <div className="mb-3">
               <label htmlFor="storage" className="form-label">Storage</label>
-              <select id="storage" name="storage" className="form-select" value={parameters.storage} onChange={handleParamChange}>
+              <select id="storage" name="storage" className="form-select" value={parameters.storage} onChange={(e) => onParametersChange({...parameters, storage: e.target.value})}>
                 <option value="list">List</option>
                 <option value="rtree">R-Tree</option>
               </select>
@@ -252,7 +235,7 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
                 <button 
                     type="button" 
                     className="btn btn-primary" 
-                    onClick={() => onCompute(parameters)} 
+                    onClick={() => onCompute()} 
                     disabled={isComputing}
                 >
                     {isComputing ? (

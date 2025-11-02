@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Sidebar from "../../components/MapEditor/Sidebar";
 import Map from "../../components/MapEditor/Map";
 import ResultModal from '../../components/ResultModal/ResultModal';
@@ -9,14 +10,44 @@ function Homepage() {
   const [lastComputation, setLastComputation] = useState({ params: null, result: null });
   const mapRef = useRef();
   const [drawMode, setDrawMode] = useState('marker');
+  const [parameters, setParameters] = useState({
+    algorithm: 'rrtstar',
+    goal_bias: 0.1,
+    max_iterations: 10000,
+    step_size_mt: 20.0,
+    sampler: 'uniform',
+    seed: 10,
+    storage: 'rtree'
+  });
   const [waypoints, setWaypoints] = useState([]);
   const [obstacles, setObstacles] = useState([]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const routeToEdit = location.state?.routeToEdit;
+    if (routeToEdit) {
+      setWaypoints(routeToEdit.waypoints || []);
+      setObstacles(routeToEdit.constraints || []);
+      if (routeToEdit.parameters) {
+        const newParams = {
+            ...routeToEdit.parameters,
+            step_size_mt: routeToEdit.parameters.max_step_size_mt || 20.0
+        };
+        delete newParams.max_step_size_mt;
+        setParameters(newParams);
+      }
+    }
+  }, [location.state]);
   const [currentAltitude, setCurrentAltitude] = useState({ value: 0, unit: 'm' });
   const [currentObstacleAltitude, setCurrentObstacleAltitude] = useState({ min: 100, max: 500, unit: 'm' });
 
   const handleObstacleAltitudeChange = useCallback((altitude) => {
     setCurrentObstacleAltitude(altitude);
+  }, []);
+
+  const handleParametersChange = useCallback((newParams) => {
+    setParameters(newParams);
   }, []);
 
   const handleAltitudeChange = useCallback((altitude) => {
@@ -132,9 +163,9 @@ function Homepage() {
     setIsMapReady(true);
   }, []);
 
-  const handleCompute = (params) => {
+  const handleCompute = () => {
     setModalState('loading');
-    setLastComputation(prev => ({ ...prev, params }));
+    setLastComputation(prev => ({ ...prev, params: parameters }));
 
     const bounds = mapRef.current.getBounds();
     if (!bounds) {
@@ -169,8 +200,8 @@ function Homepage() {
         constraints: obstacles,
         search_volume: searchVolume,
         parameters: {
-            ...params,
-            max_step_size_mt: params.step_size_mt // Renaming for the backend
+            ...parameters,
+            max_step_size_mt: parameters.step_size_mt // Renaming for the backend
         }
     };
     delete requestPayload.parameters.step_size_mt;
@@ -197,7 +228,7 @@ function Homepage() {
 
   const handleRetry = () => {
     if (lastComputation.params) {
-        handleCompute(lastComputation.params);
+        handleCompute();
     }
   };
 
@@ -216,6 +247,8 @@ function Homepage() {
             onGenerateRandomObstacles={handleGenerateRandomObstacles}
             onAltitudeChange={handleAltitudeChange}
             onObstacleAltitudeChange={handleObstacleAltitudeChange}
+            onParametersChange={handleParametersChange}
+            parameters={parameters}
             onCompute={handleCompute}
             isComputing={modalState === 'loading'}
             onRequestGeolocate={() => { /* call util then goto */ }}
