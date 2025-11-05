@@ -12,7 +12,7 @@ The front-end one could be a web application having a geojson.io-like map: inter
 In addition, the system provides various options to manage the routing request: for example, it could take into account the maximum turning rate of the drone or compare one route to the one that would use a ground vehicle or some other algorithm-based parameters. 
 Finally, the system computes the optimal route.
 Each routing request’s computation is important to be independent and parallel to the others in order to exploit the distributed nature of it and to optimize the resources.
- So after each request, the system can scale up or down in order to balance the computational load on it
+So after each request, the system can scale up or down in order to balance the computational load on it
 
 
 # USER STORIES:
@@ -23,14 +23,16 @@ Each routing request’s computation is important to be independent and parallel
 3)  As a visitor, I want to mark areas that the drone should avoid so that I can plan a safe path.
 4)  As a visitor, I want to see the proposed drone route displayed on the map so that I understand how the drone would fly.
 5)  As a visitor, I want to download or share the proposed route so that I can reuse it outside the app.
-6)  As a registered user, I want to log in to my personal space so that I can manage my routes.
-7)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later.
-8)  As a registered user, I want to save important points or areas for future use so that I don’t have to redraw them every time.
-9)  As a registered user, I want to save specific routes I like so that I can quickly access them later.
-10)  As a user, I want to see how the drone route compares to a car route for the same points so that I can choose the best option for my needs.
-11)  As a user, I want the app to suggest an efficient path for my drone so that I don’t have to figure it out myself.
-12)  As a user, I want to easily repeat my last request so that I can test or adjust it quickly.
-13)  As a user, I want the app to warn me if I create impossible or conflicting routes so that I can fix them before computing.
-14)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
-15)  As a user, I want the option to adjust my inputs and try again after an error so that I don’t have to start from scratch.
-16)  As a user, I want the app to guide me back to the home screen after completing or failing a request so that I can easily start over.
+6)  As a visitor, I want to sign up into the app so that I can create my personal account
+7)  As a registered user, I want to log in to my personal space so that I can manage my routes.
+8)  As a registered user, I want to log out to my personal account so that anyone can use my account.
+9)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later.
+10)  As a registered user, I want to save important points or areas for future use so that I don’t have to redraw them every time.
+11)  As a registered user, I want to save specific routes I like so that I can quickly access them later.
+12)  As a user, I want to see how the drone route compares to a car route for the same points so that I can choose the best option for my needs.
+13)  As a user, I want the app to suggest an efficient path for my drone so that I don’t have to figure it out myself.
+14)  As a user, I want to easily repeat my last request so that I can test or adjust it quickly.
+15)  As a user, I want the app to warn me if I create impossible or conflicting routes so that I can fix them before computing.
+16)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
+17)  As a user, I want the option to adjust my inputs and try again after an error so that I don’t have to start from scratch.
+18)  As a user, I want the app to guide me back to the home screen after completing or failing a request so that I can easily start over.
