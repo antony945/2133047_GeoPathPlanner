@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   routing:
     image: geopathplanner/routing:latest
@@ -14,9 +16,10 @@ services:
         condition: service_completed_successfully
       api:
         condition: service_healthy
+    networks:
+      - geopathplanner-net
 
   api:
-    # container_name: api
     image: geopathplanner/api:latest
     build:
       context: api
@@ -36,17 +39,8 @@ services:
         condition: service_completed_successfully
     ports:
       - "8000:8000"
-    # volumes:
-    #   - ${pwd}:/code
-
-  # redis:
-  #   image: redis:7
-  #   container_name: redis
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - "${REDIS_PORT}:6379"
+    networks:
+      - geopathplanner-net
 
   db:
     container_name: db
@@ -64,8 +58,10 @@ services:
       timeout: 60s
       retries: 5
       start_period: 10s
-    # volumes:
-    #   - db_data:/var/lib/postgresql/data
+    volumes:
+      - api_db_data:/var/lib/postgresql/data
+    networks:
+      - geopathplanner-net
 
   pgadmin:
     image: dpage/pgadmin4
@@ -76,8 +72,12 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
       PGADMIN_DEFAULT_PASSWORD: strong-password
-    # volumes:
-    # - pgadmin-data:/var/lib/pgadmin
+    volumes:
+      - api_pgadmin_data:/var/lib/pgadmin
+    networks:
+      - geopathplanner-net
+    depends_on:
+      - db
 
   kafka:
     image: apache/kafka:latest
@@ -95,25 +95,18 @@ services:
     ports:
       - "9092:9092"
     environment:
-      # Configure listeners for both docker and host communication
       KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
-
-      # Settings required for KRaft mode
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9091
-
-      # Listener to use for broker-to-broker communication
       KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
-
-      # Required for a single node cluster
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
-      # Override default number of kafka partitions
       KAFKA_NUM_PARTITIONS: ${KAFKA_REQUEST_TOPIC_PARTITIONS}
+    networks:
+      - geopathplanner-net
 
   kafka-init-topics:
     image: apache/kafka:latest
@@ -129,6 +122,8 @@ services:
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_BROKERS} --create --if-not-exists --topic ${KAFKA_RESPONSE_TOPIC} --partitions ${KAFKA_RESPONSE_TOPIC_PARTITIONS};
       echo 'Topics created successfully!';
       "
+    networks:
+      - geopathplanner-net
 
   kafka-ui:
     image: kafbat/kafka-ui:main
@@ -143,6 +138,90 @@ services:
       kafka:
         condition: service_healthy
         restart: true
-# volumes:
-#   db_data:
-#   pgadmin-data:
+    networks:
+      - geopathplanner-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_app
+    ports:
+      - '8081:80'
+    restart: unless-stopped
+    networks:
+      - geopathplanner-net
+
+  user-management:
+    build:
+      context: ./user-management
+      dockerfile: Dockerfile.dev
+    container_name: user_management_app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: user-management-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: Juventus108
+      DB_NAME: user_auth_db
+      JWT_SECRET: 4dad8f6ac14402c48cdd26c8c16da04f00e82a47d9e988d8597e718e7d65e6e8
+      JWT_EXPIRATION: 7d
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./user-management/src:/app/src
+      - ./user-management/test:/app/test
+      - /app/node_modules
+    depends_on:
+      user-management-db:
+        condition: service_healthy
+    networks:
+      - geopathplanner-net
+
+  user-management-db:
+    image: postgres:15-alpine
+    container_name: postgres_db_user_management
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: user_auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Juventus108
+      TZ: 'Europe/Rome'
+    ports:
+      - '5434:5432'
+    volumes:
+      - user_management_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geopathplanner-net
+
+  user-management-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_user_management
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - '5050:80'
+    depends_on:
+      - user-management-db
+    networks:
+      - geopathplanner-net
+
+networks:
+  geopathplanner-net:
+    driver: bridge
+
+volumes:
+  api_db_data:
+  api_pgadmin_data:
+  user_management_db_data:
+    driver: local
