@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 
+
+WORKDIR /code
+
+# Install curl and then clean apt cache to reduce size
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# --- NEW: uninstall any preinstalled bcrypt first ---
+RUN pip uninstall -y bcrypt || true
+
+# Copy requirements and install everything cleanly
+COPY ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy your app
+COPY app ./app
+
+EXPOSE 8000
+# CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# CMD ["fastapi", "dev", "app/main.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["fastapi", "run", "app/main.py", "--host", "0.0.0.0", "--port", "8000"]
