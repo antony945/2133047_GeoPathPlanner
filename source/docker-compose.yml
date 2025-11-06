@@ -149,6 +149,13 @@ services:
     ports:
       - '8081:80'
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      user-management:
+        condition: service_healthy
+      routing:
+        condition: service_started
     networks:
       - geopathplanner-net
 
@@ -158,6 +165,12 @@ services:
       dockerfile: Dockerfile.dev
     container_name: user_management_app
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     environment:
       NODE_ENV: development
       PORT: 3000
