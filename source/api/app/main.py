@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Header, HTTPException, Depends, Query, Path
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 from app.models import RoutingRequest, RoutingResponse
 from app.token import verify_jwt_token
 from app.kafka import KafkaService
@@ -36,6 +37,15 @@ async def lifespan(app: FastAPI):
 
 # Create api
 app = FastAPI(title=APP_NAME, version=APP_VERSION, lifespan=lifespan)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # -------------------------------
 # 🌍 Base endpoint
