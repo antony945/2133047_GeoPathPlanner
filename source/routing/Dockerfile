@@ -10,6 +10,7 @@ RUN go mod download
 
 # Copy source
 COPY . .
+RUN go mod tidy
 
 # This is the image VS Code will use
 # gopls, autocompletion etc. will work here
