@@ -17,6 +17,7 @@ from app.models import RoutingResponse
 from app.config import DATABASE_URL
 
 # --- DATABASE SETUP ---
+# TODO: Change echo from true to false
 engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -143,7 +144,6 @@ async def get_routing_response(request_id: str) -> Optional[RoutingResponseDB]:
         except Exception as e:
             logger.error(f"Failed to delete routing response request_id={request_id}: {e}")
             return None
-
 
 # # --- GEOMETRY CONVERSION HELPERS ---
 # from shapely.geometry import MultiPoint, MultiPolygon, shape

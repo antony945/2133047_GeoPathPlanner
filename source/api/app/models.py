@@ -3,14 +3,16 @@ from geojson_pydantic import Feature
 from datetime import datetime
 from typing import Optional, List
 
-class RoutingRequest(BaseModel):
+class RoutingRequestPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    request_id: str
     waypoints: List[Feature]
     constraints: Optional[List[Feature]] = None
     search_volume: Feature
     parameters: Optional[dict] = None
+
+class RoutingRequest(RoutingRequestPublic):
+    request_id: str
     received_at: datetime
 
 class RoutingResponse(RoutingRequest):
