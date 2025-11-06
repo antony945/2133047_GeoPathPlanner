@@ -1,11 +1,16 @@
 import axios from 'axios';
 
-const api = axios.create({
+const apiLogin = axios.create({
   baseURL: 'http://localhost:3000',
 });
 
+const apiRouting = axios.create({
+  baseURL: 'http://localhost:8000',
+});
+
+
 // Add auth token to each request
-api.interceptors.request.use(
+apiLogin.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -18,4 +23,4 @@ api.interceptors.request.use(
   }
 );
 
-export default api;
+export { apiLogin, apiRouting };

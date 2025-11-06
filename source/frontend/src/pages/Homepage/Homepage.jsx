@@ -5,8 +5,10 @@ import Sidebar from "../../components/MapEditor/Sidebar";
 import Map from "../../components/MapEditor/Map";
 import ResultModal from '../../components/ResultModal/ResultModal';
 
+import { apiRouting } from '../../services/api';
+
 function Homepage() {
-  const [modalState, setModalState] = useState('closed'); // closed, loading, success, error
+  const [modalState, setModalState] = useState('closed');
   const [lastComputation, setLastComputation] = useState({ params: null, result: null });
   const mapRef = useRef();
   const [drawMode, setDrawMode] = useState('marker');
@@ -21,14 +23,19 @@ function Homepage() {
   });
   const [waypoints, setWaypoints] = useState([]);
   const [obstacles, setObstacles] = useState([]);
+  const [computedRoute, setComputedRoute] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    const routeToEdit = location.state?.routeToEdit;
-    if (routeToEdit) {
+    const routeToEditJson = sessionStorage.getItem('routeToEdit');
+    if (routeToEditJson) {
+      const routeToEdit = JSON.parse(routeToEditJson);
+      sessionStorage.removeItem('routeToEdit');
+
       setWaypoints(routeToEdit.waypoints || []);
       setObstacles(routeToEdit.constraints || []);
+
       if (routeToEdit.parameters) {
         const newParams = {
             ...routeToEdit.parameters,
@@ -38,9 +45,9 @@ function Homepage() {
         setParameters(newParams);
       }
     }
-  }, [location.state]);
-  const [currentAltitude, setCurrentAltitude] = useState({ value: 0, unit: 'm' });
-  const [currentObstacleAltitude, setCurrentObstacleAltitude] = useState({ min: 100, max: 500, unit: 'm' });
+  }, []);
+  const [currentAltitude, setCurrentAltitude] = useState({ value: 0, unit: 'mt' });
+  const [currentObstacleAltitude, setCurrentObstacleAltitude] = useState({ min: 100, max: 500, unit: 'mt' });
 
   const handleObstacleAltitudeChange = useCallback((altitude) => {
     setCurrentObstacleAltitude(altitude);
@@ -154,7 +161,8 @@ function Homepage() {
 
     // Add new obstacles to map and update state
     newObstacles.forEach(obstacle => {
-      mapRef.current.addObstacle(obstacle);
+      const tooltip = `Altitude: ${obstacle.properties.minAltitudeValue}${obstacle.properties.altitudeUnit} - ${obstacle.properties.maxAltitudeValue}${obstacle.properties.altitudeUnit}`;
+      mapRef.current.addFeature(obstacle, tooltip);
     });
     setObstacles(newObstacles);
   };
@@ -163,9 +171,34 @@ function Homepage() {
     setIsMapReady(true);
   }, []);
 
-  const handleCompute = () => {
+  useEffect(() => {
+    if (isMapReady && mapRef.current) {
+        mapRef.current.clearWaypoints();
+        mapRef.current.clearObstacles();
+        waypoints.forEach((wp, index) => {
+            const tooltip = `Waypoint ${index + 1}: ${wp.properties.altitudeValue}${wp.properties.altitudeUnit}`;
+            mapRef.current.addFeature(wp, tooltip);
+        });
+        obstacles.forEach(obs => {
+            const tooltip = `Altitude: ${obs.properties.minAltitudeValue}${obs.properties.altitudeUnit} - ${obs.properties.maxAltitudeValue}${obs.properties.altitudeUnit}`;
+            mapRef.current.addFeature(obs, tooltip);
+        });
+    }
+  }, [waypoints, obstacles, isMapReady]);
+
+  useEffect(() => {
+    if (isMapReady && mapRef.current && computedRoute) {
+        mapRef.current.drawRoute(computedRoute);
+    }
+  }, [computedRoute, isMapReady]);
+
+  const handleCompute = async () => {
     setModalState('loading');
     setLastComputation(prev => ({ ...prev, params: parameters }));
+    setComputedRoute(null);
+    if (mapRef.current) {
+        mapRef.current.clearRoute();
+    }
 
     const bounds = mapRef.current.getBounds();
     if (!bounds) {
@@ -191,11 +224,13 @@ function Homepage() {
         properties: {
             minAltitudeValue: -999999,
             maxAltitudeValue: 999999,
-            altitudeUnit: "m"
+            altitudeUnit: "mt"
         }
     };
 
     const requestPayload = {
+        request_id: crypto.randomUUID(),
+        received_at: new Date().toISOString(),
         waypoints: waypoints,
         constraints: obstacles,
         search_volume: searchVolume,
@@ -208,22 +243,25 @@ function Homepage() {
 
     console.log("Request Payload:", JSON.stringify(requestPayload, null, 2));
 
-    // Simulate API call
-    setTimeout(() => {
-        const isSuccess = Math.random() > 0.3; // 70% chance of success
-        if (isSuccess) {
-            const fakeResult = {
-                pathLength: Math.floor(Math.random() * 50) + 10,
-                waypointsCount: waypoints.length,
-                distance: (Math.random() * 100).toFixed(2),
-                duration: `${Math.floor(Math.random() * 60) + 5} minutes`
-            };
-            setLastComputation(prev => ({ ...prev, result: fakeResult }));
-            setModalState('success');
-        } else {
-            setModalState('error');
-        }
-    }, 2000);
+    try {
+      const response = await apiRouting.post('/routes/compute', requestPayload);
+      console.log("Response:", response.data);
+      const resultData = response.data.data;
+
+      setLastComputation(prev => ({ ...prev, result: resultData }));
+
+      if (resultData?.route_found) {
+          setComputedRoute(resultData.route);
+          setModalState('success');
+      } else {
+          setComputedRoute(null);
+          setModalState('error');
+      }
+    } catch (error) {
+      console.error("Error computing route:", error);
+      setLastComputation(prev => ({ ...prev, result: { message: error.message } }));
+      setModalState('error');
+    }
   };
 
   const handleRetry = () => {
@@ -240,7 +278,7 @@ function Homepage() {
     <div className="container-fluid px-0" style={{ overflow: "hidden" }}>
       <div className="row no-gutters" style={{ height: "calc(100vh - 64px)" }}>
         {/* Sidebar, tall, sticky, nav-tabs, content */}
-        <div className="col-3 bg-light border-end p-0">
+        <div className="col-3 bg-light border-end p-0" style={{ position: 'relative' }}>
           <Sidebar
             onGoto={handleSelectLocation}
             onToggleDraw={handleToggleDraw}
@@ -253,6 +291,13 @@ function Homepage() {
             isComputing={modalState === 'loading'}
             onRequestGeolocate={() => { /* call util then goto */ }}
             isMapReady={isMapReady}
+          />
+          <ResultModal 
+            state={modalState}
+            result={lastComputation.result}
+            onRetry={handleRetry}
+            onEdit={handleModalClose}
+            onClose={handleModalClose}
           />
         </div>
         {/* Map */}
@@ -267,13 +312,6 @@ function Homepage() {
           </div>
         </div>
       </div>
-      <ResultModal 
-        state={modalState}
-        result={lastComputation.result}
-        onRetry={handleRetry}
-        onEdit={handleModalClose}
-        onClose={handleModalClose}
-      />
     </div>
   );
 }

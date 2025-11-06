@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import { apiLogin } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await api.get('/users/me');
+          const response = await apiLogin.get('/users/me');
           setUser(response.data);
         } catch (error) {
           console.error('Session expired or invalid', error);
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { username: email, password });
+      const response = await apiLogin.post('/auth/login', { username: email, password });
       const { access_token, user } = response.data;
       localStorage.setItem('token', access_token);
       setUser(user);
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await apiLogin.post('/auth/register', userData);
       const { access_token, user } = response.data;
       localStorage.setItem('token', access_token);
       setUser(user);

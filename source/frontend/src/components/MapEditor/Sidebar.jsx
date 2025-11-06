@@ -5,10 +5,10 @@ import { getCurrentPosition , geocodeNominatim } from '../../assets/js/utils/geo
 function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing, parameters, onParametersChange }) {
   const [tab, setTab] = useState('waypoint');
   const [altitudeValue, setAltitudeValue] = useState(0);
-  const [altitudeUnit, setAltitudeUnit] = useState('m');
+  const [altitudeUnit, setAltitudeUnit] = useState('mt');
   const [minAltitudeValue, setMinAltitudeValue] = useState(100);
   const [maxAltitudeValue, setMaxAltitudeValue] = useState(500);
-  const [obstacleAltitudeUnit, setObstacleAltitudeUnit] = useState('m');
+  const [obstacleAltitudeUnit, setObstacleAltitudeUnit] = useState('mt');
   const [query, setQuery] = useState('');
   const [displayQuery, setDisplayQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -119,7 +119,7 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
                   value={altitudeUnit}
                   onChange={e => setAltitudeUnit(e.target.value)}
                 >
-                  <option value="m">Meters (m)</option>
+                  <option value="mt">Meters (m)</option>
                   <option value="ft">Feet (ft)</option>
                 </select>
               </div>
@@ -171,7 +171,7 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
                     </div>
                     <div className="col-md">
                         <select className="form-select" value={obstacleAltitudeUnit} onChange={e => setObstacleAltitudeUnit(e.target.value)}>
-                            <option value="m">m</option>
+                            <option value="mt">mt</option>
                             <option value="ft">ft</option>
                         </select>
                     </div>

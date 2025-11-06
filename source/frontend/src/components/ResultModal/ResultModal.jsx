@@ -1,65 +1,98 @@
 import React from 'react';
+import { Button, Spinner, Alert } from 'react-bootstrap';
+import './ResultModal.css';
 
 function ResultModal({ state, result, onRetry, onEdit, onClose }) {
-  if (state === 'closed') return null;
+  if (state === 'closed') {
+    return null;
+  }
 
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
+  const renderContent = () => {
+    switch (state) {
+      case 'loading':
+        return (
+          <div className="text-center">
+            <Spinner animation="border" role="status" variant="primary" style={{ width: '3rem', height: '3rem' }}>
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
+            <p className="mt-3 mb-0 fs-5">Computing route...</p>
+          </div>
+        );
+      case 'success':
+        const processingTime = result?.completed_at && result?.received_at
+        ? (new Date(result.completed_at) - new Date(result.received_at)) / 1000
+        : null;
+
+        return (
+          <div>
+            <Alert variant="success" className="mb-3">
+              <Alert.Heading>Computation Successful!</Alert.Heading>
+            </Alert>
+            {result?.cost_km != null && <p><strong>Route Cost:</strong> {result.cost_km.toFixed(2)} km</p>}
+            {processingTime != null && <p><strong>Processing Time:</strong> {processingTime.toFixed(3)} seconds</p>}
+            {result?.parameters?.algorithm && <p><strong>Algorithm:</strong> <span className="text-uppercase">{result.parameters.algorithm}</span></p>}
+            {result?.waypoints && <p className="mb-0"><strong>Waypoints:</strong> {result.waypoints.length}</p>}
+          </div>
+        );
+      case 'error':
+        return (
+          <Alert variant="danger" className="mb-0">
+            <Alert.Heading>Computation Failed</Alert.Heading>
+            <p className="mb-0">
+              {result?.message || 'An error occurred while computing the route. Please check your parameters and try again.'}
+            </p>
+          </Alert>
+        );
+      default:
+        return null;
     }
   };
 
+  const renderFooter = () => {
+    switch (state) {
+      case 'success':
+        return (
+          <>
+            <Button variant="secondary" onClick={onEdit}>Edit</Button>
+            <Button variant="primary" onClick={onClose}>OK</Button>
+          </>
+        );
+      case 'error':
+        return (
+          <>
+            <Button variant="secondary" onClick={onEdit}>Edit</Button>
+            <Button variant="primary" onClick={onRetry}>Retry</Button>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const isLoading = state === 'loading';
+
   return (
-    <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleBackdropClick}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">
-              {state === 'loading' && 'Computing Route...'}
-              {state === 'success' && 'Route Computed Successfully'}
-              {state === 'error' && 'Computation Failed'}
-            </h5>
-            {state !== 'loading' && <button type="button" className="btn-close" onClick={onClose}></button>}
-          </div>
-          <div className="modal-body">
-            {state === 'loading' && (
-              <div className="d-flex justify-content-center align-items-center">
-                <div className="spinner-border" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <span className="ms-3">Please wait...</span>
-              </div>
-            )}
-            {state === 'error' && (
-              <div className="alert alert-danger mb-0">
-                An unexpected error occurred. Please check the parameters and try again.
-              </div>
-            )}
-            {state === 'success' && result && (
-              <div>
-                <p><strong>Path Length:</strong> {result.pathLength} segments</p>
-                <p><strong>Total Waypoints:</strong> {result.waypointsCount}</p>
-                <p><strong>Distance:</strong> {result.distance} km</p>
-                <p><strong>Estimated Car Duration:</strong> {result.duration}</p>
-              </div>
-            )}
-          </div>
-          <div className="modal-footer">
-            {state === 'error' && (
-              <>
-                <button type="button" className="btn btn-primary" onClick={onRetry}>Retry</button>
-                <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
-              </>
-            )}
-            {state === 'success' && (
-              <>
-                <button type="button" className="btn btn-primary" onClick={onRetry}>Retry</button>
-                <button type="button" className="btn btn-secondary" onClick={onEdit}>Edit</button>
-                <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Close</button>
-              </>
-            )}
-          </div>
-        </div>
+    <div className={`result-modal-overlay ${isLoading ? 'loading' : ''}`} onClick={!isLoading ? onClose : undefined}>
+      <div className="result-modal-content" onClick={(e) => e.stopPropagation()}>
+        {isLoading ? (
+          renderContent()
+        ) : (
+          <>
+            <div className="result-modal-header">
+              <h5>
+                {state === 'success' && 'Results'}
+                {state === 'error' && 'Error'}
+              </h5>
+              <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
+            </div>
+            <div className="result-modal-body">
+              {renderContent()}
+            </div>
+            <div className="result-modal-footer">
+              {renderFooter()}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

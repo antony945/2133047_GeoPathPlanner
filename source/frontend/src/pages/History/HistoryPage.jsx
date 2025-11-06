@@ -8,8 +8,8 @@ const mockRoutes = [
     name: 'Brussels Exploration',
     createdAt: '2025-10-28T10:30:00Z',
     request: {
-      waypoints: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [4.43, 50.87] }, properties: { altitudeValue: 200, altitudeUnit: 'm' } }, { type: 'Feature', geometry: { type: 'Point', coordinates: [4.46, 50.88] }, properties: { altitudeValue: 300, altitudeUnit: 'm' } }],
-      constraints: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[ [4.45, 50.87], [4.45, 50.88], [4.44, 50.88], [4.45, 50.87] ]] }, properties: { minAltitudeValue: 100, maxAltitudeValue: 500, altitudeUnit: 'm' } }],
+      waypoints: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [4.43, 50.87] }, properties: { altitudeValue: 200, altitudeUnit: 'mt' } }, { type: 'Feature', geometry: { type: 'Point', coordinates: [4.46, 50.88] }, properties: { altitudeValue: 300, altitudeUnit: 'mt' } }],
+      constraints: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[ [4.45, 50.87], [4.45, 50.88], [4.44, 50.88], [4.45, 50.87] ]] }, properties: { minAltitudeValue: 100, maxAltitudeValue: 500, altitudeUnit: 'mt' } }],
       parameters: { algorithm: 'rrtstar', goal_bias: 0.1, max_iterations: 10000, step_size_mt: 20, sampler: 'uniform', seed: 10, storage: 'rtree' },
     },
     result: {
@@ -56,7 +56,8 @@ function HistoryPage() {
   };
 
   const handleEdit = (route) => {
-    navigate('/', { state: { routeToEdit: route.request } });
+    sessionStorage.setItem('routeToEdit', JSON.stringify(route.request));
+    navigate('/');
   };
 
   const closeModal = () => {

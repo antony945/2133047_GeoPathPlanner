@@ -43,6 +43,7 @@ const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_
     const [geoError, setGeoError] = useState(null);
     const featureGroupRef = useRef();
     const leafletMapRef = useRef(null);
+    const routeLayerRef = useRef(null);
 
     useImperativeHandle(ref, () => ({
         goTo: ({ lat, lon, zoom }) => {
@@ -51,6 +52,17 @@ const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_
         },
         getBounds: () => {
             return leafletMapRef.current ? leafletMapRef.current.getBounds() : null;
+        },
+        clearWaypoints: () => {
+            const featureGroup = featureGroupRef.current;
+            if (!featureGroup) return;
+            const layersToRemove = [];
+            featureGroup.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    layersToRemove.push(layer);
+                }
+            });
+            layersToRemove.forEach(layer => featureGroup.removeLayer(layer));
         },
         clearObstacles: () => {
             const featureGroup = featureGroupRef.current;
@@ -63,11 +75,45 @@ const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_
             });
             layersToRemove.forEach(layer => featureGroup.removeLayer(layer));
         },
-        addObstacle: (obstacleGeoJson) => {
+        addFeature: (geoJson, tooltipContent) => {
             const featureGroup = featureGroupRef.current;
             if (!featureGroup) return;
-            const newLayer = L.geoJSON(obstacleGeoJson);
-            newLayer.eachLayer(layer => featureGroup.addLayer(layer));
+            const newLayer = L.geoJSON(geoJson);
+            newLayer.eachLayer(layer => {
+                if (tooltipContent) {
+                    layer.bindTooltip(tooltipContent);
+                }
+                featureGroup.addLayer(layer);
+            });
+        },
+        clearRoute: () => {
+            if (routeLayerRef.current) {
+                routeLayerRef.current.remove();
+                routeLayerRef.current = null;
+            }
+        },
+        drawRoute: (routePoints) => {
+            if (!leafletMapRef.current) return;
+
+            if (routeLayerRef.current) {
+                routeLayerRef.current.remove();
+            }
+
+            const coordinates = routePoints.map(point => point.geometry.coordinates);
+            const lineString = {
+                type: 'LineString',
+                coordinates: coordinates,
+            };
+
+            const routeLayer = L.geoJSON(lineString, {
+                style: {
+                    color: '#e02828', // red
+                    weight: 4,
+                    opacity: 0.85,
+                }
+            }).addTo(leafletMapRef.current);
+
+            routeLayerRef.current = routeLayer;
         }
     }));
 

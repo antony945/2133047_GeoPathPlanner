@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import { apiLogin } from '../../services/api';
 
 function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ function ProfilePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await api.get('/users/me');
+        const response = await apiLogin.get('/users/me');
         setFormData(response.data);
       } catch (err) {
         console.error(err)
@@ -55,7 +55,7 @@ function ProfilePage() {
     };
 
     try {
-      await api.put('/users/me', updateData);
+      await apiLogin.put('/users/me', updateData);
       setProfileSuccess('Profile updated successfully!');
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'An error occurred while updating.';
@@ -72,7 +72,7 @@ function ProfilePage() {
       return;
     }
     try {
-      await api.patch('/users/me/password', passwordData);
+      await apiLogin.patch('/users/me/password', passwordData);
       setPasswordSuccess('Password changed successfully!');
       setPasswordData({ oldPassword: '', newPassword: '' }); 
     } catch (err) {
