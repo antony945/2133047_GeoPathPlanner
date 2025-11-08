@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"geopathplanner/routing/internal/kafka"
+	"geopathplanner/routing/internal/models"
 	"geopathplanner/routing/internal/service"
 	"geopathplanner/routing/internal/validator"
 	"os"
@@ -52,6 +53,29 @@ func Run() error {
 	// Run the KAFKA consumer for it to wait for upcoming messages
 	k.ConsumeMessage(func(r *kgo.Record) error {
 		// What to do with each record that we have
+		// Extract request_id from header "request_id"
+		// 📨 Log the basic info
+	    fmt.Printf("📩 Received message from topic %s (partition=%d, offset=%d)\n",
+        r.Topic, r.Partition, r.Offset)
+
+		// ✅ Extract request_id from headers
+		var requestID string
+		for _, h := range r.Headers {
+			if h.Key == "request_id" {
+				requestID = string(h.Value)
+				break
+			}
+		}
+
+		if requestID == "" {
+			fmt.Println("⚠️ No request_id header found — skipping message")
+			return nil // or handle according to your logic
+		}
+
+		fmt.Printf("🆔 Extracted request_id: %s\n", requestID)
+
+		var response *models.RoutingResponse
+
 		// 1. Validate data to make sure it is a valide RoutingRequest
 		v := validator.NewDefaultValidator()
 		req, err := v.ValidateMessage(r.Value)
@@ -59,20 +83,24 @@ func Run() error {
 			error_msg := fmt.Sprintf("❌ error decoding RoutingRequest (topic=%s, partition=%d, offset=%d): %v",
 				r.Topic, r.Partition, r.Offset, err)
 			fmt.Println(error_msg)
-			// TODO: What to do if we get something that is not a routingRequest? For now let's ignore it
+			// TODO: What to do if we get something that is not a routingRequest?
 			// Alternative: send an error msg and continue
-			// k.ProduceMessage([]byte(error_msg))
-			return nil
-		}
-
-		fmt.Printf("✅ Valid RoutingRequest %s with %d wps and %d constraints (topic=%s, partition=%d, offset=%d)\n", req.RequestID, len(req.Waypoints), len(req.Constraints), r.Topic, r.Partition, r.Offset)
-
-		// 2. Run RoutingService
-		response, found := rs.HandleRoutingRequest(req, v)
-		if found {
-			fmt.Printf("✅ ROUTE FOUND\n")
+			// TODO: For now just return a notfound route
+			// take received at form
+			
+			response = models.NewRoutingResponseError(models.MustNewEmptyRoutingRequest(requestID, r.Timestamp), err.Error())
 		} else {
-			fmt.Printf("❌ ROUTE NOT FOUND\n")
+			fmt.Printf("✅ Valid RoutingRequest %s with %d wps and %d constraints (topic=%s, partition=%d, offset=%d)\n", req.RequestID, len(req.Waypoints), len(req.Constraints), r.Topic, r.Partition, r.Offset)
+
+			// 2. Run RoutingService
+			myResp, found := rs.HandleRoutingRequest(req, v)
+			if found {
+				fmt.Printf("✅ ROUTE FOUND\n")
+			} else {
+				fmt.Printf("❌ ROUTE NOT FOUND\n")
+			}
+
+			response = myResp
 		}
 
 		// 3. Marshal response to obtain []byte

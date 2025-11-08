@@ -2,19 +2,19 @@ from fastapi import FastAPI, Header, HTTPException, Depends, Query, Path
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from app.models import RoutingRequest, RoutingResponse
+from app.models import RoutingRequest, RoutingResponse, RoutingRequestPublic
 from app.token import verify_jwt_token
 from app.kafka import KafkaService
 from app.logger import logger
 from app.config import RESPONSE_TIMEOUT_SECONDS, APP_NAME, APP_VERSION
 from app.db import init_db, insert_routing_response, get_routing_response, get_routing_responses_by_user, db_healthcheck, delete_routing_response
 from contextlib import asynccontextmanager
+from uuid import uuid4
+from datetime import datetime, timezone
 
 # -------------------------------
 # Standard response helper
 # -------------------------------
-def standard_response(data=None, status="success", message=None):
-    return {"status": status, "message": message, "data": data}
 
 # Create kafka service
 kafka = KafkaService()
@@ -53,14 +53,12 @@ app.add_middleware(
 @app.get("/")
 async def root():
     logger.info("📡 Root endpoint called.")
-    return standard_response(
-        data = {
-            "service": app.title,
-            "status": "running",
-            "message": "Welcome to the GeoPathPlanner Routing API 🚀",
-            "version": app.version
-        }
-    )
+    return {
+        "service": app.title,
+        "status": "running",
+        "message": "Welcome to the GeoPathPlanner Routing API 🚀",
+        "version": app.version
+    }
 
 # -------------------------------
 # 💓 Healthcheck endpoint
@@ -88,17 +86,29 @@ async def health_check():
 
     # If any service is not ok, return 503 otherwise 200
     code = 503 if kafka_status != "ok" or db_status != "ok" else 200
-    return JSONResponse(content=standard_response(status), status_code=code)
+    return JSONResponse(status, status_code=code)
 
 # -------------------------------
 # 🧭 Compute route endpoint
 # -------------------------------
 @app.post("/routes/compute", response_model=RoutingResponse)
 async def compute_route(
-    request: RoutingRequest,
+    request_public: RoutingRequestPublic,
     user_id: str | None = Query(None),
     token_payload: dict = Depends(verify_jwt_token)
 ):
+    # TODO: Assign unique request id to request and convert it to RoutingRequest
+    # ✅ Generate unique ID and timestamp
+    request_id = str(uuid4())
+    received_at = datetime.now(timezone.utc)
+
+    # ✅ Create a complete RoutingRequest object
+    request = RoutingRequest(
+        **request_public.model_dump(),  # Copy all fields from RoutingRequestPublic
+        request_id=request_id,
+        received_at=received_at,
+    )
+
     logger.info(f"📨 Received routing request (request_id={request.request_id})")
 
     # Produce to Kafka
@@ -124,9 +134,9 @@ async def compute_route(
         except Exception as e:
             logger.error(f"❌ Failed to save routing response to DB: {e}")
     
-    return JSONResponse(content=standard_response(jsonable_encoder(response)), status_code=200)
+    return JSONResponse(content=jsonable_encoder(response), status_code=200)
 
-# -------------------------------
+# --------------------------------
 # 🕘 Retrieve past routes/history
 # -------------------------------
 @app.get("/routes", response_model=list[RoutingResponse])
@@ -162,7 +172,7 @@ async def get_user_history(
         except Exception as e:
             logger.warning(f"⚠️ Failed to parse routing response for request_id={entry.request_id}: {e}")
 
-    return JSONResponse(content=standard_response(jsonable_encoder(routes)), status_code=200)
+    return JSONResponse(content=jsonable_encoder(routes), status_code=200)
 
 # -------------------------------
 # 🗑️ Delete a past route
@@ -184,10 +194,7 @@ async def delete_route(
         raise HTTPException(status_code=500, detail="Failed to delete routing response")
 
     return JSONResponse(
-        content=standard_response(
-            data=jsonable_encoder(deleted.response),
-            message="Route successfully removed"
-        ),
+        content=jsonable_encoder(deleted.response),
         status_code=200
     )
 
@@ -206,15 +213,13 @@ async def get_route(
         route = await get_routing_response(request_id)
         if not route:
             raise HTTPException(status_code=404, detail="Route not found")
+            # TODO: check this
 
     except Exception as e:
         logger.error(f"❌ Failed to retrieve routing response: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve routing response")
     
     return JSONResponse(
-        content=standard_response(
-            data=jsonable_encoder(route.response),
-            message="Route successfully retrieved"
-        ),
+        content=jsonable_encoder(route.response),
         status_code=200
     )

@@ -16,6 +16,7 @@ func NewRoutingService() (*RoutingService, error) {
 
 func (rs *RoutingService) HandleRoutingRequest(input *models.RoutingRequest, val validator.Validator) (*models.RoutingResponse, bool) {
 	// TODO: Think about this
+
 	// 1. Validate waypoints and constraint
 	wps, constraints, err := val.ValidateInput(input.SearchVolume, input.Waypoints, input.Constraints)
 	if err != nil {

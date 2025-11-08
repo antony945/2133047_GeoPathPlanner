@@ -17,6 +17,7 @@ from app.models import RoutingResponse
 from app.config import DATABASE_URL
 
 # --- DATABASE SETUP ---
+# TODO: Change echo from true to false
 engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -27,7 +28,7 @@ class RoutingResponseDB(Base):
     __tablename__ = "routing_responses"
 
     request_id = Column(String, primary_key=True)
-    user_id = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     # waypoints = Column(JSON, nullable=False)
     # constraints = Column(JSON, nullable=True)
     # search_volume = Column(JSON, nullable=False)
@@ -102,15 +103,18 @@ async def delete_routing_response(request_id: str) -> Optional[RoutingResponseDB
     """
     async with async_session() as session:
         try:
-            stmt = delete(RoutingResponseDB).where(
-                RoutingResponseDB.request_id == request_id
-                # RoutingResponseDB.user_id == user_id
+            stmt = (
+                delete(RoutingResponseDB)
+                    .where(RoutingResponseDB.request_id == request_id)
+                        # RoutingResponseDB.user_id == user_id
+                    .returning(RoutingResponseDB)
             )
 
             result = await session.execute(stmt)
+            deleted_row = result.scalar_one_or_none()
             await session.commit()
 
-            return result.scalar_one_or_none()
+            return deleted_row
 
         except Exception as e:
             logger.error(f"Failed to delete routing response request_id={request_id}: {e}")
@@ -143,7 +147,6 @@ async def get_routing_response(request_id: str) -> Optional[RoutingResponseDB]:
         except Exception as e:
             logger.error(f"Failed to delete routing response request_id={request_id}: {e}")
             return None
-
 
 # # --- GEOMETRY CONVERSION HELPERS ---
 # from shapely.geometry import MultiPoint, MultiPolygon, shape
