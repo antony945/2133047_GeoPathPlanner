@@ -176,7 +176,7 @@ async def delete_route(
     logger.info(f"🗑️ Deleting routing response request_id={request_id} for user_id={user_id}")
 
     try:
-        deleted = await delete_routing_response(request_id, user_id)
+        deleted = await delete_routing_response(request_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Route not found")
     except Exception as e:
