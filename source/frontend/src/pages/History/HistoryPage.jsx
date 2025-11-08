@@ -24,7 +24,7 @@ function HistoryPage() {
       try {
         setLoading(true);
         const response = await getHistory(user.id);
-        setRoutes(response.data.data || []);
+        setRoutes(response.data || []);
       } catch (err) {
         setError('Failed to fetch route history.');
         console.error(err);

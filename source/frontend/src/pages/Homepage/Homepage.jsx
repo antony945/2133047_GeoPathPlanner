@@ -253,7 +253,7 @@ function Homepage() {
 
       const response = await apiRouting.post(url, requestPayload);
       console.log("Response:", response.data);
-      const resultData = response.data.data;
+      const resultData = response.data;
 
       setLastComputation(prev => ({ ...prev, result: resultData }));
 
