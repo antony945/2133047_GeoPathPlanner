@@ -233,8 +233,6 @@ function Homepage() {
     };
 
     const requestPayload = {
-        request_id: crypto.randomUUID(),
-        received_at: new Date().toISOString(),
         waypoints: waypoints,
         constraints: obstacles,
         search_volume: searchVolume,
