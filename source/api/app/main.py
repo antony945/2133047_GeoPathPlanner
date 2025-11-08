@@ -8,6 +8,8 @@ from app.logger import logger
 from app.config import RESPONSE_TIMEOUT_SECONDS, APP_NAME, APP_VERSION
 from app.db import init_db, insert_routing_response, get_routing_response, get_routing_responses_by_user, db_healthcheck, delete_routing_response
 from contextlib import asynccontextmanager
+from uuid import uuid4
+from datetime import datetime, timezone
 
 # -------------------------------
 # Standard response helper
@@ -81,11 +83,21 @@ async def health_check():
 # -------------------------------
 @app.post("/routes/compute", response_model=RoutingResponse)
 async def compute_route(
-    request: RoutingRequestPublic,
+    request_public: RoutingRequestPublic,
     user_id: str | None = Query(None),
     token_payload: dict = Depends(verify_jwt_token)
 ):
     # TODO: Assign unique request id to request and convert it to RoutingRequest
+    # ✅ Generate unique ID and timestamp
+    request_id = str(uuid4())
+    received_at = datetime.now(timezone.utc)
+
+    # ✅ Create a complete RoutingRequest object
+    request = RoutingRequest(
+        **request_public.model_dump(),  # Copy all fields from RoutingRequestPublic
+        request_id=request_id,
+        received_at=received_at,
+    )
 
     logger.info(f"📨 Received routing request (request_id={request.request_id})")
 
@@ -164,7 +176,7 @@ async def delete_route(
     logger.info(f"🗑️ Deleting routing response request_id={request_id} for user_id={user_id}")
 
     try:
-        deleted = await delete_routing_response(request_id, user_id)
+        deleted = await delete_routing_response(request_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Route not found")
     except Exception as e:
@@ -191,6 +203,7 @@ async def get_route(
         route = await get_routing_response(request_id)
         if not route:
             raise HTTPException(status_code=404, detail="Route not found")
+            # TODO: check this
 
     except Exception as e:
         logger.error(f"❌ Failed to retrieve routing response: {e}")

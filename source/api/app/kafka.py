@@ -47,7 +47,10 @@ class KafkaService:
     async def produce_request(self, request: RoutingRequest):
         """Send a RoutingRequest message to Kafka."""
         message = request.model_dump_json()
-        await self.producer.send_and_wait(KAFKA_REQUEST_TOPIC, message)
+        # Add request_id header
+        headers = [("request_id", request.request_id.encode("utf-8"))]
+
+        await self.producer.send_and_wait(KAFKA_REQUEST_TOPIC, message, headers=headers)
         logger.info(f"Produced routing request: {request.request_id}")
 
     async def wait_for_response(self, request_id: str, timeout: float = 10.0) -> RoutingResponse | None:
