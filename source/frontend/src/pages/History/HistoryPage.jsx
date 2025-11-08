@@ -1,62 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ResultModal from '../../components/ResultModal/ResultModal';
-
-const mockRoutes = [
-  {
-    id: 1,
-    name: 'Brussels Exploration',
-    createdAt: '2025-10-28T10:30:00Z',
-    request: {
-      waypoints: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [4.43, 50.87] }, properties: { altitudeValue: 200, altitudeUnit: 'mt' } }, { type: 'Feature', geometry: { type: 'Point', coordinates: [4.46, 50.88] }, properties: { altitudeValue: 300, altitudeUnit: 'mt' } }],
-      constraints: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[ [4.45, 50.87], [4.45, 50.88], [4.44, 50.88], [4.45, 50.87] ]] }, properties: { minAltitudeValue: 100, maxAltitudeValue: 500, altitudeUnit: 'mt' } }],
-      parameters: { algorithm: 'rrtstar', goal_bias: 0.1, max_iterations: 10000, step_size_mt: 20, sampler: 'uniform', seed: 10, storage: 'rtree' },
-    },
-    result: {
-      pathLength: 34,
-      waypointsCount: 2,
-      distance: '12.50',
-      duration: '15 minutes',
-    },
-  },
-  {
-    id: 2,
-    name: 'City Center Fly-by',
-    createdAt: '2025-10-27T15:00:00Z',
-    request: {
-      waypoints: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [12.49, 41.90] }, properties: { altitudeValue: 100, altitudeUnit: 'ft' } }, { type: 'Feature', geometry: { type: 'Point', coordinates: [12.51, 41.89] }, properties: { altitudeValue: 150, altitudeUnit: 'ft' } }],
-      constraints: [],
-      parameters: { algorithm: 'rrt', goal_bias: 0.2, max_iterations: 5000, step_size_mt: 30, sampler: 'halton', seed: 42, storage: 'list' },
-    },
-    result: {
-      pathLength: 22,
-      waypointsCount: 2,
-      distance: '5.80',
-      duration: '8 minutes',
-    },
-  },
-];
+import { apiRouting } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import HistoryCard from './HistoryCard';
 
 function HistoryPage() {
-  const [routes, setRoutes] = useState(mockRoutes);
-  const [modalState, setModalState] = useState({ type: 'closed', data: null }); // type: 'view', 'delete'
+  const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [modalState, setModalState] = useState({ type: 'closed', data: null }); // type: 'delete'
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const handleView = (route) => {
-    setModalState({ type: 'view', data: route.result });
-  };
+  const getHistory = (userId) => apiRouting.get('/routes', { params: { user_id: userId } });
+  const deleteHistory = (routeId, userId) => apiRouting.delete(`/routes/${routeId}`, { params: { user_id: userId } });
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const response = await getHistory(user.id);
+        setRoutes(response.data.data || []);
+      } catch (err) {
+        setError('Failed to fetch route history.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [user]);
 
   const handleDelete = (routeId) => {
     setModalState({ type: 'delete', data: { id: routeId } });
   };
 
-  const confirmDelete = () => {
-    setRoutes(prev => prev.filter(r => r.id !== modalState.data.id));
-    setModalState({ type: 'closed', data: null });
+  const confirmDelete = async () => {
+    if (!modalState.data?.id || !user?.id) return;
+    try {
+      await deleteHistory(modalState.data.id, user.id);
+      setRoutes(prev => prev.filter(r => r.request_id !== modalState.data.id));
+    } catch (err) {
+      console.error('Failed to delete route:', err);
+      // TODO: show error modal
+    } finally {
+      setModalState({ type: 'closed', data: null });
+    }
   };
 
-  const handleEdit = (route) => {
-    sessionStorage.setItem('routeToEdit', JSON.stringify(route.request));
+  const handleViewOnMap = (requestData) => {
+    sessionStorage.setItem('routeToEdit', JSON.stringify(requestData));
     navigate('/');
   };
 
@@ -64,43 +62,47 @@ function HistoryPage() {
     setModalState({ type: 'closed', data: null });
   };
 
+  if (loading) {
+    return (
+      <div className="container mt-4 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2">Loading your route history...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mt-4">
+        <div className="alert alert-danger" role="alert">
+          <strong>Error:</strong> {error} Please try again later.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-4">
       <h1 className="mb-4">Route History</h1>
       <div className="row">
         {routes.map(route => (
-          <div key={route.id} className="col-md-6 col-lg-4 mb-4">
-            <div className="card h-100">
-              <div className="card-body">
-                <h5 className="card-title">{route.name}</h5>
-                <p className="card-text">
-                  <small className="text-muted">Created: {new Date(route.createdAt).toLocaleString()}</small>
-                </p>
-                <p>
-                  {route.request.waypoints.length} waypoints, {route.request.constraints.length} obstacles.
-                </p>
-              </div>
-              <div className="card-footer d-flex justify-content-between">
-                <button className="btn btn-sm btn-outline-primary" onClick={() => handleView(route)}>View</button>
-                <button className="btn btn-sm btn-outline-secondary" onClick={() => handleEdit(route)}>Edit</button>
-                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(route.id)}>Delete</button>
-              </div>
+          <HistoryCard 
+            key={route.request_id}
+            route={route}
+            onViewOnMap={handleViewOnMap}
+            onDelete={handleDelete}
+          />
+        ))}
+        {routes.length === 0 && !loading && (
+          <div className="col-12">
+            <div className="alert alert-info" role="alert">
+              You have no saved routes yet. Go to the <a href="/" className="alert-link">homepage</a> to create one!
             </div>
           </div>
-        ))}
-        {routes.length === 0 && <p>No saved routes found.</p>}
+        )}
       </div>
-
-      {/* View Modal */}
-      {modalState.type === 'view' && (
-        <ResultModal
-          state="success"
-          result={modalState.data}
-          onClose={closeModal}
-          onEdit={closeModal} 
-          onRetry={() => {}}
-        />
-      )}
 
       {/* Delete Confirmation Modal */}
       {modalState.type === 'delete' && (

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Sidebar from "../../components/MapEditor/Sidebar";
 import Map from "../../components/MapEditor/Map";
 import ResultModal from '../../components/ResultModal/ResultModal';
+import { useAuth } from '../../context/AuthContext';
 
 import { apiRouting } from '../../services/api';
 
@@ -25,16 +26,19 @@ function Homepage() {
   const [obstacles, setObstacles] = useState([]);
   const [computedRoute, setComputedRoute] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const location = useLocation();
+  
+  const { user } = useAuth();
 
   useEffect(() => {
     const routeToEditJson = sessionStorage.getItem('routeToEdit');
     if (routeToEditJson) {
       const routeToEdit = JSON.parse(routeToEditJson);
       sessionStorage.removeItem('routeToEdit');
+      console.log("route to edit", routeToEdit)
 
       setWaypoints(routeToEdit.waypoints || []);
       setObstacles(routeToEdit.constraints || []);
+      setComputedRoute(routeToEdit.result?.route || null)
 
       if (routeToEdit.parameters) {
         const newParams = {
@@ -244,7 +248,12 @@ function Homepage() {
     console.log("Request Payload:", JSON.stringify(requestPayload, null, 2));
 
     try {
-      const response = await apiRouting.post('/routes/compute', requestPayload);
+      let url = '/routes/compute';
+      if (user) {
+        url = `${url}?user_id=${user.id}`
+      }
+
+      const response = await apiRouting.post(url, requestPayload);
       console.log("Response:", response.data);
       const resultData = response.data.data;
 
