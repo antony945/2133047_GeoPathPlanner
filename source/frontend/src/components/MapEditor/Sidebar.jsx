@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 import { getCurrentPosition , geocodeNominatim } from '../../assets/js/utils/geolocation.js';
 
-function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing, parameters, onParametersChange, onClearMap, isEditingHistoryRoute, onEnableRouteEditing }) {
+function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing, parameters, onParametersChange, onClearMap, isEditingHistoryRoute, onEnableRouteEditing, onFileUpload }) {
   const [tab, setTab] = useState('waypoint');
   const [altitudeValue, setAltitudeValue] = useState(0);
   const [altitudeUnit, setAltitudeUnit] = useState('mt');
@@ -83,6 +83,13 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
     setTab(tabName);
   }
 
+  const handleFileChange = (event, type) => {
+    const file = event.target.files[0];
+    if (file) {
+      onFileUpload(file, type);
+    }
+  };
+
   return (
     <div className="d-flex flex-column h-100 sidebar">
       <ul className="nav nav-tabs">
@@ -154,7 +161,7 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
 
             <div className="mb-3">
               <label className="form-label">Importa waypoints da file (.geojson)</label>
-              <input type="file" className="form-control" accept=".geojson,.json" />
+              <input type="file" className="form-control" accept=".geojson,.json" onChange={(e) => handleFileChange(e, 'waypoints')} />
             </div>
           </div>
         )}
@@ -186,7 +193,7 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
 
             <div className="mb-3">
               <label className="form-label">Importa ostacoli da file (.geojson)</label>
-              <input type="file" className="form-control" accept=".geojson,.json" />
+              <input type="file" className="form-control" accept=".geojson,.json" onChange={(e) => handleFileChange(e, 'obstacles')} />
             </div>
           </div>
         )}

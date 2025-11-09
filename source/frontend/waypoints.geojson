@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.247513,
+          43.802881
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 114,
+        "inside": false
+      },
+      "id": 4
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.259275,
+          43.806969
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 114,
+        "inside": false
+      },
+      "id": 5
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.254849,
+          43.797352
+        ]
+      },
+      "properties": {
+        "altitudeUnit": "mt",
+        "altitudeValue": 114,
+        "inside": false
+      },
+      "id": 6
+    }
+  ]
+}

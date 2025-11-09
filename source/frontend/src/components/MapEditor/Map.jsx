@@ -67,6 +67,11 @@ const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_
         getBounds: () => {
             return leafletMapRef.current ? leafletMapRef.current.getBounds() : null;
         },
+        fitBounds: (bounds) => {
+            if (leafletMapRef.current) {
+                leafletMapRef.current.fitBounds(bounds);
+            }
+        },
         clearWaypoints: () => {
             const featureGroup = featureGroupRef.current;
             if (!featureGroup) return;

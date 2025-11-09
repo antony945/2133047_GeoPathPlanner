@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+import L from 'leaflet';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from "../../components/MapEditor/Sidebar";
@@ -334,7 +335,7 @@ function Homepage() {
   const handleFeatureEdited = useCallback((e) => {
     console.log("Handle Feature Edited");
     console.log("[handleFeatureEdited] e: ", e);
-    e.layers.eachLayer(layer => {
+e.layers.eachLayer(layer => {
       console.log("layer", layer);
       const editedGeoJSON = layer.toGeoJSON();
       const editedId = layer.options.id;
@@ -367,6 +368,39 @@ function Homepage() {
     setShowEditControls(true);
   };
 
+  const handleFileUpload = (file, type) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const geojson = JSON.parse(e.target.result);
+        if (geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+          let currentId = nextId;
+          const featuresWithIds = geojson.features.map(f => ({ ...f, id: currentId++ }));
+          setNextId(currentId);
+
+          const layerGroup = L.geoJSON(featuresWithIds);
+          const bounds = layerGroup.getBounds();
+
+          if (bounds.isValid() && mapRef.current) {
+            mapRef.current.fitBounds(bounds);
+          }
+
+          if (type === 'waypoints') {
+            setWaypoints(featuresWithIds);
+          } else if (type === 'obstacles') {
+            setObstacles(featuresWithIds);
+          }
+        } else {
+          alert('Invalid GeoJSON format. Must be a FeatureCollection.');
+        }
+      } catch (error) {
+        console.error('Error parsing GeoJSON file:', error);
+        alert('Error reading or parsing the GeoJSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="container-fluid px-0" style={{ overflowX: 'hidden' }}>
       <div className="row no-gutters" style={{ height: "calc(100vh - 64px)" }}>
@@ -386,6 +420,7 @@ function Homepage() {
             onClearMap={() => window.location.reload()}
             isEditingHistoryRoute={isEditingHistoryRoute}
             onEnableRouteEditing={handleEnableRouteEditing}
+            onFileUpload={handleFileUpload}
           />
           <ResultModal 
             state={modalState}
