@@ -1,10 +1,30 @@
 [
     {
-        "set_id": <id of the set>,
-        "set_name": <name of the set>,
-        "user_stories": <list of user stories>,
-        "links": <list of the linked set>,
-        "db": <if contains a db>
+        "set_id": 1,
+        "set_name": "frontend",
+        "user_stories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+        "links": [2, 4],
+        "db": false
     },
-    ...
+    {
+        "set_id": 2,
+        "set_name": "api",
+        "user_stories": [1, 11, 16, 17],
+        "links": [1, 3],
+        "db": true
+    },
+    {
+        "set_id": 3,
+        "set_name": "routing",
+        "user_stories": [4, 11],
+        "links": [2],
+        "db": false
+    },
+    {
+        "set_id": 4,
+        "set_name": "user_management",
+        "user_stories": [7, 8, 9, 10],
+        "links": [1],
+        "db": true
+    }
 ]
