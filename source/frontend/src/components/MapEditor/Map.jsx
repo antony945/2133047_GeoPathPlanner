@@ -37,7 +37,21 @@ function MapController({ center, zoom }) {
   return null;
 }
 
-const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_ZOOM, drawMode, onFeatureCreated, onMapReady }, ref) => {
+function MapClassUpdater({ showEditControls }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const container = map.getContainer();
+    if (showEditControls) {
+      container.classList.remove('hide-edit-controls');
+    } else {
+      container.classList.add('hide-edit-controls');
+    }
+  }, [map, showEditControls]);
+  return null;
+}
+
+const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_ZOOM, drawMode, onFeatureCreated, onMapReady, onFeatureDeleted, onFeatureEdited, showEditControls }, ref) => {
     const [center, setCenter] = useState(initialCenter);
     const [zoom, setZoom] = useState(initialZoom);
     const [geoError, setGeoError] = useState(null);
@@ -82,6 +96,10 @@ const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_
             newLayer.eachLayer(layer => {
                 if (tooltipContent) {
                     layer.bindTooltip(tooltipContent);
+                }
+                // Store the id on the layer for later retrieval during edits/deletions
+                if (geoJson.id !== undefined) {
+                    layer.options.id = geoJson.id;
                 }
                 featureGroup.addLayer(layer);
             });
@@ -161,22 +179,35 @@ const Map = forwardRef(({ initialCenter = DEFAULT_CENTER, initialZoom = DEFAULT_
         }
     };
 
+    const _onEdited = (e) => {
+        if (onFeatureEdited) {
+            onFeatureEdited(e);
+        }
+    };
+
+    const _onDeleted = (e) => {
+        if (onFeatureDeleted) {
+            onFeatureDeleted(e);
+        }
+    };
+
     return (
         <div style={{ height: '100%', width: '100%', minHeight: 400 }}>
             <MapContainer
                 ref={leafletMapRef}
                 center={center}
                 zoom={zoom}
-                style={{ height: '100%', width: '99%' }}
+                style={{ height: '100%', width: '100%' }}
                 id="geomap"
                 whenReady={onMapReady}
             >
+                <MapClassUpdater showEditControls={showEditControls} />
                 <FeatureGroup ref={featureGroupRef}>
                     <EditControl
                         position="topright"
                         onCreated={_onCreated}
-                        onEdited={() => { }}
-                        onDeleted={() => { }}
+                        onEdited={_onEdited}
+                        onDeleted={_onDeleted}
                         draw={{
                             rectangle: false,
                             circle: false,

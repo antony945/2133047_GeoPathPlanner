@@ -28,10 +28,11 @@ function ResultModal({ state, result, onRetry, onEdit, onClose }) {
             <Alert variant="success" className="mb-3">
               <Alert.Heading>Computation Successful!</Alert.Heading>
             </Alert>
-            {result?.cost_km != null && <p><strong>Route Cost:</strong> {result.cost_km.toFixed(2)} km</p>}
-            {processingTime != null && <p><strong>Processing Time:</strong> {processingTime.toFixed(3)} seconds</p>}
-            {result?.parameters?.algorithm && <p><strong>Algorithm:</strong> <span className="text-uppercase">{result.parameters.algorithm}</span></p>}
+            {result?.parameters?.algorithm && <p className="mb-0"><strong>Algorithm:</strong> <span className="text-uppercase">{result.parameters.algorithm}</span></p>}
             {result?.waypoints && <p className="mb-0"><strong>Waypoints:</strong> {result.waypoints.length}</p>}
+            {result?.constraints && <p className="mb-0"><strong>Constraints:</strong> {result.constraints.length}</p>}
+            {result?.cost_km != null && <p className="mb-0"><strong>Route Cost:</strong> {result.cost_km.toFixed(2)} km</p>}
+            {processingTime != null && <p className="mb-0"><strong>Processing Time:</strong> {processingTime.toFixed(3)} seconds</p>}
           </div>
         );
       case 'error':
@@ -54,7 +55,7 @@ function ResultModal({ state, result, onRetry, onEdit, onClose }) {
         return (
           <>
             <Button variant="secondary" onClick={onEdit}>Edit</Button>
-            <Button variant="primary" onClick={onClose}>OK</Button>
+            <Button variant="primary" onClick={onRetry}>Retry</Button>
           </>
         );
       case 'error':

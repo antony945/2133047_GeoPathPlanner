@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 import { getCurrentPosition , geocodeNominatim } from '../../assets/js/utils/geolocation.js';
 
-function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing, parameters, onParametersChange }) {
+function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing, parameters, onParametersChange, onClearMap, isEditingHistoryRoute, onEnableRouteEditing }) {
   const [tab, setTab] = useState('waypoint');
   const [altitudeValue, setAltitudeValue] = useState(0);
   const [altitudeUnit, setAltitudeUnit] = useState('mt');
@@ -236,7 +236,7 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
                     type="button" 
                     className="btn btn-primary" 
                     onClick={() => onCompute()} 
-                    disabled={isComputing}
+                    disabled={isComputing || isEditingHistoryRoute}
                 >
                     {isComputing ? (
                         <>
@@ -244,6 +244,28 @@ function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, 
                             <span className="ms-2">Computing...</span>
                         </>
                     ) : 'Compute'}
+                </button>
+            </div>
+
+            {isEditingHistoryRoute && (
+              <div className="d-grid mt-2">
+                <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={onEnableRouteEditing}
+                >
+                    Edit Route
+                </button>
+              </div>
+            )}
+
+            <div className="d-grid mt-2">
+                <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    onClick={onClearMap}
+                >
+                    Clear Map
                 </button>
             </div>
           </form>

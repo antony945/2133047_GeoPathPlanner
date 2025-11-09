@@ -15,6 +15,8 @@ const formatDate = (dateString) => {
 const HistoryCard = ({ route, onViewOnMap, onDelete }) => {
   const statusOk = route.route_found;
 
+  const processingTime = route?.completed_at && route?.received_at  ? (new Date(route.completed_at) - new Date(route.received_at)) / 1000 : null;
+
   // The request object to be stored for "View on Map"
   const requestForMap = {
     waypoints: route.waypoints,
@@ -53,10 +55,16 @@ const HistoryCard = ({ route, onViewOnMap, onDelete }) => {
               <span className="badge bg-secondary rounded-pill">{route.constraints.length}</span>
             </li>
             {statusOk && (
+              <>
               <li className="list-group-item d-flex justify-content-between align-items-center px-0">
                 Cost (km)
-                <span className="badge bg-info text-dark rounded-pill">{route.cost_km.toFixed(2)}</span>
+                <span className="text-dark">{route.cost_km.toFixed(2)}</span>
               </li>
+              <li className="list-group-item d-flex justify-content-between align-items-center px-0">
+                Processing time (s)
+                <span className="text-dark">{route.cost_km.toFixed(2)}</span>
+              </li>
+              </>
             )}
           </ul>
           {!statusOk && (

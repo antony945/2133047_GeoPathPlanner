@@ -26,6 +26,9 @@ function Homepage() {
   const [obstacles, setObstacles] = useState([]);
   const [computedRoute, setComputedRoute] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [nextId, setNextId] = useState(0);
+  const [showEditControls, setShowEditControls] = useState(true);
+  const [isEditingHistoryRoute, setIsEditingHistoryRoute] = useState(false);
   
   const { user } = useAuth();
 
@@ -36,9 +39,26 @@ function Homepage() {
       sessionStorage.removeItem('routeToEdit');
       console.log("route to edit", routeToEdit)
 
-      setWaypoints(routeToEdit.waypoints || []);
-      setObstacles(routeToEdit.constraints || []);
-      setComputedRoute(routeToEdit.result?.route || null)
+      let currentId = nextId;
+      const waypointsWithIds = (routeToEdit.waypoints || []).map(wp => {
+        if (wp.id === undefined) {
+          return { ...wp, id: currentId++ };
+        }
+        return wp;
+      });
+      const obstaclesWithIds = (routeToEdit.constraints || []).map(obs => {
+        if (obs.id === undefined) {
+          return { ...obs, id: currentId++ };
+        }
+        return obs;
+      });
+      setNextId(currentId);
+
+      setWaypoints(waypointsWithIds);
+      setObstacles(obstaclesWithIds);
+      setComputedRoute(routeToEdit.result?.route || null);
+      setShowEditControls(false);
+      setIsEditingHistoryRoute(true);
 
       if (routeToEdit.parameters) {
         const newParams = {
@@ -74,9 +94,13 @@ function Homepage() {
   };
 
   const handleFeatureCreated = (feature, type) => {
+    const newId = nextId;
+    setNextId(prevId => prevId + 1);
+
     if (type === 'marker') {
       const newWaypoint = {
         ...feature,
+        id: newId,
         properties: {
           ...feature.properties,
           altitudeValue: currentAltitude.value,
@@ -87,6 +111,7 @@ function Homepage() {
     } else if (type === 'polygon') {
       const newObstacle = {
         ...feature,
+        id: newId,
         properties: {
           ...feature.properties,
           minAltitudeValue: currentObstacleAltitude.min,
@@ -127,8 +152,9 @@ function Homepage() {
     const maxLat = northEast.lat;
     const maxLon = northEast.lng;
 
+    let currentId = nextId;
     const newObstacles = [];
-    const numObstacles = Math.floor(Math.random() * 5) + 3; // 3 to 7
+    const numObstacles = Math.floor(Math.random() * 2) + 3; // 3 to 5
 
     for (let i = 0; i < numObstacles; i++) {
       const numVertices = Math.floor(Math.random() * 4) + 3; // 3 to 6
@@ -150,6 +176,7 @@ function Homepage() {
 
       const polygonGeoJSON = {
         type: 'Feature',
+        id: currentId++,
         properties: {
           minAltitudeValue: currentObstacleAltitude.min,
           maxAltitudeValue: currentObstacleAltitude.max,
@@ -162,6 +189,8 @@ function Homepage() {
       };
       newObstacles.push(polygonGeoJSON);
     }
+
+    setNextId(currentId);
 
     // Add new obstacles to map and update state
     newObstacles.forEach(obstacle => {
@@ -260,6 +289,7 @@ function Homepage() {
       if (resultData?.route_found) {
           setComputedRoute(resultData.route);
           setModalState('success');
+          setShowEditControls(false);
       } else {
           setComputedRoute(null);
           setModalState('error');
@@ -279,12 +309,67 @@ function Homepage() {
 
   const handleModalClose = () => {
     setModalState('closed');
+    setShowEditControls(true);
+    if (computedRoute) {
+      if (mapRef.current) {
+        mapRef.current.clearRoute();
+      }
+      setComputedRoute(null);
+    }
+  };
+
+  const handleFeatureDeleted = useCallback(() => {
+    console.log("handleFeature Deleted");
+    console.log("feature deleted: computedRoute", computedRoute);
+    setWaypoints([]);
+    setObstacles([]);
+    if (computedRoute) {
+      if (mapRef.current) {
+        mapRef.current.clearRoute();
+      }
+      setComputedRoute(null);
+    }
+  }, [computedRoute]);
+
+  const handleFeatureEdited = useCallback((e) => {
+    console.log("Handle Feature Edited");
+    console.log("[handleFeatureEdited] e: ", e);
+    e.layers.eachLayer(layer => {
+      console.log("layer", layer);
+      const editedGeoJSON = layer.toGeoJSON();
+      const editedId = layer.options.id;
+
+      console.log("editedGeoJSON", editedGeoJSON);
+
+      if (editedId === undefined) {
+        console.error("Edited feature has no ID!");
+        return;
+      }
+
+      if (layer instanceof L.Marker) {
+        setWaypoints(current =>
+          current.map(wp => (wp.id === editedId ? { ...wp, geometry: editedGeoJSON.geometry } : wp))
+        );
+      } else if (layer instanceof L.Polygon) {
+        setObstacles(current =>
+          current.map(obs => (obs.id === editedId ? { ...obs, geometry: editedGeoJSON.geometry } : obs))
+        );
+      }
+    });
+  }, []);
+
+  const handleEnableRouteEditing = () => {
+    setIsEditingHistoryRoute(false);
+    if (mapRef.current) {
+      mapRef.current.clearRoute();
+    }
+    setComputedRoute(null);
+    setShowEditControls(true);
   };
 
   return (
-    <div className="container-fluid px-0" style={{ overflow: "hidden" }}>
+    <div className="container-fluid px-0" style={{ overflowX: 'hidden' }}>
       <div className="row no-gutters" style={{ height: "calc(100vh - 64px)" }}>
-        {/* Sidebar, tall, sticky, nav-tabs, content */}
         <div className="col-3 bg-light border-end p-0" style={{ position: 'relative' }}>
           <Sidebar
             onGoto={handleSelectLocation}
@@ -296,8 +381,11 @@ function Homepage() {
             parameters={parameters}
             onCompute={handleCompute}
             isComputing={modalState === 'loading'}
-            onRequestGeolocate={() => { /* call util then goto */ }}
+            onRequestGeolocate={() => { }}
             isMapReady={isMapReady}
+            onClearMap={() => window.location.reload()}
+            isEditingHistoryRoute={isEditingHistoryRoute}
+            onEnableRouteEditing={handleEnableRouteEditing}
           />
           <ResultModal 
             state={modalState}
@@ -309,12 +397,15 @@ function Homepage() {
         </div>
         {/* Map */}
         <div className="col-9 p-0">
-          <div style={{ height: "100%", width: "100%" }}>
+          <div style={{ height: "100%", width: "99%" }}>
             <Map
               ref={mapRef}
               drawMode={drawMode}
               onFeatureCreated={handleFeatureCreated}
               onMapReady={handleMapReady}
+              onFeatureDeleted={handleFeatureDeleted}
+              onFeatureEdited={handleFeatureEdited}
+              showEditControls={showEditControls}
             />
           </div>
         </div>
