@@ -19,20 +19,21 @@ So after each request, the system can scale up or down in order to balance the c
 
 
 1)  As a visitor, I want to try the app without creating an account so that I can quickly see how it works.
-2)  As a visitor, I want to set points on a map where my drone should go so that I can get a possible route.
-3)  As a visitor, I want to mark areas that the drone should avoid so that I can plan a safe path.
-4)  As a visitor, I want to see the proposed drone route displayed on the map so that I understand how the drone would fly.
-5)  As a visitor, I want to download or share the proposed route so that I can reuse it outside the app.
-6)  As a visitor, I want to sign up into the app so that I can create my personal account
-7)  As a registered user, I want to log in to my personal space so that I can manage my routes.
-8)  As a registered user, I want to log out to my personal account so that anyone can use my account.
-9)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later.
-10)  As a registered user, I want to save important points or areas for future use so that I don’t have to redraw them every time.
-11)  As a registered user, I want to save specific routes I like so that I can quickly access them later.
-12)  As a user, I want to see how the drone route compares to a car route for the same points so that I can choose the best option for my needs.
-13)  As a user, I want the app to suggest an efficient path for my drone so that I don’t have to figure it out myself.
-14)  As a user, I want to easily repeat my last request so that I can test or adjust it quickly.
-15)  As a user, I want the app to warn me if I create impossible or conflicting routes so that I can fix them before computing.
-16)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
-17)  As a user, I want the option to adjust my inputs and try again after an error so that I don’t have to start from scratch.
-18)  As a user, I want the app to guide me back to the home screen after completing or failing a request so that I can easily start over.
+2)  As a user, I want to set points on a map where my drone should go so that I can get a possible route.
+3)  As a user, I want to mark areas that the drone should avoid so that I can plan a safe path.
+4)  As a user, I want to have options to customize which route to compute so to choose tradeoff between computation speed and quality of resulted route.
+5)  As a user, I want to see the proposed drone route displayed on the map so that I understand how the drone would fly.
+6)  As a user, I want to download or share the proposed route so that I can reuse it outside the app.
+7)  As a visitor, I want to sign up into the application so that I can create my personal account to manage my data and routes.
+8)  As a registered user, I want to log in to my personal space so that I can manage my routes.
+9)  As a registered user, I want to log out to my personal account so that anyone can use my account.
+10)  As a registered user, I want to edit my profile information.
+11)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
+12)  As a user, I want to easily repeat my last request so that I can test it again.
+13)  As a user, I want the option to adjust my inputs and try again after completing or failing request si I don’t have to start from scratch.
+14)  As a user, I want the app to generate random no-fly areas so that I can quickly test different scenarios without having to draw them manually.
+15)  As a user, I want the app to provide a easy way to clean the window so that I can easily restart over.
+16)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later.
+17)  As a registered user, I want to delete past routes from my history so that I can no longer see routes that I don't want anymore.
+18)  As a user, I want to load waypoints and constraints from geojson file, so that I can easily perform request without having to manually define it.
+
