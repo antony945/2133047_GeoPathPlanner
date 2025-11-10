@@ -1,51 +1,23 @@
 # Booklet: SCRUM Process
 
-## 1. Introduction
+## Introduction
 
-This project was developed using the SCRUM agile methodology. We organized our work into two-week sprints, each with a specific goal, a planned backlog, and a review/retrospective session. This approach allowed us to adapt to challenges and deliver value incrementally.
+This project was developed using the SCRUM agile methodology using JIRA. We organized our work into two-week sprints, each with a specific goal. This approach allowed us to adapt to challenges and deliver value incrementally.
 
-## 2. Sprint 1: Foundation and Core Map Interaction
+## Sprint 1: Foundation and Core Map Interaction
 
-*   **Duration:** 2 Weeks
-*   **Sprint Goal:** Establish the project foundation, including the basic frontend layout, and implement core map functionalities for defining waypoints and obstacles.
+*   **Duration:** 2 Weeks (22/09/2025 -> 06/10/2025)
+*   **Sprint Goal:** Build the overall architecture and define the project structure.
+*   **User Stories:** [7, 8, 9] = 8 Story Points
 
-### Sprint 1 Backlog
+## Sprint 2
 
-| User Story ID | Description | Status |
-| :------------ | :---------- | :------- |
-| US-2 | Set waypoints on the map | Done |
-| US-3 | Mark no-fly zones (obstacles) | Done |
-| US-15 | Add a "clear map" button | Done |
-| - | Setup React project with Vite | Done |
-| - | Implement basic Homepage layout | Done |
+*   **Duration:** 2 Weeks (13/10/2025 -> 27/10/2025)
+*   **Sprint Goal:** Implement the routing and advance other microservices for integration.
+*   **User Stories:** [1, 2, 3, 10, 14] = 23 Story Points
 
-### Sprint 1 Review & Retrospective
+## Sprint 3
 
-*   **Review:** Successfully demonstrated the ability to add and remove markers (waypoints) and polygons (obstacles) on the Leaflet map.
-*   **Retrospective:** The initial setup of React-Leaflet with Vite was more complex than expected. We decided to allocate more time for library integration in future sprints.
-
-## 3. Sprint 2: Route Computation Flow (Stubbed) & User Auth UI
-
-*   **Duration:** 2 Weeks
-*   **Sprint Goal:** Implement the UI for user authentication and connect the frontend to a stubbed backend to simulate the route computation flow.
-
-### Sprint 2 Backlog
-
-| User Story ID | Description | Status |
-| :------------ | :---------- | :------- |
-| US-1 | Allow guest access to the map | Done |
-| US-7 | Create UI for user sign-up | Done |
-| US-8 | Create UI for user login | Done |
-| US-4 | Add options to customize route request | In Progress |
-| US-5 | Display a fake computed route on the map | Done |
-
-### Sprint 2 Review & Retrospective
-
-*   **Review:** Showcased the login/signup pages and the end-to-end flow of sending a request and displaying a hardcoded route result on the map.
-*   **Retrospective:** Managing application state (user auth, map data, results) is becoming complex. We will prioritize implementing a state management solution (like React Context) in the next sprint.
-
-## 4. Burndown Chart
-
-A burndown chart was used to track our progress against the plan for each sprint. The chart plots the remaining effort (in story points) against the days of the sprint.
-
-*(You should include a screenshot of your burndown chart from a spreadsheet or project management tool here.)*
+*   **Duration:** 2 Weeks (27/10/2025 -> 10/11/2025)
+*   **Sprint Goal:** Complete the project and prepare for the demo.
+*   **User Stories:** [4, 5, 11, 12, 13, 15, 16, 17, 18] = 46 Story Points

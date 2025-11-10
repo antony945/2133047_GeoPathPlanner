@@ -392,10 +392,3 @@ docker compose down -v
 
 This project is distributed under the MIT License.  
 Feel free to use, modify, and distribute it.
-
----
-
-## 👨‍💻 Author
-
-Developed with ❤️ using Go and Kafka.  
-If you find this helpful, give it a ⭐ on GitHub!

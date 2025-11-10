@@ -12,24 +12,24 @@ Communication between services is primarily via REST APIs for synchronous intera
 
 # USER STORIES:
 
-1)  As a visitor, I want to try the app without creating an account so that I can quickly see how it works.
-2)  As a user, I want to set points on a map where my drone should go so that I can get a possible route.
-3)  As a user, I want to mark areas that the drone should avoid so that I can plan a safe path.
-4)  As a user, I want to have options to customize which route to compute so to choose tradeoff between computation speed and quality of resulted route.
-5)  As a user, I want to see the proposed drone route displayed on the map so that I understand how the drone would fly.
-6)  As a user, I want to download or share the proposed route so that I can reuse it outside the app.
-7)  As a visitor, I want to sign up into the application so that I can create my personal account to manage my data and routes.
-8)  As a registered user, I want to log in to my personal space so that I can manage my routes.
-9)  As a registered user, I want to log out to my personal account so that anyone can use my account.
-10)  As a registered user, I want to edit my profile information.
-11)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
-12)  As a user, I want to easily repeat my last request so that I can test it again.
-13)  As a user, I want the option to adjust my inputs and try again after completing or failing request si I don’t have to start from scratch.
-14)  As a user, I want the app to generate random no-fly areas so that I can quickly test different scenarios without having to draw them manually.
-15)  As a user, I want the app to provide a easy way to clean the window so that I can easily restart over.
-16)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later.
-17)  As a registered user, I want to delete past routes from my history so that I can no longer see routes that I don't want anymore.
-18)  As a user, I want to load waypoints and constraints from geojson file, so that I can easily perform request without having to manually define it.
+1)  As a visitor, I want to try the app without creating an account so that I can quickly see how it works. (5 SP)
+2)  As a user, I want to set points on a map where my drone should go so that I can get a possible route. (5 SP)
+3)  As a user, I want to mark areas that the drone should avoid so that I can plan a safe path. (5 SP)
+4)  As a user, I want to have options to customize which route to compute so to choose tradeoff between computation speed and quality of resulted route. (8 SP)
+5)  As a user, I want to see the proposed drone route displayed on the map so that I understand how the drone would fly. (5 SP)
+6)  As a user, I want to download or share the proposed route so that I can reuse it outside the app. (5 SP)
+7)  As a visitor, I want to sign up into the application so that I can create my personal account to manage my data and routes. (3 SP)
+8)  As a registered user, I want to log in to my personal space so that I can manage my routes. (3 SP)
+9)  As a registered user, I want to log out to my personal account so that anyone can use my account. (2 SP)
+10)  As a registered user, I want to edit my profile information. (5 SP)
+11)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong. (3 SP)
+12)  As a user, I want to easily repeat my last request so that I can test it again. (5 SP)
+13)  As a user, I want the option to adjust my inputs and try again after completing or failing request si I don’t have to start from scratch. (5 SP)
+14)  As a user, I want the app to generate random no-fly areas so that I can quickly test different scenarios without having to draw them manually. (3 SP)
+15)  As a user, I want the app to provide a easy way to clean the window so that I can easily restart over. (2 SP)
+16)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later. (8 SP)
+17)  As a registered user, I want to delete past routes from my history so that I can no longer see routes that I don't want anymore. (5 SP)
+18)  As a user, I want to load waypoints and constraints from geojson file, so that I can easily perform request without having to manually define it. (5 SP)
 
 # CONTAINERS:
 
@@ -39,22 +39,24 @@ Communication between services is primarily via REST APIs for synchronous intera
 Provides an interactive single-page application where users can define waypoints and obstacles, configure routing parameters, and visualize computed routes. It acts as the primary interface for user interaction with the GeoPathPlanner system.
 
 ### USER STORIES:
-1) As a visitor, I want to try the app without creating an account so that I can quickly see how it works.
-2) As a user, I want to set points on a map where my drone should go so that I can get a possible route.
-3) As a user, I want to mark areas that the drone should avoid so that I can plan a safe path.
-5) As a user, I want to see the proposed drone route displayed on the map so that I understand how the drone would fly.
-6) As a user, I want to download or share the proposed route so that I can reuse it outside the app.
-7) As a visitor, I want to sign up into the application so that I can create my personal account to manage my data and routes.
-8) As a registered user, I want to log in to my personal space so that I can manage my routes.
-9) As a registered user, I want to log out to my personal account so that anyone can use my account.
-10) As a registered user, I want to edit my profile information.
-11) As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
-12) As a user, I want to easily repeat my last request so that I can test it again.
-13) As a user, I want the option to adjust my inputs and try again after completing or failing request si I don’t have to start from scratch.
-14) As a user, I want the app to generate random no-fly areas so that I can quickly test different scenarios without having to draw them manually.
-15) As a user, I want the app to provide a easy way to clean the window so that I can easily restart over.
-16) As a registered user, I want to see a history of my past routes so that I can review or reuse them later.
-18) As a user, I want to load waypoints and constraints from geojson file, so that I can easily perform request without having to manually define it.
+1)  As a visitor, I want to try the app without creating an account so that I can quickly see how it works. (5 SP)
+2)  As a user, I want to set points on a map where my drone should go so that I can get a possible route. (5 SP)
+3)  As a user, I want to mark areas that the drone should avoid so that I can plan a safe path. (5 SP)
+4)  As a user, I want to have options to customize which route to compute so to choose tradeoff between computation speed and quality of resulted route. (8 SP)
+5)  As a user, I want to see the proposed drone route displayed on the map so that I understand how the drone would fly. (5 SP)
+6)  As a user, I want to download or share the proposed route so that I can reuse it outside the app. (5 SP)
+7)  As a visitor, I want to sign up into the application so that I can create my personal account to manage my data and routes. (3 SP)
+8)  As a registered user, I want to log in to my personal space so that I can manage my routes. (3 SP)
+9)  As a registered user, I want to log out to my personal account so that anyone can use my account. (2 SP)
+10)  As a registered user, I want to edit my profile information. (5 SP)
+11)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong. (3 SP)
+12)  As a user, I want to easily repeat my last request so that I can test it again. (5 SP)
+13)  As a user, I want the option to adjust my inputs and try again after completing or failing request si I don’t have to start from scratch. (5 SP)
+14)  As a user, I want the app to generate random no-fly areas so that I can quickly test different scenarios without having to draw them manually. (3 SP)
+15)  As a user, I want the app to provide a easy way to clean the window so that I can easily restart over. (2 SP)
+16)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later. (8 SP)
+17)  As a registered user, I want to delete past routes from my history so that I can no longer see routes that I don't want anymore. (5 SP)
+18)  As a user, I want to load waypoints and constraints from geojson file, so that I can easily perform request without having to manually define it. (5 SP)
 
 ### PORTS:
 8081:80
@@ -100,10 +102,10 @@ The frontend is a React-based single-page application. The codebase is structure
 Serves as the single entry point for all routing requests, abstracting the underlying microservice. It handles request routing, authentication of routing requests (by validating JWTs with the User Management Service Secret JWT key), and forwards routing requests to the Routing Manager via Kafka.
 
 ### USER STORIES:
-1) As a visitor, I want to try the app without creating an account so that I can quickly see how it works.
-11) As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
-16) As a registered user, I want to see a history of my past routes so that I can review or reuse them later.
-17) As a registered user, I want to delete past routes from my history so that I can no longer see routes that I don't want anymore.
+1)  As a visitor, I want to try the app without creating an account so that I can quickly see how it works. (5 SP)
+11)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong. (3 SP)
+16)  As a registered user, I want to see a history of my past routes so that I can review or reuse them later. (8 SP)
+17)  As a registered user, I want to delete past routes from my history so that I can no longer see routes that I don't want anymore. (5 SP)
 
 ### PORTS:
 8000:8000
@@ -148,10 +150,10 @@ The service is built with FastAPI and is structured into modules:
 Manages all user-related functionalities, including user registration, login and profile management. It issues and validates JSON Web Tokens (JWT) for secure authentication.
 
 ### USER STORIES:
-7) As a visitor, I want to sign up into the application so that I can create my personal account to manage my data and routes.
-8) As a registered user, I want to log in to my personal space so that I can manage my routes.
-9) As a registered user, I want to log out to my personal account so that anyone can use my account.
-10) As a registered user, I want to edit my profile information.
+7)  As a visitor, I want to sign up into the application so that I can create my personal account to manage my data and routes. (3 SP)
+8)  As a registered user, I want to log in to my personal space so that I can manage my routes. (3 SP)
+9)  As a registered user, I want to log out to my personal account so that anyone can use my account. (2 SP)
+10)  As a registered user, I want to edit my profile information. (5 SP)
 
 ### PORTS:
 3000:3000
@@ -196,8 +198,8 @@ The service is a NestJS application organized into modules:
 The core computational engine of the system. It listens for routing requests via Kafka, applies various pathfinding algorithms (e.g., RRT, RRT*, Bug Path), and publishes the computed route results back to Kafka.
 
 ### USER STORIES:
-4)  As a user, I want to have options to customize which route to compute so to choose tradeoff between computation speed and quality of resulted route.
-11)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong.
+4)  As a user, I want to have options to customize which route to compute so to choose tradeoff between computation speed and quality of resulted route. (8 SP)
+11)  As a user, I want to see a clear explanation when no route can be found so that I understand what went wrong. (3 SP)
 
 ### PORTS:
 None
