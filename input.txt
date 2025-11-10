@@ -1,22 +1,19 @@
 ﻿# SYSTEM DESCRIPTION:
 
+GeoPathPlanner is a distributed web-application used to find the shortest path between a set of geographical locations for an aerial (or sea) vehicle avoiding obstacles in a particular searching area. This will be achieved implementing path planning algorithms such that RRT, RRT*, and Bug Path. The project architecture is designed to be distributed as a series of microservices.
 
-GeoPathPlanner is a distributed web-application used to find the shortest path between a pair of geographical locations for an aerial (or sea) vehicle avoiding obstacles in a particular searching area. 
-This will  be achieved implementing path planning algorithms such that RRT, RRT*, Bug Path and others.
-The project architecture is designed to be distributed as a series of microservices. 
-The front-end one could be a web application having a geojson.io-like map: interacting with it the user will be able to choose waypoints and obstacles (used as system input) in each of the following ways:
-* manually select both the waypoints and the obstacles
-* manually select waypoints using randomly generated obstacles
-* loading waypoints and obstacles from a .geojson file
-* loading some pre-defined sets of waypoints and obstacles (stored in a database)
-In addition, the system provides various options to manage the routing request: for example, it could take into account the maximum turning rate of the drone or compare one route to the one that would use a ground vehicle or some other algorithm-based parameters. 
+The front-end is a web application featuring a geojson.io-like map. Users can select waypoints and obstacles as input in the following ways:
+* Manually selecting both waypoints and obstacles
+* Manually selecting waypoints while using randomly generated obstacles
+* Loading waypoints and obstacles from a .geojson file
+
+Additionally, the system provides various options to personalize routing requests by selecting algorithm parameters.
 Finally, the system computes the optimal route.
-Each routing request’s computation is important to be independent and parallel to the others in order to exploit the distributed nature of it and to optimize the resources.
-So after each request, the system can scale up or down in order to balance the computational load on it
 
+Each routing request is processed independently and in parallel to leverage the distributed nature of the system and optimize resource usage.
+The system is also scalable, allowing it to adjust computational resources to balance the load efficiently.
 
 # USER STORIES:
-
 
 1)  As a visitor, I want to try the app without creating an account so that I can quickly see how it works.
 2)  As a user, I want to set points on a map where my drone should go so that I can get a possible route.
