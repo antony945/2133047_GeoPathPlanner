@@ -4,9 +4,9 @@ GeoPathPlanner is a distributed web-application used to find the shortest path b
 
 The system employs a distributed microservice architecture consisting of four main components:
 *   **Frontend:** A React application for map interaction and route visualization.
-*   **API Gateway:** The central entry point for all frontend routing requests
-*   **User Management Service:** Manages user accounts, authentication, and user-profile data.
-*   **Routing Manager Service:** Responsible for executing pathfinding algorithms and computing optimal routes.
+*   **API:** The central entry point for all frontend routing requests
+*   **User Management:** Manages user accounts, authentication, and user-profile data.
+*   **Routing:** Responsible for executing pathfinding algorithms and computing optimal routes.
 
 Communication between services is primarily via REST APIs for synchronous interactions and Kafka for asynchronous messaging, particularly for routing requests.
 
@@ -63,7 +63,7 @@ Provides an interactive single-page application where users can define waypoints
 The Frontend container does not require data persistence.
 
 ### EXTERNAL SERVICES CONNECTIONS
-- Connects to the *API Gateway* to send user requests and receive route data.
+- Connects to the *API* to send user requests and receive route data.
 - Connects to the *User Management* microservice to manage user sessions and registrations.
 
 ### MICROSERVICES:
@@ -94,7 +94,7 @@ The frontend is a React-based single-page application. The codebase is structure
 | Profile.jsx | Displays and allows editing of user profile. | user-management | 10 |
 | History.jsx | Displays the user's past routes. | api | 16, 17 |
 
-## CONTAINER_NAME: API-Gateway
+## CONTAINER_NAME: API
 
 ### DESCRIPTION:
 Serves as the single entry point for all routing requests, abstracting the underlying microservice. It handles request routing, authentication of routing requests (by validating JWTs with the User Management Service Secret JWT key), and forwards routing requests to the Routing Manager via Kafka.
@@ -109,11 +109,11 @@ Serves as the single entry point for all routing requests, abstracting the under
 8000:8000
 
 ### PERSISTANCE EVALUATION
-The API-Gateway container requires persistent storage to maintain details about the user's route history. It connects to a PostgreSQL database.
+The API-Gateway container requires persistent storage to maintain details about the user's route history. It connects to a PostGIS database.
 
 ### EXTERNAL SERVICES CONNECTIONS
 - Connects to **Kafka** to send routing requests to the Routing Manager and receive results.
-- Connects to a **PostgreSQL** database to store and retrieve route history.
+- Connects to a **PostGIS** database to store and retrieve route history.
 
 ### MICROSERVICES:
 
@@ -140,7 +140,7 @@ The service is built with FastAPI and is structured into modules:
 
 - DB STRUCTURE:
 
-**_routes_** : | **_id_** | user_id | route_data | created_at |
+**_routes_** : | **_request_id_** | user_id | response | created_at | updated_at |
 
 ## CONTAINER_NAME: User-Management
 
@@ -188,9 +188,9 @@ The service is a NestJS application organized into modules:
 
 - DB STRUCTURE:
 
-**_users_** : | **_id_** | username | email | password |
+**_users_** : | **_user_id_** | username | email | password | country | name | surname | created_at | updated_at |
 
-## CONTAINER_NAME: Routing-Manager
+## CONTAINER_NAME: Routing
 
 ### DESCRIPTION:
 The core computational engine of the system. It listens for routing requests via Kafka, applies various pathfinding algorithms (e.g., RRT, RRT*, Bug Path), and publishes the computed route results back to Kafka.
@@ -203,7 +203,7 @@ The core computational engine of the system. It listens for routing requests via
 None
 
 ### PERSISTANCE EVALUATION
-The Routing-Manager container does not require data persistence. It is a stateless computational service.
+The Routing container does not require data persistence. It is a stateless computational service.
 
 ### EXTERNAL SERVICES CONNECTIONS
 Connects to **Kafka** to consume routing requests and produce computed routes.
@@ -212,7 +212,7 @@ Connects to **Kafka** to consume routing requests and produce computed routes.
 
 #### MICROSERVICE: routing
 - TYPE: backend
-- DESCRIPTION: Executes pathfinding algorithms based on requests received from the API Gateway via Kafka.
+- DESCRIPTION: Executes pathfinding algorithms based on requests received from the API via Kafka.
 - PORTS: None
 - TECHNOLOGICAL SPECIFICATION:
   - Go
