@@ -1,0 +1,65 @@
+"Part","Section","Item","Value","Unit/Formula"
+"1. Function Point Analysis (FPA)",,,
+,"2.1. Component Identification & Complexity",,,
+,,"User Story ID(s)","Component Description","Type","Complexity"
+,,"7, 8, 9, 10","User Registration/Login/Profile","EI","Average"
+,,"2, 3, 18","Define Route Inputs (Map/File)","EI","High"
+,,"16","View Route History","EQ","Average"
+,,"5","Display Computed Route","EO","Average"
+,,"11","Show Routing Error Message","EO","Low"
+,,"6","Download/Export Route","EO","Low"
+,,"-","User Account Data","ILF","Average"
+,,"-","Route History Data","ILF","Average"
+,,"-","Geo-data Service (Nominatim)","EIF","Low"
+,,,,
+,"2.2. Unadjusted Function Points (UFP)",,,
+,,"Type","Low","Average","High","UFP"
+,,"EI (External Inputs)",0,1,1,10
+,,"EO (External Outputs)",2,1,0,13
+,,"EQ (External Inquiries)",0,1,0,4
+,,"ILF (Internal Logical Files)",0,2,0,20
+,,"EIF (External Interface Files)",1,0,0,7
+,,"Total UFP",,"",,54
+,,,,
+,"2.3. Value Adjustment Factor (VAF)",,,
+,,"Characteristic","Score (0-5)",,
+,,"Data Communications",4,,
+,,"Distributed Data Processing",5,,
+,,"Performance",4,,
+,,"Heavily Used Configuration",3,,
+,,"Transaction Rate",3,,
+,,"Online Data Entry",4,,
+,,"End-User Efficiency",4,,
+,,"Online Update",3,,
+,,"Complex Processing",5,,
+,,"Reusability",3,,
+,,"Installation Ease",4,,
+,,"Operational Ease",4,,
+,,"Multiple Sites",5,,
+,,"Facilitate Change",3,,
+,,"Total Degree of Influence (DI)",53,,
+,,"VAF Formula","(DI * 0.01) + 0.65",,
+,,"Value Adjustment Factor (VAF)",1.18,,
+,,,,
+,"2.4. Final Adjusted Function Points (FP)",,,
+,,"FP Formula","UFP * VAF",,
+,,"Adjusted Function Points (FP)",63.72,,
+,,,,
+"2. COCOMO II Estimation",,,
+,"3.1. Size in KLOC",,,
+,,"Average LOC/FP",52,"(JavaScript: 53, Go: 50)"
+,,"SLOC Formula","FP * Average LOC/FP",,
+,,"Total SLOC",3313,,
+,,"Size (KLOC)",3.313,"SLOC / 1000"
+,,,,
+,"3.2. Effort Estimation (Semi-Detached)",,,
+,,"Effort Formula","a * (Size_in_KLOC)^b",,
+,,"Constant 'a'",3.0,,
+,,"Constant 'b'",1.12,,
+,,"Effort (E)",11.37,"Person-Months"
+,,,,
+,"3.3. Schedule Estimation (Semi-Detached)",,,
+,,"TDEV Formula","c * (Effort)^d",,
+,,"Constant 'c'",2.5,,
+,,"Constant 'd'",0.35,,
+,,"Time to Develop (TDEV)",6.7,"Months"
