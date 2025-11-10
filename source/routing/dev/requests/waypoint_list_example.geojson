@@ -1,0 +1,44 @@
+[
+    {
+        "type": "Feature",
+        "properties": {
+            "altitudeUnit": "mt",
+            "altitudeValue": 200
+        },
+        "geometry": {
+            "type": "Point",            
+            "coordinates": [
+                4.433724687935722,
+                50.872778105839274
+            ]
+        }
+    },
+    {
+        "type": "Feature",
+        "properties": {
+            "altitudeUnit": "mt",
+            "altitudeValue": 300
+        },
+        "geometry": {
+            "type": "Point",            
+            "coordinates": [
+                4.46992531620532,
+                50.884400404439646
+            ]
+        }
+    },
+    {
+        "type": "Feature",
+        "properties": {
+            "altitudeUnit": "mt",
+            "altitudeValue": 400
+        },
+        "geometry": {
+            "type": "Point",            
+            "coordinates": [
+                4.45503208121508,
+                50.890383059561145
+            ]
+        }
+    }
+]

@@ -1,0 +1,12 @@
+FROM golang:1.25.1-alpine
+WORKDIR /app
+
+# Used for live reload
+RUN go install github.com/air-verse/air@latest
+
+COPY go.* ./
+RUN go mod download
+COPY . .
+
+# Used for live reload
+CMD ["air", "-c", ".air.toml"]

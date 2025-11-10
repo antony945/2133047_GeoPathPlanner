@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_auth_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: user_auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Juventus108
+      TZ: 'Europe/Rome'
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d  # Per script di inizializzazione (opzionale)
+    networks:
+      - auth_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin per gestire il database
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_auth
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - '5050:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - auth_network
+
+  # Applicazione NestJS
+  nestjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev  # Usa Dockerfile.dev per sviluppo
+    container_name: nestjs_auth_app
+    restart: unless-stopped
+    environment:
+      # Database
+      DB_HOST: postgres  # Nome del servizio postgres nel docker-compose
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: Juventus108
+      DB_NAME: user_auth_db
+      # JWT
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_EXPIRATION: 7d
+      # App
+      PORT: 3000
+      NODE_ENV: development
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./src:/app/src  # Mount del codice sorgente per hot reload
+      - ./test:/app/test
+      - /app/node_modules  # Previene la sovrascrittura di node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - auth_network
+    command: npm run start:dev
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  auth_network:
+    driver: bridge

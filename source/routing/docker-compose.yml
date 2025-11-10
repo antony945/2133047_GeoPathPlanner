@@ -1,0 +1,96 @@
+services:
+  routing:
+    image: geopathplanner/routing:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # container_name: routing
+    # Important to bind/mount your codebase dir to /app dir for live reload
+    # develop:
+    #   watch:
+    #     - action: rebuild
+    #       path: ./**/*.go
+
+    deploy:
+      mode: replicated
+      replicas: ${KAFKA_REQUEST_TOPIC_PARTITIONS}
+    env_file:
+      - .env
+
+    depends_on:
+      kafka-init-topics:
+        condition: service_completed_successfully
+
+  # redis:
+  #   image: redis:7
+  #   container_name: redis
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "${REDIS_PORT}:6379"
+
+  kafka:
+    image: apache/kafka:latest
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server :9092 || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Configure listeners for both docker and host communication
+      KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
+
+      # Settings required for KRaft mode
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9091
+
+      # Listener to use for broker-to-broker communication
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+
+      # Required for a single node cluster
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      # Override default number of kafka partitions
+      KAFKA_NUM_PARTITIONS: ${KAFKA_REQUEST_TOPIC_PARTITIONS}
+
+  kafka-init-topics:
+    image: apache/kafka:latest
+    container_name: kafka-init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+        restart: true
+    entrypoint: >
+      bash -c "
+      echo 'Waiting for Kafka to be ready...';
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_BROKERS} --create --if-not-exists --topic ${KAFKA_REQUEST_TOPIC} --partitions ${KAFKA_REQUEST_TOPIC_PARTITIONS};
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_BROKERS} --create --if-not-exists --topic ${KAFKA_RESPONSE_TOPIC} --partitions ${KAFKA_RESPONSE_TOPIC_PARTITIONS};
+      echo 'Topics created successfully!';
+      "
+
+  kafka-ui:
+    image: kafbat/kafka-ui:main
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_BROKERS}
+    depends_on:
+      kafka:
+        condition: service_healthy
+        restart: true

@@ -1,0 +1,10 @@
+fastapi[standard]>=0.110
+uvicorn[standard]>=0.27
+sqlalchemy
+asyncpg>=0.29
+geoalchemy2
+pydantic>=2.6
+geojson-pydantic
+aiokafka>=0.10
+jwt
+python-snappy

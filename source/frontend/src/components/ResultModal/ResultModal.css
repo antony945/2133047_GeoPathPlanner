@@ -1,0 +1,73 @@
+/* ResultModal.css */
+
+.result-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(248, 249, 250, 0.85); /* Match sidebar bg with transparency */
+  display: flex;
+  align-items: flex-start; /* Align to top */
+  justify-content: center;
+  z-index: 1000; /* Below potential navbars, but above sidebar content */
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+}
+
+/* For the loading state, we want a full-screen overlay */
+.result-modal-overlay.loading {
+  position: fixed; /* Cover the whole viewport */
+  background-color: rgba(0, 0, 0, 0.5); /* Darker overlay for loading */
+  z-index: 2000; /* Highest z-index */
+  align-items: center; /* Center the spinner vertically */
+}
+
+.result-modal-content {
+  background: white;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 400px; /* Max-width for the content */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dee2e6;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* When loading, the content should be just the spinner and text, no card */
+.result-modal-overlay.loading .result-modal-content {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    color: white;
+    text-align: center;
+}
+
+.result-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+}
+
+.result-modal-header h5 {
+    margin-bottom: 0;
+    font-size: 1.1rem;
+}
+
+.result-modal-body {
+  padding: 1rem;
+}
+
+.result-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+}

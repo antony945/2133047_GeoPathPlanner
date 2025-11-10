@@ -1,0 +1,45 @@
+/routing/*
+{
+  "alt_unit": "m",
+  "waypoints": [
+    {
+      "lat": 0,
+      "lon": 0,
+      "alt": 0,
+    }
+  ],
+  // mandare i poligoni come feature geojson
+  // ostacoli 2D, altezza minima
+  "constraints": [ // ogni array è un poligono
+    [{"lat": x, "lon": y, "alt": z}, {"lat": x, "lon": y, "alt": z}, {"lat": x, "lon": y, "alt": z}], 
+    [{"lat": x, "lon": y, "alt": z}, {"lat": x, "lon": y, "alt": z}, {"lat": x, "lon": y, "alt": z}, {"lat": x, "lon": y, "alt": z}, {"lat": x, "lon": y, "alt": z}, {"lat": x, "lon": y, "alt": z}],
+  ],
+  
+  // una singola feature
+  "search_volume": {
+    "bbox": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "margin_m": 0
+  },
+
+  "params": {
+    "algorithm": "RRT*",
+    "iterations": 10000,
+    "speed_mps": 12
+  },
+  "allow_contains": false
+}
+
+// /generate-obstacles
+{ // passo il centro della mappa ( ? )
+    "lat":
+    "lon":
+    "alt":
+}
+
+// constraint in geojson, con property
+// feature in goejson
