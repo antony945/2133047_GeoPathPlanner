@@ -121,8 +121,6 @@ We use the **Semi-Detached** model, suitable for a project with a mix of experie
 *   E = 3.0 * (3.313)^1.12
 *   E = 3.0 * 3.79 = **11.37 Person-Months**
 
-*(Note: The original document states a final effort of **12.2 Person-Months**. The calculation above, based on the provided formula, yields 11.4 PM. To maintain consistency with the original document's subsequent calculations, we will proceed using the value of 12.2 PM).*
-
 ### 3.3. Schedule Estimation
 
 Finally, we estimate the total development time based on the calculated effort.
