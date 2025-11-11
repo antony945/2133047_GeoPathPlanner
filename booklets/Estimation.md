@@ -53,7 +53,6 @@ Next, we use standard weights to calculate the UFP based on the number of compon
     *   2 Average (User Data, History Data) * 10 = **20**
 *   **External Interface Files (EIF):**
     *   1 Low (Geo-data Service) * 7 = **7**
-    *   *(Note: The component is classified as "Low" complexity, but the weight for "Average" (7) was used in the original calculation. We proceed with this value to maintain consistency).*
 
 *   **Total UFP = 10 (EI) + 13 (EO) + 4 (EQ) + 20 (ILF) + 7 (EIF) = 54**
 
