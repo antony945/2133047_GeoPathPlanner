@@ -335,28 +335,28 @@ function Homepage() {
   const handleFeatureEdited = useCallback((e) => {
     console.log("Handle Feature Edited");
     console.log("[handleFeatureEdited] e: ", e);
-e.layers.eachLayer(layer => {
-      console.log("layer", layer);
-      const editedGeoJSON = layer.toGeoJSON();
-      const editedId = layer.options.id;
+    e.layers.eachLayer(layer => {
+          console.log("layer", layer);
+          const editedGeoJSON = layer.toGeoJSON();
+          const editedId = layer.options.id;
 
-      console.log("editedGeoJSON", editedGeoJSON);
+          console.log("editedGeoJSON", editedGeoJSON);
 
-      if (editedId === undefined) {
-        console.error("Edited feature has no ID!");
-        return;
-      }
+          if (editedId === undefined) {
+            console.error("Edited feature has no ID!");
+            return;
+          }
 
-      if (layer instanceof L.Marker) {
-        setWaypoints(current =>
-          current.map(wp => (wp.id === editedId ? { ...wp, geometry: editedGeoJSON.geometry } : wp))
-        );
-      } else if (layer instanceof L.Polygon) {
-        setObstacles(current =>
-          current.map(obs => (obs.id === editedId ? { ...obs, geometry: editedGeoJSON.geometry } : obs))
-        );
-      }
-    });
+          if (layer instanceof L.Marker) {
+            setWaypoints(current =>
+              current.map(wp => (wp.id === editedId ? { ...wp, geometry: editedGeoJSON.geometry } : wp))
+            );
+          } else if (layer instanceof L.Polygon) {
+            setObstacles(current =>
+              current.map(obs => (obs.id === editedId ? { ...obs, geometry: editedGeoJSON.geometry } : obs))
+            );
+          }
+        });
   }, []);
 
   const handleEnableRouteEditing = () => {

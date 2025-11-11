@@ -4,7 +4,7 @@ import { getCurrentPosition , geocodeNominatim } from '../../assets/js/utils/geo
 
 function Sidebar({ onGoto, onToggleDraw, onGenerateRandomObstacles, isMapReady, onAltitudeChange, onObstacleAltitudeChange, onCompute, isComputing, parameters, onParametersChange, onClearMap, isEditingHistoryRoute, onEnableRouteEditing, onFileUpload }) {
   const [tab, setTab] = useState('waypoint');
-  const [altitudeValue, setAltitudeValue] = useState(0);
+  const [altitudeValue, setAltitudeValue] = useState(200);
   const [altitudeUnit, setAltitudeUnit] = useState('mt');
   const [minAltitudeValue, setMinAltitudeValue] = useState(100);
   const [maxAltitudeValue, setMaxAltitudeValue] = useState(500);
